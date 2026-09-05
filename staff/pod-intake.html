@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POD Intake — Crafts by Jon Staff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --bg: #E0F7FA; --bg-card: #ffffff; --bg-muted: #f0fbfc;
+      --text: #4A4A4A; --text-soft: #888;
+      --accent: #FF7F50; --accent-hover: #e86e40;
+      --teal: #20B2AA; --teal-light: #d0f0ee; --teal-hover: #1a9992;
+      --border: #c8ebed; --success: #4CAF50; --error: #c0392b;
+      --radius: 10px; --shadow: 0 2px 16px rgba(32,178,170,0.10);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 80px; }
+    header { background: var(--teal); color: #fff; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(32,178,170,0.25); flex-wrap: wrap; gap: 12px; }
+    header h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 700; }
+    .wrapper { max-width: 760px; margin: 0 auto; padding: 36px 20px 0; }
+    .page-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 700; color: var(--teal); margin-bottom: 6px; }
+    .page-subtitle { font-size: 0.88rem; color: var(--text-soft); margin-bottom: 28px; line-height: 1.5; }
+    .card { background: var(--bg-card); border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; }
+    .card-section { padding: 22px 26px; border-bottom: 1px solid var(--border); }
+    .card-section:last-child { border-bottom: none; }
+    .section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--teal); margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--teal-light); }
+    .section-hint { font-size: 0.8rem; color: var(--text-soft); margin: 10px 0 16px; line-height: 1.5; }
+    .field { margin-bottom: 18px; }
+    .field:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-soft); margin-bottom: 6px; }
+    label .required { color: var(--accent); margin-left: 2px; }
+    label .hint { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.78rem; color: #aaa; margin-left: 6px; }
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 7px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text);
+      background: var(--bg-muted); transition: border-color 0.15s, box-shadow 0.15s; appearance: none;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(32,178,170,0.12); }
+    .id-row { display: flex; gap: 10px; align-items: flex-end; }
+    .id-row input { flex: 1; }
+    .btn { padding: 10px 22px; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; }
+    .btn-teal { background: var(--teal); color: #fff; }
+    .btn-teal:hover { background: var(--teal-hover); }
+    .btn-teal:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-submit { padding: 12px 36px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .btn-submit:hover { background: var(--accent-hover); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status-line { font-size: 0.82rem; margin-top: 10px; min-height: 1.3em; }
+    .status-ok { color: #2e7d32; }
+    .status-error { color: var(--error); }
+    .status-pending { color: var(--text-soft); }
+    .drop-zone {
+      border: 2px dashed #ccc; border-radius: 10px; padding: 28px 16px; text-align: center;
+      background: var(--bg-muted); cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .drop-zone.drag-over { border-color: var(--teal); background: var(--teal-light); }
+    .drop-zone-icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .drop-zone-text { font-size: 0.88rem; color: var(--text-soft); }
+    .drop-zone-text strong { color: var(--teal-hover); }
+    .drop-zone input[type=file] { display: none; }
+    .zip-summary { margin-top: 16px; }
+    .zip-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .zip-summary-row:last-child { border-bottom: none; }
+    .zip-summary-badge { background: var(--teal-light); color: var(--teal-hover); padding: 2px 10px; border-radius: 20px; font-weight: 600; font-size: 0.78rem; }
+    .zip-warning { background: #fff8e1; color: #8a6d00; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; margin-top: 10px; }
+    .design-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; background: var(--bg-muted); }
+    .design-card:last-child { margin-bottom: 0; }
+    .design-card-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; flex-wrap: wrap; gap: 6px; }
+    .design-card-name { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 700; color: var(--text); }
+    .design-card-meta { font-size: 0.76rem; color: var(--text-soft); }
+    .design-card .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+    .variant-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .variant-chip { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 3px 11px; font-size: 0.76rem; color: var(--text-soft); }
+    .empty-state { text-align: center; padding: 30px 20px; color: var(--text-soft); font-size: 0.88rem; }
+    .toast { display: none; padding: 10px 16px; border-radius: 8px; font-size: 0.88rem; font-weight: 500; margin-top: 14px; }
+    .toast.ok { display: block; background: #e8f8e8; color: #2a7a2a; border: 1px solid #b2ddb2; }
+    .toast.error { display: block; background: #fdecea; color: var(--error); border: 1px solid #f5c0bb; }
+    .toast.info { display: block; background: var(--teal-light); color: var(--teal-hover); border: 1px solid var(--border); }
+    .submit-area { padding: 22px 26px; background: var(--bg-muted); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .colour-slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; margin-top: 4px; }
+    .colour-slot { border: 1.5px dashed var(--border); border-radius: 10px; padding: 12px 10px; text-align: center; background: var(--bg-muted); cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .colour-slot.filled { border-style: solid; border-color: var(--teal); background: var(--teal-light); }
+    .colour-slot input[type=file] { display: none; }
+    .colour-slot-preview { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; background: #fff; display: none; }
+    .colour-slot.filled .colour-slot-preview { display: block; }
+    .colour-slot.filled .colour-slot-icon { display: none; }
+    .colour-slot-icon { font-size: 1.4rem; margin-bottom: 6px; }
+    .colour-slot-name { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+    .colour-slot-status { font-size: 0.7rem; color: var(--text-soft); margin-top: 2px; }
+    @media (max-width: 560px) { .design-card .two-col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✂️ Crafts by Jon — Staff</h1>
+</header>
+<script src="/staff/nav.js"></script>
+
+<div class="wrapper">
+  <div class="page-title">POD Intake</div>
+  <div class="page-subtitle" id="page-subtitle">Pulls a Gelato template's design/colour/size structure and matches it against a mockup zip, ready to create one CBJ listing per design. Nothing is submitted to Gelato or any other supplier from this page, and no order or fulfilment action happens here.</div>
+
+  <div class="card">
+    <div class="card-section">
+      <div class="section-title">1. Product</div>
+      <div class="field">
+        <label>Product Type</label>
+        <select id="f-product-type" onchange="onProductTypeChange()">
+          <option value="T-Shirt">T-Shirt</option>
+          <option value="Print">Print</option>
+          <option value="Tote Bag">Tote Bag</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Collection <span class="hint">optional — applies to every design created in this run</span></label>
+        <select id="f-collection">
+          <option value="">— No collection —</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-section">
+      <!-- Gelato path: T-Shirt / Print -->
+      <div id="section2-gelato">
+        <div class="section-title">2. Mockup Images</div>
+        <div class="section-hint">Paste the template ID from the Gelato dashboard, then drop the mockup export zip here. Both are read entirely in the browser, nothing is uploaded until you submit at the bottom.</div>
+        <div class="field">
+          <label>Template ID <span class="required">*</span></label>
+          <div class="id-row">
+            <input type="text" id="f-template-id" placeholder="e.g. ba6cbb94-3186-49d9-a330-0ff8d2244bf5" />
+            <button class="btn btn-teal" id="btn-fetch-template" onclick="fetchTemplate()">Fetch structure</button>
+          </div>
+          <div class="status-line" id="template-status"></div>
+        </div>
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('f-zip').click()">
+          <div class="drop-zone-icon">🗂️</div>
+          <div class="drop-zone-text"><strong>Click to choose</strong> or drag a .zip file here</div>
+          <input type="file" id="f-zip" accept=".zip" onchange="handleZipFile(this.files[0])" />
+        </div>
+        <div class="status-line" id="zip-status"></div>
+        <div class="zip-summary" id="zip-summary" style="display:none;"></div>
+      </div>
+
+      <!-- Manual path: Tote Bag -->
+      <div id="section2-tote" style="display:none;">
+        <div class="section-title">2. Colour Images</div>
+        <div class="section-hint">Drop a mockup image into each colour that this design comes in. Skip any colour you're not launching yet — whichever slots get an image become that design's variant list. No Gelato template involved (Inkthreadable isn't on Gelato).</div>
+        <div class="colour-slot-grid" id="tote-colour-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-section">
+      <div class="section-title" id="section3-title">3. Designs</div>
+      <div class="section-hint" id="section3-hint">One CBJ listing gets created per design below. Colour/size come from the template, price applies across every colour and size of that design.</div>
+      <div id="print-pricing-block" style="display:none; margin-bottom: 18px;"></div>
+      <div id="designs-list">
+        <div class="empty-state">Fetch a template and/or upload a zip to see designs here.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="submit-area" style="flex-direction:column; align-items:stretch;">
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <button class="btn-submit" id="btn-submit" onclick="submitAll()" disabled>Create Listings</button>
+        <div class="toast" id="submit-toast"></div>
+      </div>
+      <div class="status-line status-error" id="submit-guard-note" style="display:block;">Fetch the template structure first — colour/size/variant data comes from there, not from the zip alone.</div>
+      <div id="submit-progress" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Backend endpoints — live as of 21 Aug 2026.
+  const GELATO_TEMPLATE_API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api/gelato/template'; // GET /:templateId
+  const GELATO_PRICES_API   = 'https://craftsbyjon.co.uk/n8n-proxy/products-api/gelato/prices';    // POST { productUids }
+  const PRODUCTS_API        = 'https://craftsbyjon.co.uk/n8n-proxy/products-api/products';         // POST { 'Product ID', 'Title', ... }
+  const UPLOAD_API           = 'https://craftsbyjon.co.uk/n8n-proxy/products-api/upload-image';   // POST multipart
+  const GENERATE_LISTING_API = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/generate-product-descriptions'; // POST { productId }
+  const GENERATE_SOCIAL_API  = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/generate-social-posts';           // POST { productId }
+  const COLLECTIONS_API      = 'https://craftsbyjon.co.uk/n8n-proxy/products-api/collections';                // GET
+
+  // Size guide image, appended as the last gallery image for every colour on T-Shirt
+  // products only (agreed 18 Aug 2026 — t-shirt-specific, not used for other POD types).
+  // Update this one line if the chart ever changes.
+  const SIZE_CHART_URL = 'https://images.craftsbyjon.co.uk/products/size-chart.png';
+
+  // Fixed colour set for the manual Tote Bag intake path — real Stanley/Stella STAU773
+  // colourway names (confirmed 21 Aug 2026), not derived from anywhere automatically since
+  // Inkthreadable has no template/API structure to pull them from.
+  const TOTE_COLOURS = ['Natural Raw', 'Anthracite', 'French Navy', 'White', 'Black'];
+
+  function slugify(text) {
+    return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  async function loadCollections() {
+    try {
+      const res = await fetch(COLLECTIONS_API);
+      const { result } = await res.json();
+      const sel = document.getElementById('f-collection');
+      (result || []).filter(c => c.status === 'live').forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+    } catch {}
+  }
+  loadCollections();
+
+  let templateData = null;
+  let zipDesigns = {};
+  let zipImageEntries = {};  // { designName: { colour: { shotKey: JSZip file object } } }
+  let mergedDesigns = [];
+  let toteFiles = {};  // { colourName: File }
+  let toteDesign = { title: '', price: 17.99 };
+
+  // Prints price by size, not a single flat figure across the whole design (confirmed
+  // 21 Aug 2026 - contribution ~30-34%, anchored so 35x35 keeps the old A3 price point).
+  // Keyed by the normalised "NNxNN" size found inside the template's Size option string.
+  const PRINT_SIZE_PRICE_DEFAULTS = {
+    '25x25': 14.99,
+    '30x30': 15.99,
+    '35x35': 16.99,
+    '40x40': 17.99,
+    '45x45': 18.99,
+    '50x50': 19.99,
+    '70x70': 23.99
+  };
+  let printSizePrices = {};  // { rawSizeString: price } - keyed by the exact Size option value from the template
+
+  // ---------- Product Type switching ----------
+  function onProductTypeChange() {
+    const type = document.getElementById('f-product-type').value;
+    const isTote = type === 'Tote Bag';
+    document.getElementById('section2-gelato').style.display = isTote ? 'none' : 'block';
+    document.getElementById('section2-tote').style.display = isTote ? 'block' : 'none';
+    document.getElementById('page-subtitle').textContent = isTote
+      ? "Manual intake for Inkthreadable tote bags — no Gelato template involved. Upload one mockup per colour below, ready to create one CBJ listing. Nothing is submitted to Inkthreadable from this page, and no order or fulfilment action happens here."
+      : "Pulls a Gelato template's design/colour/size structure and matches it against a mockup zip, ready to create one CBJ listing per design. Nothing is submitted to Gelato from this page, and no order or fulfilment action happens here.";
+    document.getElementById('section3-hint').textContent = isTote
+      ? "One CBJ listing gets created from the colour images above. Price applies across every colour."
+      : "One CBJ listing gets created per design below. Colour/size come from the template, price applies across every colour and size of that design.";
+
+    if (isTote) {
+      buildToteColourGrid();
+      renderToteDesign();
+    } else {
+      mergeAndRender();
+    }
+  }
+
+  // ---------- Tote Bag manual path ----------
+  function buildToteColourGrid() {
+    const grid = document.getElementById('tote-colour-grid');
+    grid.innerHTML = TOTE_COLOURS.map(colour => `
+      <div class="colour-slot" id="tote-slot-${slugify(colour)}" onclick="document.getElementById('tote-file-${slugify(colour)}').click()">
+        <img class="colour-slot-preview" id="tote-preview-${slugify(colour)}" />
+        <div class="colour-slot-icon">🖼️</div>
+        <div class="colour-slot-name">${colour}</div>
+        <div class="colour-slot-status" id="tote-status-${slugify(colour)}">No image</div>
+        <input type="file" accept="image/*" id="tote-file-${slugify(colour)}" onchange="handleToteFile('${colour}', this.files[0])" />
+      </div>
+    `).join('');
+  }
+
+  function handleToteFile(colour, file) {
+    if (!file) return;
+    toteFiles[colour] = file;
+    const slot = document.getElementById(`tote-slot-${slugify(colour)}`);
+    const preview = document.getElementById(`tote-preview-${slugify(colour)}`);
+    const status = document.getElementById(`tote-status-${slugify(colour)}`);
+    slot.classList.add('filled');
+    preview.src = URL.createObjectURL(file);
+    status.textContent = 'Image added';
+    renderToteDesign();
+  }
+
+  function renderToteDesign() {
+    const listEl = document.getElementById('designs-list');
+    const filledColours = TOTE_COLOURS.filter(c => toteFiles[c]);
+
+    if (filledColours.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">Upload at least one colour image above to see the listing here.</div>';
+      document.getElementById('btn-submit').disabled = true;
+      document.getElementById('submit-guard-note').textContent = 'Upload at least one colour image before creating the listing.';
+      document.getElementById('submit-guard-note').style.display = 'block';
+      return;
+    }
+
+    listEl.innerHTML = `
+      <div class="design-card">
+        <div class="design-card-head">
+          <div class="design-card-name">New Tote Bag Design</div>
+          <div class="design-card-meta">${filledColours.length} colour${filledColours.length === 1 ? '' : 's'} uploaded</div>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Listing title</label>
+            <input type="text" value="${toteDesign.title}" placeholder="e.g. Middle Street Tote Bag" oninput="toteDesign.title = this.value" />
+          </div>
+          <div class="field">
+            <label>Price (£)</label>
+            <input type="number" step="0.01" value="${toteDesign.price}" oninput="toteDesign.price = parseFloat(this.value)" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Product ID <span class="required">*</span></label>
+          <input type="text" id="f-tote-product-id" placeholder="e.g. totebag001" />
+        </div>
+        <div class="variant-chip-row">
+          ${filledColours.map(c => `<span class="variant-chip">${c}</span>`).join('')}
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-submit').disabled = false;
+    document.getElementById('submit-guard-note').style.display = 'none';
+  }
+
+  async function submitTote() {
+    const btn = document.getElementById('btn-submit');
+    const toast = document.getElementById('submit-toast');
+    const progressEl = document.getElementById('submit-progress');
+    const productId = (document.getElementById('f-tote-product-id').value || '').trim();
+
+    if (!productId) {
+      toast.className = 'toast error';
+      toast.style.display = 'block';
+      toast.textContent = 'Enter a Product ID before submitting (e.g. totebag001).';
+      return;
+    }
+
+    btn.disabled = true;
+    toast.className = 'toast info';
+    toast.style.display = 'block';
+    toast.textContent = 'Creating listing…';
+    progressEl.innerHTML = `<div class="status-line" id="progress-tote">⏳ ${toteDesign.title || productId} — saving product…</div>`;
+
+    const collection = document.getElementById('f-collection').value;
+    const filledColours = TOTE_COLOURS.filter(c => toteFiles[c]);
+
+    try {
+      // 1. Upload each colour's image first.
+      setProgressLine('tote', 'pending', `${toteDesign.title || productId} — uploading ${filledColours.length} image(s)…`);
+      const variantImages = {};
+      for (const colour of filledColours) {
+        const fd = new FormData();
+        fd.append('image', toteFiles[colour], `${productId}-${slugify(colour)}.jpg`);
+        fd.append('productId', `${productId}-${slugify(colour)}`);
+        const upRes = await fetch(UPLOAD_API, { method: 'POST', body: fd });
+        const upData = await upRes.json();
+        if (upRes.ok && upData.success) variantImages[colour] = upData.url;
+      }
+
+      if (Object.keys(variantImages).length === 0) {
+        throw new Error('No images uploaded successfully — nothing to attach.');
+      }
+
+      // Default hero image: prefer Natural Raw, else first uploaded colour.
+      const defaultColour = filledColours.find(c => c === 'Natural Raw') || filledColours[0];
+      const heroUrl = variantImages[defaultColour];
+
+      // 2. Save the product itself — simple model, same as the existing keyring
+      // Clear/Black finish pattern: a plain `variants` list + `variant_images` JSON,
+      // one flat price. No Gelato variant IDs, no product_variants rows — checkout
+      // already prices this via the generic `item.variant` branch.
+      setProgressLine('tote', 'pending', `${toteDesign.title || productId} — saving product…`);
+      const res = await fetch(PRODUCTS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          'Product ID': productId,
+          'Title': toteDesign.title || productId,
+          'price': toteDesign.price,
+          'product_type': 'Tote Bag',
+          'application_method': 'Print on Demand (Inkthreadable)',
+          'material': 'Cotton',
+          'personalisation_available': 'No',
+          'original_design': 'Yes',
+          'Ready to Go': 'No',
+          'Collection': collection,
+          'variants': Object.keys(variantImages).join(', '),
+          'variant_images': JSON.stringify(variantImages),
+          'Image URL': heroUrl
+        })
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Product save returned ${res.status}`);
+      }
+
+      // 3. Generate listing copy + social posts, same as the Gelato path.
+      let listingOk = false;
+      setProgressLine('tote', 'pending', `${toteDesign.title || productId} — generating listing copy…`);
+      try {
+        const genRes = await fetch(GENERATE_LISTING_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId })
+        });
+        if (!genRes.ok) throw new Error(`Webhook returned ${genRes.status}`);
+        listingOk = true;
+      } catch (err) {
+        setProgressLine('tote', 'ok', `${toteDesign.title || productId} — product, variants and images saved (draft), but listing copy generation failed: ${err.message} — retry from Listings page`);
+      }
+
+      if (listingOk) {
+        setProgressLine('tote', 'pending', `${toteDesign.title || productId} — generating social posts…`);
+        try {
+          const socialRes = await fetch(GENERATE_SOCIAL_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId })
+          });
+          if (!socialRes.ok) throw new Error(`Webhook returned ${socialRes.status}`);
+          setProgressLine('tote', 'ok', `${toteDesign.title || productId} — product, images, listing copy and social posts saved (draft)`);
+        } catch (err) {
+          setProgressLine('tote', 'ok', `${toteDesign.title || productId} — product, images and listing copy saved (draft), but social post generation failed: ${err.message} — retry from Listings page`);
+        }
+      }
+
+      toast.className = 'toast ok';
+      toast.textContent = `1 of 1 listing created. Saved as draft (Ready to Go: No) — review before publishing.`;
+    } catch (err) {
+      setProgressLine('tote', 'error', `${toteDesign.title || productId} — failed: ${err.message}`);
+      toast.className = 'toast error';
+      toast.textContent = `Listing creation failed: ${err.message}`;
+    }
+
+    btn.disabled = false;
+  }
+
+  // ---------- Gelato path (T-Shirt / Print) ----------
+  async function fetchTemplate() {
+    const id = document.getElementById('f-template-id').value.trim();
+    const statusEl = document.getElementById('template-status');
+    if (!id) { statusEl.textContent = 'Enter a template ID first.'; statusEl.className = 'status-line status-error'; return; }
+
+    const btn = document.getElementById('btn-fetch-template');
+    btn.disabled = true;
+    statusEl.textContent = 'Fetching from Gelato…';
+    statusEl.className = 'status-line status-pending';
+
+    try {
+      const res = await fetch(`${GELATO_TEMPLATE_API}/${encodeURIComponent(id)}`);
+      if (!res.ok) throw new Error(`Endpoint returned ${res.status} — backend for this isn't built yet`);
+      templateData = await res.json();
+      statusEl.textContent = `Loaded "${templateData.title}" — ${templateData.variants.length} variants.`;
+      statusEl.className = 'status-line status-ok';
+      mergeAndRender();
+    } catch (err) {
+      statusEl.textContent = err.message;
+      statusEl.className = 'status-line status-error';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  const dropZone = document.getElementById('drop-zone');
+  ['dragenter', 'dragover'].forEach(evt =>
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('drag-over'); })
+  );
+  ['dragleave', 'drop'].forEach(evt =>
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('drag-over'); })
+  );
+  dropZone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (file) handleZipFile(file);
+  });
+
+  // Folder names look like: {productUid} {designName} — a lone "-" means no design assigned
+  // (the spurious variant Gelato won't let you delete).
+  function parseFolderName(name) {
+    const match = name.match(/^(.*?_gildan_\d+)\s+(.*)$/) || name.match(/^(.*?_ver)\s+(.*)$/);
+    if (!match) return null;
+    const productUid = match[1];
+    const design = match[2].trim();
+    const colourMatch = productUid.match(/_gco_([a-z0-9-]+)_/);
+    let colour;
+    if (colourMatch) {
+      colour = colourMatch[1];
+    } else {
+      // No colour dimension (e.g. Print productUids) — fall back to a size-derived key
+      // so multiple sizes of the same design don't all collapse into one "unknown"
+      // bucket and clobber each other's images (found 21 Aug 2026 — only the last
+      // processed size's photos were surviving).
+      const sizeMatch = productUid.match(/flat_(\d+x\d+)-mm/);
+      colour = sizeMatch ? sizeMatch[1] : 'unknown';
+    }
+    return { productUid, design, colour };
+  }
+
+  // Gelato's mockup filenames per folder, mapped to a stable key for storage.
+  // T-shirt exports use the 4 apparel-style shots; flat/poster exports (prints) use a
+  // different 3-shot set (living-room, simple flat, bedroom) — both mapped here so
+  // either product type's zip is read correctly rather than silently skipped.
+  const SHOT_KEY_MAP = {
+    'editor_front.jpeg':         'front',
+    'editor3_front.jpeg':        'front_alt',
+    'person2_female_front.jpeg': 'lifestyle_female',
+    'person2_male_front.jpeg':   'lifestyle_male',
+    'Simple.jpeg':                'flat',
+    'Living-Room-Modern-White-2.jpeg': 'lifestyle_living_room',
+    'Bedroom-Modern-White-2.jpeg':     'lifestyle_bedroom'
+  };
+
+  async function handleZipFile(file) {
+    if (!file) return;
+    const statusEl = document.getElementById('zip-status');
+    statusEl.textContent = 'Reading zip…';
+    statusEl.className = 'status-line status-pending';
+
+    try {
+      const zip = await JSZip.loadAsync(file);
+      const folderSet = new Set();
+      const folderEntries = {}; // folderName -> { shotKey: JSZip file object }
+      zip.forEach((relPath, entry) => {
+        if (entry.dir) return;
+        const parts = relPath.split('/').filter(Boolean);
+        if (parts.length < 2) return;
+        const folderName = parts[parts.length - 2];
+        const fileName = parts[parts.length - 1];
+        folderSet.add(folderName);
+        const shotKey = SHOT_KEY_MAP[fileName];
+        if (shotKey) {
+          if (!folderEntries[folderName]) folderEntries[folderName] = {};
+          folderEntries[folderName][shotKey] = entry;
+        }
+      });
+
+      zipDesigns = {};
+      zipImageEntries = {};
+      let unparsed = 0;
+      folderSet.forEach(folderName => {
+        const parsed = parseFolderName(folderName);
+        if (!parsed) { unparsed++; return; }
+        const { design, colour } = parsed;
+        if (!zipDesigns[design]) zipDesigns[design] = new Set();
+        zipDesigns[design].add(colour);
+        if (!zipImageEntries[design]) zipImageEntries[design] = {};
+        zipImageEntries[design][colour] = folderEntries[folderName] || {};
+      });
+
+      renderZipSummary(folderSet.size, unparsed);
+      statusEl.textContent = `Read ${folderSet.size} folders from ${file.name}.`;
+      statusEl.className = 'status-line status-ok';
+      mergeAndRender();
+    } catch (err) {
+      statusEl.textContent = `Couldn't read that zip: ${err.message}`;
+      statusEl.className = 'status-line status-error';
+    }
+  }
+
+  function renderZipSummary(folderCount, unparsedCount) {
+    const el = document.getElementById('zip-summary');
+    el.style.display = 'block';
+    const designs = Object.keys(zipDesigns);
+    let html = designs.map(d => {
+      const colours = Array.from(zipDesigns[d]);
+      const isBlank = d === '-' || d === '';
+      return `<div class="zip-summary-row">
+        <span>${isBlank ? '<em>(unassigned / blank design — will be excluded)</em>' : d}</span>
+        <span class="zip-summary-badge">${colours.length} colour${colours.length === 1 ? '' : 's'}</span>
+      </div>`;
+    }).join('');
+    if (unparsedCount > 0) {
+      html += `<div class="zip-warning">⚠ ${unparsedCount} folder name(s) didn't match the expected Gelato pattern and were skipped. Worth a manual check.</div>`;
+    }
+    el.innerHTML = html;
+  }
+
+  function renderPrintPricing(allSizes) {
+    const block = document.getElementById('print-pricing-block');
+    if (allSizes.length === 0) { block.style.display = 'none'; return; }
+    block.style.display = 'block';
+
+    allSizes.forEach(size => {
+      if (printSizePrices[size] == null) {
+        const normMatch = size.match(/(\d+x\d+)/);
+        printSizePrices[size] = normMatch && PRINT_SIZE_PRICE_DEFAULTS[normMatch[1]] != null
+          ? PRINT_SIZE_PRICE_DEFAULTS[normMatch[1]]
+          : 19.99;
+      }
+    });
+
+    block.innerHTML = `
+      <div class="section-title" style="border-bottom:none;padding-bottom:0;">Pricing by size</div>
+      <div class="section-hint">Every design uses this same price ladder across its sizes — pre-filled from the agreed pricing, editable per size.</div>
+      <div class="colour-slot-grid">
+        ${allSizes.map(size => `
+          <div class="field" style="margin-bottom:0;">
+            <label>${size}</label>
+            <input type="number" step="0.01" value="${printSizePrices[size]}" oninput="printSizePrices['${size.replace(/'/g, "\\'")}'] = parseFloat(this.value)" />
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function mergeAndRender() {
+    const listEl = document.getElementById('designs-list');
+    const designNames = new Set();
+
+    if (templateData) {
+      templateData.variants.forEach(v => {
+        const opt = v.variantOptions.find(o => o.name === 'Choose Your Option' || o.name === 'Design');
+        if (opt) designNames.add(opt.value);
+      });
+    }
+    Object.keys(zipDesigns).forEach(d => designNames.add(d));
+
+    mergedDesigns = Array.from(designNames)
+      .filter(d => d !== '-' && d !== '')
+      .map(design => {
+        const variants = templateData
+          ? templateData.variants.filter(v =>
+              v.variantOptions.some(o => (o.name === 'Choose Your Option' || o.name === 'Design') && o.value === design))
+          : [];
+        const colours = new Set(variants.map(v => {
+          const c = v.variantOptions.find(o => o.name === 'Color' || o.name === 'Colour');
+          return c ? c.value : null;
+        }).filter(Boolean));
+        const sizes = new Set(variants.map(v => {
+          const s = v.variantOptions.find(o => o.name === 'Size');
+          return s ? s.value : null;
+        }).filter(Boolean));
+        const hasZipImages = !!zipDesigns[design];
+        return { design, variants, colours: Array.from(colours), sizes: Array.from(sizes), hasZipImages, price: 19.99, title: design };
+      });
+
+    const productType = document.getElementById('f-product-type').value;
+    if (productType === 'Print') {
+      const allSizes = [...new Set(mergedDesigns.flatMap(d => d.sizes))];
+      renderPrintPricing(allSizes);
+    } else {
+      document.getElementById('print-pricing-block').style.display = 'none';
+    }
+
+    if (mergedDesigns.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">Fetch a template and/or upload a zip to see designs here.</div>';
+      document.getElementById('btn-submit').disabled = true;
+      return;
+    }
+
+    listEl.innerHTML = mergedDesigns.map((d, i) => `
+      <div class="design-card">
+        <div class="design-card-head">
+          <div class="design-card-name">${d.design}</div>
+          <div class="design-card-meta">
+            ${d.variants.length ? d.variants.length + ' variants from template' : 'not in template yet'}
+            ${d.hasZipImages ? ' · images found' : ' · <span style="color:var(--error)">no images in zip</span>'}
+          </div>
+        </div>
+        <div class="two-col" style="${productType === 'Print' ? 'grid-template-columns:1fr;' : ''}">
+          <div class="field">
+            <label>Listing title</label>
+            <input type="text" value="${d.title}" oninput="mergedDesigns[${i}].title = this.value" />
+          </div>
+          ${productType === 'Print' ? '' : `
+          <div class="field">
+            <label>Price (£)</label>
+            <input type="number" step="0.01" value="${d.price}" oninput="mergedDesigns[${i}].price = parseFloat(this.value)" />
+          </div>`}
+        </div>
+        ${productType === 'Print' ? '<div class="section-hint" style="margin:6px 0 0;">Priced per size — see the pricing ladder above.</div>' : ''}
+        <div class="variant-chip-row">
+          ${d.colours.map(c => `<span class="variant-chip">${c}</span>`).join('')}
+          ${d.sizes.map(s => `<span class="variant-chip">${s}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+
+    // "Jon is an idiot" guard (his words): even with designs merged from the zip alone,
+    // never enable Create Listings until a template has actually been fetched — without
+    // it there's no colour/size/variant data at all, just image folders.
+    document.getElementById('btn-submit').disabled = !templateData;
+    const guardNote = document.getElementById('submit-guard-note');
+    if (guardNote) {
+      guardNote.style.display = templateData ? 'none' : 'block';
+      guardNote.textContent = 'Fetch the template structure first — colour/size/variant data comes from there, not from the zip alone.';
+    }
+  }
+
+  function setProgressLine(i, state, text) {
+    const el = document.getElementById(`progress-${i}`);
+    if (!el) return;
+    const icons = { pending: '⏳', ok: '✓', error: '⚠' };
+    const colors = { pending: 'var(--text-soft)', ok: '#2e7d32', error: 'var(--error)' };
+    el.innerHTML = `<span style="color:${colors[state]}">${icons[state]} ${text}</span>`;
+  }
+
+  async function submitAll() {
+    const productType = document.getElementById('f-product-type').value;
+    if (productType === 'Tote Bag') {
+      return submitTote();
+    }
+
+    const btn = document.getElementById('btn-submit');
+    const toast = document.getElementById('submit-toast');
+    const progressEl = document.getElementById('submit-progress');
+    btn.disabled = true;
+    toast.className = 'toast info';
+    toast.style.display = 'block';
+    toast.textContent = `Creating ${mergedDesigns.length} listing(s)…`;
+
+    progressEl.innerHTML = mergedDesigns.map((d, i) =>
+      `<div class="status-line" id="progress-${i}" style="margin-top:4px;">⏳ ${d.design} — queued</div>`
+    ).join('');
+
+    // 1. Batch-fetch Gelato cost for every unique productUid across all designs, one call.
+    const allUids = [...new Set(mergedDesigns.flatMap(d => d.variants.map(v => v.productUid)))];
+    let costs = {};
+    if (allUids.length > 0) {
+      try {
+        const r = await fetch(GELATO_PRICES_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productUids: allUids })
+        });
+        if (r.ok) { const data = await r.json(); costs = data.prices || {}; }
+      } catch { /* non-fatal — variants still get created, just without a cost figure */ }
+    }
+
+    let okCount = 0, errCount = 0;
+
+    // 2. Create each design as a product, then its variants — sequential so a failure
+    //    on one design is clearly attributable and doesn't abort the rest of the batch.
+    const collection = document.getElementById('f-collection').value;
+
+    for (let i = 0; i < mergedDesigns.length; i++) {
+      const d = mergedDesigns[i];
+      const productId = `pod-${slugify(productType)}-${slugify(d.design)}`;
+
+      setProgressLine(i, 'pending', `${d.design} — saving product…`);
+      try {
+        const res = await fetch(PRODUCTS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            'Product ID': productId,
+            'Title': d.title,
+            'price': productType === 'Print' ? Math.min(...Object.values(printSizePrices)) : d.price,
+            'product_type': productType,
+            'application_method': 'Print on Demand (Gelato)',
+            'material': productType === 'Print' ? 'Paper' : 'Cotton',
+            'personalisation_available': 'No',
+            'original_design': 'Yes',
+            'Ready to Go': 'No',
+            'Collection': collection
+          })
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          const message = errData.error || `Product save returned ${res.status}`;
+          // Re-running intake on a batch where some designs already exist from an earlier
+          // run is a normal, expected case (not a real failure) — carry straight on to
+          // variants/images/listing-copy/social-posts for that existing product instead of
+          // treating it as an error and skipping the design entirely.
+          if (!/already exists/i.test(message)) throw new Error(message);
+          setProgressLine(i, 'pending', `${d.design} — already exists, updating variants/images/copy…`);
+        }
+      } catch (err) {
+        setProgressLine(i, 'error', `${d.design} — product save failed: ${err.message}`);
+        errCount++;
+        continue; // skip variants for this design, move to the next
+      }
+
+      setProgressLine(i, 'pending', `${d.design} — saving ${d.variants.length} variant(s)…`);
+      let variantsOk = false;
+      try {
+        const variantRows = d.variants.map(v => {
+          const colourOpt = v.variantOptions.find(o => o.name === 'Color' || o.name === 'Colour');
+          const sizeOpt = v.variantOptions.find(o => o.name === 'Size');
+          const sizeValue = sizeOpt ? sizeOpt.value : null;
+          const retailPrice = (productType === 'Print' && sizeValue && printSizePrices[sizeValue] != null)
+            ? Math.round(printSizePrices[sizeValue] * 100)
+            : null;
+          return {
+            gelato_variant_id: v.id,
+            gelato_product_uid: v.productUid,
+            option1_name: 'Colour',
+            option1_value: colourOpt ? colourOpt.value : null,
+            option2_name: sizeOpt ? 'Size' : null,
+            option2_value: sizeValue,
+            gelato_cost_pence: costs[v.productUid] != null ? costs[v.productUid] : null,
+            retail_price_pence: retailPrice,
+            image_url: null // per-variant image not used — images are stored per-colour on the product, see below
+          };
+        });
+        const res = await fetch(`${PRODUCTS_API}/${productId}/variants`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variants: variantRows })
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Variant save returned ${res.status}`);
+        }
+        variantsOk = true;
+      } catch (err) {
+        setProgressLine(i, 'error', `${d.design} — product saved, but variants failed: ${err.message}`);
+        errCount++;
+        continue;
+      }
+
+      // 3. Upload mockup images per colour (ignoring size, as agreed) and attach to the product.
+      setProgressLine(i, 'pending', `${d.design} — uploading images…`);
+      try {
+        // Zip folder names give us a slugified colour (e.g. "rs-sport-grey"), but the
+        // Template API's variantOptions gives the proper display name (e.g. "Rs Sport Grey"),
+        // which is what gets stored in product_variants.option1_value. The gallery MUST be
+        // keyed by that same proper name, or the storefront's colour→size lookup can never
+        // match (found 18 Aug 2026 — sizes got permanently stuck on "Loading…"). For Print
+        // products (no colour dimension, size only), fall back to the design name itself so
+        // there's still a single gallery key to hang images under.
+        const slugToProperName = {};
+        d.variants.forEach(v => {
+          const uidMatch = v.productUid.match(/_gco_([a-z0-9-]+)_/);
+          const colourOpt = v.variantOptions.find(o => o.name === 'Color' || o.name === 'Colour');
+          if (uidMatch && colourOpt) slugToProperName[uidMatch[1]] = colourOpt.value;
+        });
+
+        const entriesByColour = zipImageEntries[d.design] || {};
+        const galleryByColour = {};
+
+        if (productType === 'Print') {
+          // Prints vary by size, not colour — the storefront doesn't need a different
+          // room photo per size (only price changes), so use one shared image set per
+          // design: the 35x35cm "anchor" size's photos if present, else whatever's
+          // first. Keyed under the design name, same shape as before (single gallery
+          // entry), just deterministic now instead of "whichever size processed last".
+          const sizeKeys = Object.keys(entriesByColour);
+          const preferredSizeKey = sizeKeys.find(k => k === '350x350') || sizeKeys[0];
+          if (preferredSizeKey) {
+            const shots = entriesByColour[preferredSizeKey];
+            const urls = {};
+            for (const shotKey of Object.keys(shots)) {
+              const blob = await shots[shotKey].async('blob');
+              const fd = new FormData();
+              fd.append('image', blob, `${slugify(d.design)}-${shotKey}.jpeg`);
+              fd.append('productId', `${productId}-${slugify(d.design)}`);
+              const upRes = await fetch(UPLOAD_API, { method: 'POST', body: fd });
+              const upData = await upRes.json();
+              if (upRes.ok && upData.success) urls[shotKey] = upData.url;
+            }
+            if (Object.keys(urls).length > 0) galleryByColour[d.design] = urls;
+          }
+        } else {
+          for (const colourSlug of Object.keys(entriesByColour)) {
+            const properName = slugToProperName[colourSlug] || colourSlug;
+            const shots = entriesByColour[colourSlug];
+            const urls = {};
+            for (const shotKey of Object.keys(shots)) {
+              const blob = await shots[shotKey].async('blob');
+              const fd = new FormData();
+              fd.append('image', blob, `${slugify(properName)}-${shotKey}.jpeg`);
+              fd.append('productId', `${productId}-${slugify(properName)}`);
+              const upRes = await fetch(UPLOAD_API, { method: 'POST', body: fd });
+              const upData = await upRes.json();
+              if (upRes.ok && upData.success) urls[shotKey] = upData.url;
+            }
+            if (Object.keys(urls).length > 0) galleryByColour[properName] = urls;
+          }
+        }
+
+        // Append the size guide as the final image in every colour's set, T-Shirt only.
+        if (productType === 'T-Shirt' && SIZE_CHART_URL && SIZE_CHART_URL !== 'PLACEHOLDER_AWAITING_UPLOAD') {
+          for (const colour of Object.keys(galleryByColour)) {
+            galleryByColour[colour].size_chart = SIZE_CHART_URL;
+          }
+        }
+
+        const uploadedColours = Object.keys(galleryByColour);
+        if (uploadedColours.length > 0) {
+          // Default hero image: prefer a colour named "Natural", else first colour found.
+          const defaultColour = uploadedColours.find(c => c.toLowerCase() === 'natural') || uploadedColours[0];
+          const defaultShot = galleryByColour[defaultColour].front || galleryByColour[defaultColour].flat || galleryByColour[defaultColour].front_alt || Object.values(galleryByColour[defaultColour])[0];
+
+          const patchRes = await fetch(`${PRODUCTS_API}/${productId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              'Image URL': defaultShot || '',
+              'pod_gallery_images': JSON.stringify(galleryByColour)
+            })
+          });
+          if (!patchRes.ok) throw new Error(`Image attach (PATCH) returned ${patchRes.status}`);
+        }
+      } catch (err) {
+        setProgressLine(i, 'error', `${d.design} — product + variants saved, but image upload failed: ${err.message}`);
+        errCount++;
+        continue;
+      }
+
+      // 4. Generate title/description/bullets/tags — same webhook the Listings page's
+      // "Regenerate Listing" button uses, targeted at this productId. Non-fatal if it
+      // fails: the product/variants/images are already saved, and Jon can retry this
+      // one step from the Listings page.
+      let listingOk = false;
+      setProgressLine(i, 'pending', `${d.design} — generating listing copy…`);
+      try {
+        const genRes = await fetch(GENERATE_LISTING_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId })
+        });
+        if (!genRes.ok) throw new Error(`Webhook returned ${genRes.status}`);
+        listingOk = true;
+      } catch (err) {
+        setProgressLine(i, 'ok', `${d.design} — product, variants and images saved (draft), but listing copy generation failed: ${err.message} — retry from Listings page`);
+      }
+
+      // 5. Generate social posts (FB/IG/Pinterest) — same webhook the Listings page uses.
+      // Runs after listing copy so the title/description it reads are already up to date.
+      // Non-fatal, and skipped entirely if listing copy failed (nothing meaningful to
+      // write posts about yet) — retry both from the Listings page in that case.
+      if (listingOk) {
+        setProgressLine(i, 'pending', `${d.design} — generating social posts…`);
+        try {
+          const socialRes = await fetch(GENERATE_SOCIAL_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId })
+          });
+          if (!socialRes.ok) throw new Error(`Webhook returned ${socialRes.status}`);
+          setProgressLine(i, 'ok', `${d.design} — product, variants, images, listing copy and social posts saved (draft)`);
+        } catch (err) {
+          setProgressLine(i, 'ok', `${d.design} — product, variants, images and listing copy saved (draft), but social post generation failed: ${err.message} — retry from Listings page`);
+        }
+      }
+      okCount++;
+    }
+
+    toast.className = errCount === 0 ? 'toast ok' : 'toast error';
+    toast.textContent = `${okCount} of ${mergedDesigns.length} listing(s) created${errCount ? `, ${errCount} failed` : ''}. All saved as drafts (Ready to Go: No) — review before publishing.`;
+    btn.disabled = false;
+  }
+</script>
+
+</body>
+</html>

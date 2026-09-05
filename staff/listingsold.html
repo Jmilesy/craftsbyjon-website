@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Listings — Crafts by Jon Staff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #E0F7FA;
+      --bg-card:   #ffffff;
+      --bg-muted:  #f0fbfc;
+      --text:      #4A4A4A;
+      --text-soft: #888;
+      --accent:    #FF7F50;
+      --accent-hover: #e86e40;
+      --teal:      #20B2AA;
+      --teal-light:#d0f0ee;
+      --teal-hover:#1a9992;
+      --border:    #c8ebed;
+      --copied:    #4CAF50;
+      --radius:    10px;
+      --shadow:    0 2px 16px rgba(32,178,170,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    header {
+      background: var(--teal);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(32,178,170,0.25);
+    }
+    header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    header span { font-size: 0.82rem; opacity: 0.8; font-weight: 300; }
+
+    .wrapper { max-width: 900px; margin: 0 auto; padding: 28px 20px 0; }
+
+    #status-bar {
+      text-align: center;
+      padding: 60px 20px;
+      font-size: 1rem;
+      color: var(--text-soft);
+    }
+    #status-bar .spinner {
+      display: inline-block;
+      width: 36px; height: 36px;
+      border: 3px solid var(--teal-light);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .nav-counter {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      color: var(--teal);
+      font-weight: 600;
+    }
+    .nav-counter span { color: var(--text-soft); font-weight: 400; font-size: 1rem; }
+    .nav-buttons { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: background 0.18s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-teal  { background: var(--teal); color: #fff; }
+    .btn-teal:hover  { background: var(--teal-hover); }
+    .btn-ghost { background: #fff; color: var(--teal); border: 1.5px solid var(--teal); }
+    .btn-ghost:hover { background: var(--teal-light); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .jump-wrap { display: flex; align-items: center; gap: 6px; }
+    .jump-wrap label { font-size: 0.82rem; color: var(--text-soft); }
+    .jump-wrap input {
+      width: 58px;
+      padding: 6px 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #fff;
+    }
+    .jump-wrap input:focus { outline: none; border-color: var(--teal); }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .card-header {
+      background: linear-gradient(135deg, var(--teal) 0%, #2ec4bb 100%);
+      padding: 20px 24px;
+    }
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.25;
+    }
+    .product-id-badge {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .status-flags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 14px 24px;
+      background: var(--bg-muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .flag {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .flag-yes  { background: #d4f5d4; color: #2a7a2a; }
+    .flag-no   { background: #fde8e8; color: #a33; }
+    .flag-label { color: var(--text-soft); font-weight: 400; }
+
+    .fields { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+
+    .field-group { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .field-group-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--teal);
+      padding: 10px 14px 8px;
+      background: var(--bg-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .field-row {
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid #f0f5f5;
+    }
+    .field-row:last-child { border-bottom: none; }
+
+    .field-label {
+      min-width: 160px;
+      max-width: 160px;
+      padding: 12px 14px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #fafefe;
+      border-right: 1px solid #f0f5f5;
+    }
+
+    .field-value {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .field-value.empty { color: #bbb; font-style: italic; }
+
+    .field-copy { padding: 8px 10px; display: flex; align-items: flex-start; }
+
+    .copy-btn {
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .copy-btn:hover { background: var(--accent-hover); }
+    .copy-btn:active { transform: scale(0.95); }
+    .copy-btn.copied { background: var(--copied); }
+    .copy-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── MadeByMe panel ── */
+    .madebyme-panel {
+      margin: 0 24px 20px;
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .madebyme-header {
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 14px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .madebyme-header em {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      font-style: normal;
+      opacity: 0.85;
+    }
+    .madebyme-body { padding: 14px; background: #fff; }
+    .madebyme-current {
+      font-size: 0.82rem;
+      color: var(--text-soft);
+      margin-bottom: 10px;
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .madebyme-current a { color: var(--teal); text-decoration: none; }
+    .madebyme-current a:hover { text-decoration: underline; }
+    .madebyme-input-row { display: flex; gap: 8px; }
+    .madebyme-input {
+      flex: 1;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--bg-muted);
+    }
+    .madebyme-input:focus { outline: none; border-color: var(--accent); }
+    .madebyme-save {
+      padding: 9px 18px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .madebyme-save:hover { background: var(--accent-hover); }
+    .madebyme-save:disabled { opacity: 0.5; cursor: not-allowed; }
+    .madebyme-status { margin-top: 8px; font-size: 0.8rem; min-height: 1.2em; }
+    .madebyme-status.ok    { color: var(--copied); }
+    .madebyme-status.error { color: #c00; }
+
+    /* ── Image ── */
+    .image-preview { padding: 12px 24px 20px; }
+    .image-preview img {
+      max-width: 220px; max-height: 220px;
+      border-radius: 8px; border: 2px solid var(--border);
+      object-fit: cover; display: block;
+    }
+    .no-image {
+      width: 120px; height: 80px;
+      background: var(--bg-muted); border: 2px dashed var(--border);
+      border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; color: var(--text-soft); font-size: 0.8rem;
+    }
+
+    .generated-at {
+      padding: 12px 24px;
+      background: var(--bg-muted);
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--text-soft);
+    }
+
+    .reload-wrap { text-align: right; margin-bottom: 10px; }
+    .btn-reload {
+      background: none; border: none; color: var(--teal);
+      font-size: 0.82rem; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; text-decoration: underline; padding: 0;
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 14px 16px; }
+      .wrapper { padding: 16px 10px 0; }
+      .fields { padding: 12px; }
+      .field-label { min-width: 100px; max-width: 100px; font-size: 0.72rem; }
+      .madebyme-panel { margin: 0 12px 16px; }
+      .madebyme-input-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✂️ Crafts by Jon — Staff</h1>
+  <span>Product Listings Browser</span>
+</header>
+
+<div class="wrapper">
+  <div id="status-bar">
+    <div class="spinner"></div><br>Loading product data…
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="reload-wrap">
+      <button class="btn-reload" onclick="loadData()">↺ Reload from sheet</button>
+    </div>
+
+    <div class="nav-bar">
+      <div class="nav-counter">
+        Product <strong id="idx-display">1</strong>
+        <span>of <span id="total-display">?</span></span>
+      </div>
+      <div class="nav-buttons">
+        <div class="jump-wrap">
+          <label for="jump-input">Go to:</label>
+          <input id="jump-input" type="number" min="1" placeholder="#" />
+        </div>
+        <button class="btn btn-ghost" id="btn-prev" onclick="navigate(-1)">← Prev</button>
+        <button class="btn btn-teal"  id="btn-next" onclick="navigate(1)">Next →</button>
+      </div>
+    </div>
+
+    <div class="card" id="product-card"></div>
+  </div>
+</div>
+
+<script>
+  // ── Config ───────────────────────────────────────────────────
+  const SHEET_ID   = '1cz6uzd6joccNEOiB8mGFFfhMPqd70wR_9NuV9vtuC4k';
+  const SHEET_TAB  = 'Product Listings';
+  const CSV_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+  const N8N_WEBHOOK = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/update-madebyme-url';
+  const IMAGE_SERVER_PFX  = '/var/www/craftsbyjon-images/products/';
+  const IMAGE_WEB_PFX     = 'https://images.craftsbyjon.co.uk/products/';
+
+  // ── State ────────────────────────────────────────────────────
+  let products = [], current = 0;
+
+  const COLS = [
+    'Product ID','Title','Short Description','Full Description',
+    'Bullet Point 1','Bullet Point 2','Bullet Point 3','Bullet Point 4','Bullet Point 5',
+    'Search Tags','Image URL',
+    'Added to Sales','Added to Facebook','Added to Instagram',
+    'Added to Pinterest','Added to Website','Ready to Go',
+    'Generated At','MadeByMe URL'
+  ];
+  const STATUS_COLS = [
+    'Added to Sales','Added to Facebook','Added to Instagram',
+    'Added to Pinterest','Added to Website','Ready to Go'
+  ];
+
+  // ── Image URL conversion ──────────────────────────────────────
+  function toWebImageUrl(serverPath) {
+    if (!serverPath) return '';
+    if (serverPath.startsWith('http')) return serverPath;
+    const filename = serverPath.startsWith(IMAGE_SERVER_PFX)
+      ? serverPath.slice(IMAGE_SERVER_PFX.length)
+      : serverPath.split('/').pop();
+    return IMAGE_WEB_PFX + filename;
+  }
+
+  // ── CSV parser ────────────────────────────────────────────────
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], field = '', inQ = false, i = 0;
+    while (i < text.length) {
+      const c = text[i];
+      if (inQ) {
+        if (c === '"') { if (text[i+1]==='"') { field+='"'; i+=2; continue; } inQ=false; }
+        else field += c;
+      } else {
+        if (c==='"') inQ=true;
+        else if (c===',') { row.push(field); field=''; }
+        else if (c==='\n') { row.push(field); rows.push(row); row=[]; field=''; }
+        else if (c!=='\r') field+=c;
+      }
+      i++;
+    }
+    if (field||row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  // ── Load ─────────────────────────────────────────────────────
+  async function loadData() {
+    document.getElementById('status-bar').style.display = 'block';
+    document.getElementById('status-bar').innerHTML = '<div class="spinner"></div><br>Loading product data…';
+    document.getElementById('app').style.display = 'none';
+    try {
+      const res  = await fetch(CSV_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const rows = parseCSV(await res.text());
+      if (rows.length < 2) throw new Error('Sheet appears empty.');
+      const headers = rows[0].map(h => h.trim());
+      products = rows.slice(1).filter(r => r.some(c => c.trim())).map(row => {
+        const obj = {};
+        COLS.forEach(col => { const i = headers.indexOf(col); obj[col] = i>=0 ? (row[i]||'').trim() : ''; });
+        return obj;
+      });
+      if (!products.length) throw new Error('No product rows found.');
+      current = 0;
+      document.getElementById('total-display').textContent = products.length;
+      document.getElementById('status-bar').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      render();
+    } catch (err) {
+      document.getElementById('status-bar').innerHTML =
+        `<strong style="color:#c00">⚠ Could not load sheet</strong><br><br>
+         <span style="font-size:.85rem">${err.message}</span><br><br>
+         <span style="font-size:.8rem;color:#888">Sheet must be shared as <em>"Anyone with the link can view"</em></span><br><br>
+         <button class="btn btn-teal" onclick="loadData()">Try again</button>`;
+    }
+  }
+
+  function navigate(dir) {
+    current = Math.max(0, Math.min(products.length-1, current+dir));
+    render();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('jump-input').addEventListener('change', function() {
+      const n = parseInt(this.value, 10);
+      if (!isNaN(n) && n>=1 && n<=products.length) { current=n-1; render(); }
+      this.value = '';
+    });
+    loadData();
+  });
+
+  // ── Copy ─────────────────────────────────────────────────────
+  function copyField(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copied'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent='Copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  // ── Save MadeByMe URL ─────────────────────────────────────────
+  async function saveMadeByMeUrl() {
+    const input  = document.getElementById('mbm-input');
+    const btn    = document.getElementById('mbm-save');
+    const status = document.getElementById('mbm-status');
+    const url    = input.value.trim();
+    const productId = products[current]['Product ID'];
+
+    if (!url) {
+      status.textContent = 'Please enter a URL first.';
+      status.className = 'madebyme-status error';
+      return;
+    }
+
+    btn.disabled = true; btn.textContent = 'Saving…'; status.textContent = ''; status.className = 'madebyme-status';
+
+    try {
+      const res = await fetch(N8N_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, madebymeUrl: url })
+      });
+      if (!res.ok) throw new Error(`Webhook returned ${res.status}`);
+      products[current]['MadeByMe URL'] = url;
+      input.value = '';
+      status.textContent = '✓ Saved to sheet';
+      status.className = 'madebyme-status ok';
+      document.getElementById('mbm-current').innerHTML = renderMbmCurrent(url);
+    } catch (err) {
+      status.textContent = `⚠ Failed: ${err.message}`;
+      status.className = 'madebyme-status error';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save';
+    }
+  }
+
+  function renderMbmCurrent(url) {
+    if (!url) return '<em style="color:#bbb">Not set yet</em>';
+    return `<a href="${escAttr(url)}" target="_blank">${escHtml(url)}</a>
+            <button class="copy-btn" style="font-size:.72rem;padding:3px 8px"
+              onclick="copyField(this,${JSON.stringify(url)})">Copy</button>`;
+  }
+
+  // ── Render ────────────────────────────────────────────────────
+  function render() {
+    const p = products[current];
+    document.getElementById('idx-display').textContent = current + 1;
+    document.getElementById('btn-prev').disabled = current === 0;
+    document.getElementById('btn-next').disabled = current === products.length - 1;
+
+    const isYes = v => /^(yes|true|1|x|✓|y)$/i.test((v||'').trim());
+
+    const fieldRow = (label, value) => {
+      const empty = !value;
+      return `<div class="field-row">
+        <div class="field-label">${label}</div>
+        <div class="field-value${empty?' empty':''}">${empty?'(empty)':escHtml(value)}</div>
+        <div class="field-copy">
+          <button class="copy-btn" onclick="copyField(this,${JSON.stringify(value||'')})"
+            ${empty?'disabled':''}>Copy</button>
+        </div>
+      </div>`;
+    };
+
+    const flagHtml = col => {
+      const yes = isYes(p[col]);
+      return `<span class="flag ${yes?'flag-yes':'flag-no'}">
+                <span class="flag-label">${col.replace('Added to ','')}:</span> ${yes?'✓ Yes':'✗ No'}
+              </span>`;
+    };
+
+    const bulletRows = [1,2,3,4,5].map(n => fieldRow(`Bullet ${n}`, p[`Bullet Point ${n}`])).join('');
+
+    const webImg = toWebImageUrl(p['Image URL']);
+    const imageHtml = webImg
+      ? `<div class="image-preview">
+           <div class="field-group-title" style="margin-bottom:10px">Product Image</div>
+           <img src="${escAttr(webImg)}" alt="Product image" onerror="this.style.display='none'" />
+           <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+             <a href="${escAttr(webImg)}" target="_blank" style="font-size:.8rem;color:var(--teal)">Open full ↗</a>
+             <button class="copy-btn" onclick="copyField(this,${JSON.stringify(webImg)})">Copy URL</button>
+           </div>
+         </div>`
+      : `<div class="image-preview"><div class="no-image">No image</div></div>`;
+
+    document.getElementById('product-card').innerHTML = `
+      <div class="card-header">
+        <div class="product-id-badge">ID: ${escHtml(p['Product ID']||'—')}</div>
+        <div class="card-title">${escHtml(p['Title']||'Untitled Product')}</div>
+      </div>
+
+      <div class="status-flags">${STATUS_COLS.map(flagHtml).join('')}</div>
+
+      <div class="fields">
+        <div class="field-group">
+          <div class="field-group-title">Core Listing Fields</div>
+          ${fieldRow('Product ID',        p['Product ID'])}
+          ${fieldRow('Title',             p['Title'])}
+          ${fieldRow('Short Description', p['Short Description'])}
+          ${fieldRow('Full Description',  p['Full Description'])}
+        </div>
+        <div class="field-group">
+          <div class="field-group-title">Bullet Points</div>
+          ${bulletRows}
+        </div>
+        <div class="field-group">
+          <div class="field-group-title">Search Tags</div>
+          ${fieldRow('Search Tags', p['Search Tags'])}
+        </div>
+      </div>
+
+      ${imageHtml}
+
+      <div class="madebyme-panel">
+        <div class="madebyme-header">
+          MadeByMe URL
+          <em>Saves directly to Google Sheet</em>
+        </div>
+        <div class="madebyme-body">
+          <div class="madebyme-current" id="mbm-current">
+            ${renderMbmCurrent(p['MadeByMe URL'])}
+          </div>
+          <div class="madebyme-input-row">
+            <input id="mbm-input" class="madebyme-input" type="url"
+              placeholder="https://www.madebyme.com/listing/…"
+              onkeydown="if(event.key==='Enter') saveMadeByMeUrl()" />
+            <button id="mbm-save" class="madebyme-save" onclick="saveMadeByMeUrl()">Save</button>
+          </div>
+          <div id="mbm-status" class="madebyme-status"></div>
+        </div>
+      </div>
+
+      <div class="generated-at">Generated at: ${escHtml(p['Generated At']||'—')}</div>
+    `;
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escAttr(s) {
+    return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+</script>
+</body>
+</html>

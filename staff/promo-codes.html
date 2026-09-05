@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Promo Codes — Crafts by Jon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #E0F7FA;
+      --bg-card:      #ffffff;
+      --bg-muted:     #f0fbfc;
+      --text:         #4A4A4A;
+      --text-soft:    #888;
+      --accent:       #FF7F50;
+      --accent-hover: #e86e40;
+      --teal:         #20B2AA;
+      --teal-light:   #d0f0ee;
+      --teal-hover:   #1a9992;
+      --border:       #c8ebed;
+      --green:        #4CAF50;
+      --green-light:  #e8f5e9;
+      --radius:       12px;
+      --shadow:       0 2px 16px rgba(32,178,170,0.10);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 60px; }
+    header { background: var(--teal); color: #fff; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(32,178,170,0.25); }
+    header h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 700; letter-spacing: 0.02em; }
+    header a { color: #fff; font-size: 0.85rem; opacity: 0.85; text-decoration: none; font-weight: 500; }
+    header a:hover { opacity: 1; }
+    .wrapper { max-width: 1100px; margin: 0 auto; padding: 36px 20px 0; }
+    .page-title { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 700; color: var(--teal); margin-bottom: 6px; }
+    .page-sub { font-size: 0.88rem; color: var(--text-soft); margin-bottom: 32px; }
+
+    .add-form {
+      background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 20px; margin-bottom: 28px;
+      display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto; gap: 10px; align-items: end;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 0.72rem; font-weight: 600; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+    .field input, .field select {
+      padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text);
+      background: var(--bg-muted); outline: none; transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--teal); background: #fff; }
+
+    .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; transition: background 0.15s, transform 0.1s; white-space: nowrap; }
+    .btn:active { transform: scale(0.97); }
+    .btn-teal { background: var(--teal); color: #fff; }
+    .btn-teal:hover { background: var(--teal-hover); }
+    .btn-danger { background: transparent; color: #c0392b; border: 1.5px solid #f5c6c6; padding: 7px 14px; font-size: 0.82rem; }
+    .btn-danger:hover { background: #fde8e8; border-color: #c0392b; }
+
+    #codes-list { display: flex; flex-direction: column; gap: 12px; }
+    .code-row {
+      background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 16px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .code-row.inactive { opacity: 0.55; }
+    .code-name { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 700; color: var(--text); min-width: 130px; }
+    .code-detail { font-size: 0.85rem; color: var(--text-soft); flex: 1; min-width: 200px; }
+    .code-source { display: inline-block; background: var(--teal-light); color: var(--teal-hover); font-size: 0.72rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-left: 6px; }
+
+    .toggle { position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider { position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 24px; transition: 0.15s; }
+    .toggle .slider::before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.15s; }
+    .toggle input:checked + .slider { background: var(--teal); }
+    .toggle input:checked + .slider::before { transform: translateX(18px); }
+
+    .msg { font-size: 0.8rem; padding: 8px 14px; border-radius: 6px; margin-bottom: 14px; display: none; }
+    .msg.show { display: block; }
+    .msg.ok { background: var(--green-light); color: #2e7d32; }
+    .msg.error { background: #fde8e8; color: #a33; }
+    .empty { text-align: center; color: var(--text-soft); font-size: 0.9rem; padding: 32px 0; }
+
+    @media (max-width: 800px) {
+      .add-form { grid-template-columns: 1fr 1fr; }
+      header { padding: 14px 16px; }
+      .wrapper { padding: 20px 12px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏷 Promo Codes</h1>
+  <a href="/staff/">← Dashboard</a>
+</header>
+
+<div class="wrapper">
+  <div class="page-title">Discount Codes</div>
+  <div class="page-sub">Manual codes customers type at checkout, and campaign links that auto-apply a code silently. Stacks with the bundle/mug discounts.</div>
+
+  <div class="msg" id="msg"></div>
+
+  <div class="add-form">
+    <div class="field"><label>Code</label><input type="text" id="f-code" placeholder="BANKHOL10" maxlength="30" style="text-transform:uppercase" /></div>
+    <div class="field"><label>Type</label>
+      <select id="f-type">
+        <option value="percent">% off</option>
+        <option value="amount">£ off</option>
+      </select>
+    </div>
+    <div class="field"><label>Value</label><input type="number" id="f-value" placeholder="10" min="1" step="1" /></div>
+    <div class="field"><label>Min order (£)</label><input type="number" id="f-min" placeholder="15" min="0" step="0.01" /></div>
+    <div class="field"><label>Source slug (optional)</label><input type="text" id="f-source" placeholder="fb-bankhol" /></div>
+    <button class="btn btn-teal" onclick="addCode()">Add Code</button>
+  </div>
+
+  <div id="codes-list"><div class="empty">Loading…</div></div>
+</div>
+
+<script>
+const API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api';
+
+async function load() {
+  const res = await fetch(`${API}/promo-codes`);
+  const { result, error } = await res.json();
+  const el = document.getElementById('codes-list');
+  if (error || !result) { el.innerHTML = `<div class="empty">Failed to load promo codes.</div>`; return; }
+  if (result.length === 0) { el.innerHTML = `<div class="empty">No promo codes yet.</div>`; return; }
+  el.innerHTML = result.map(rowHTML).join('');
+}
+
+function rowHTML(c) {
+  const valueLabel = c.discount_type === 'percent' ? `${c.discount_value}% off` : `£${(c.discount_value / 100).toFixed(2)} off`;
+  const minLabel = c.min_order_pence > 0 ? `min order £${(c.min_order_pence / 100).toFixed(2)}` : 'no minimum';
+  const sourceHtml = c.source_slug ? `<span class="code-source">auto: ${escHtml(c.source_slug)}</span>` : '';
+  return `
+    <div class="code-row${c.active ? '' : ' inactive'}" id="row-${c.id}">
+      <span class="code-name">${escHtml(c.code)}</span>
+      <span class="code-detail">${valueLabel} · ${minLabel}${sourceHtml}</span>
+      <label class="toggle">
+        <input type="checkbox" ${c.active ? 'checked' : ''} onchange="toggleActive(${c.id}, this.checked)">
+        <span class="slider"></span>
+      </label>
+      <button class="btn btn-danger" onclick="confirmDelete(${c.id}, '${escHtml(c.code)}')">Delete</button>
+    </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function addCode() {
+  const code = document.getElementById('f-code').value.trim();
+  const discount_type = document.getElementById('f-type').value;
+  const value = parseFloat(document.getElementById('f-value').value);
+  const minGbp = parseFloat(document.getElementById('f-min').value) || 0;
+  const source = document.getElementById('f-source').value.trim();
+
+  if (!code) return showMsg('Enter a code.', 'error');
+  if (!value || value <= 0) return showMsg('Enter a value.', 'error');
+
+  const discount_value = discount_type === 'amount' ? Math.round(value * 100) : value;
+
+  const res = await fetch(`${API}/promo-codes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      code, discount_type, discount_value,
+      min_order_pence: Math.round(minGbp * 100),
+      source_slug: source || null
+    })
+  });
+  const data = await res.json();
+  if (data.error) return showMsg(data.error, 'error');
+
+  document.getElementById('f-code').value = '';
+  document.getElementById('f-value').value = '';
+  document.getElementById('f-min').value = '';
+  document.getElementById('f-source').value = '';
+  showMsg(`Code "${data.result.code}" added.`, 'ok');
+  load();
+}
+
+async function toggleActive(id, active) {
+  const res = await fetch(`${API}/promo-codes/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active })
+  });
+  const data = await res.json();
+  if (data.error) { showMsg(data.error, 'error'); load(); return; }
+  load();
+}
+
+async function confirmDelete(id, code) {
+  if (!confirm(`Delete promo code "${code}"? This can't be undone.`)) return;
+  const res = await fetch(`${API}/promo-codes/${id}`, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.error) return showMsg(data.error, 'error');
+  showMsg(`Code "${code}" deleted.`, 'ok');
+  load();
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = `msg show ${type}`;
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+load();
+</script>
+<script src="/staff/nav.js"></script>
+</body>
+</html>

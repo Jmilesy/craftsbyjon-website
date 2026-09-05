@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Priorities — Crafts by Jon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#E0F7FA; --bg-card:#fff; --bg-muted:#f0fbfc;
+      --text:#4A4A4A; --text-soft:#888;
+      --teal:#20B2AA; --teal-light:#d0f0ee; --teal-hover:#1a9992;
+      --border:#c8ebed; --radius:10px; --shadow:0 2px 16px rgba(32,178,170,0.10);
+      --green:#16a34a; --green-light:#f0fff4; --green-border:#86efac;
+      --amber:#d97706; --amber-light:#fffbeb; --amber-border:#fcd34d;
+      --red:#dc2626; --red-light:#fef2f2; --red-border:#fca5a5;
+      --purple:#7C3AED; --purple-light:#ede9fe; --purple-border:#c4b5fd;
+      --grey:#6b7280; --grey-light:#f9fafb; --grey-border:#e5e7eb;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    header{background:var(--teal);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px}
+    header h1{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700}
+    header a{color:#fff;font-size:0.82rem;opacity:0.8;text-decoration:none;margin-left:auto}
+    .container{max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+    .stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:24px}
+    .stat{background:var(--bg-card);border-radius:var(--radius);border:1.5px solid var(--border);padding:12px 16px;text-align:center}
+    .stat .n{font-size:1.8rem;font-weight:700;color:var(--teal)}
+    .stat .l{font-size:0.72rem;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px}
+    .projects{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+    .project{background:var(--bg-card);border-radius:var(--radius);border:1.5px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+    .project-header{background:var(--bg-muted);border-bottom:1.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer}
+    .project-header h2{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--teal);flex:1}
+    .project-counts{display:flex;gap:6px}
+    .badge{font-size:0.68rem;font-weight:600;padding:2px 7px;border-radius:12px}
+    .badge-pending{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border)}
+    .badge-done{background:var(--green-light);color:var(--green);border:1px solid var(--green-border)}
+    .badge-parked{background:var(--grey-light);color:var(--grey);border:1px solid var(--grey-border)}
+    .badge-in_progress{background:var(--purple-light);color:var(--purple);border:1px solid var(--purple-border)}
+    .task-list{padding:0}
+    .task{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px}
+    .task:last-child{border-bottom:none}
+    .task.done{opacity:0.5}
+    .task.parked{opacity:0.6}
+    .task-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+    .task-check:hover{border-color:var(--teal);background:var(--teal-light)}
+    .task-check.checked{background:var(--green);border-color:var(--green)}
+    .task-check.checked::after{content:'✓';color:#fff;font-size:11px;font-weight:700}
+    .task-body{flex:1;min-width:0}
+    .task-title{font-size:0.85rem;font-weight:500;line-height:1.3}
+    .task.done .task-title{text-decoration:line-through}
+    .task-meta{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center}
+    .tag{font-size:0.65rem;padding:1px 6px;border-radius:8px;font-weight:600}
+    .tag-jon{background:#dbeafe;color:#1d4ed8}
+    .tag-claude{background:var(--purple-light);color:var(--purple)}
+    .tag-both{background:var(--teal-light);color:var(--teal)}
+    .task-notes{font-size:0.72rem;color:var(--text-soft);margin-top:3px;line-height:1.4}
+    .task-actions{display:flex;gap:4px;flex-shrink:0}
+    .task-btn{background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:0.68rem;cursor:pointer;color:var(--text-soft);font-family:'DM Sans',sans-serif}
+    .task-btn:hover{border-color:var(--teal);color:var(--teal)}
+    .add-task-row{padding:10px 16px;border-top:1px dashed var(--border)}
+    .add-task-row input{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.82rem;background:var(--bg-muted)}
+    .add-task-row input:focus{outline:none;border-color:var(--teal)}
+    .filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+    .filter-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg-card);font-size:0.78rem;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500}
+    .filter-btn.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+    .loading{text-align:center;padding:40px;color:var(--text-soft)}
+    .handover-toggle{font-size:0.68rem;color:var(--teal);cursor:pointer;margin-top:3px;display:inline-block;border:none;background:none;font-family:'DM Sans',sans-serif;padding:0}
+    .handover-toggle:hover{text-decoration:underline}
+    .handover-box{margin-top:6px;display:none}
+    .handover-box.open{display:block}
+    .handover-text{font-size:0.78rem;color:var(--text);line-height:1.5;background:var(--teal-light);border:1px solid var(--border);border-radius:6px;padding:8px 10px;white-space:pre-wrap;word-break:break-word}
+    .handover-edit{width:100%;min-height:80px;padding:8px 10px;border:1.5px solid var(--teal);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.78rem;line-height:1.5;resize:vertical;background:#fff}
+    .handover-save{margin-top:4px;padding:4px 12px;background:var(--teal);color:#fff;border:none;border-radius:5px;font-size:0.72rem;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:600}
+    .handover-save:hover{background:var(--teal-hover)}
+  </style>
+</head>
+<body>
+<header>
+  <h1>📋 Priorities</h1>
+  <a href="/staff/listings.html">← Listings</a>
+</header>
+<div class="container">
+  <div class="stats-bar" id="stats-bar"><div class="loading">Loading…</div></div>
+  <div class="filter-bar" id="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all')">All</button>
+    <button class="filter-btn" onclick="setFilter('pending')">Pending</button>
+    <button class="filter-btn" onclick="setFilter('in_progress')">In Progress</button>
+    <button class="filter-btn" onclick="setFilter('done')">Done</button>
+    <button class="filter-btn" onclick="setFilter('parked')">Parked</button>
+    <button class="filter-btn" onclick="setFilter('jon')">Jon</button>
+    <button class="filter-btn" onclick="setFilter('claude')">Claude</button>
+  </div>
+  <div class="projects" id="projects"><div class="loading">Loading…</div></div>
+</div>
+<script>
+const API = 'https://craftsbyjon.co.uk/n8n-proxy/priorities-api';
+let allData = { projects: [], tasks: [] };
+let currentFilter = 'all';
+
+async function load() {
+  const [pRes, tRes] = await Promise.all([
+    fetch(`${API}/projects`),
+    fetch(`${API}/tasks`)
+  ]);
+  const [pd, td] = await Promise.all([pRes.json(), tRes.json()]);
+  allData = { projects: pd.projects, tasks: td.tasks };
+  render();
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  render();
+}
+
+function filteredTasks(projectId) {
+  return allData.tasks.filter(t => {
+    if (t.project_id !== projectId) return false;
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'jon') return t.assigned_to === 'jon' && t.status !== 'done';
+    if (currentFilter === 'claude') return t.assigned_to === 'claude' && t.status !== 'done';
+    return t.status === currentFilter;
+  });
+}
+
+function render() {
+  // Stats
+  const all = allData.tasks;
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat"><div class="n">${all.filter(t=>t.status==='pending').length}</div><div class="l">Pending</div></div>
+    <div class="stat"><div class="n">${all.filter(t=>t.status==='in_progress').length}</div><div class="l">In Progress</div></div>
+    <div class="stat"><div class="n">${all.filter(t=>t.status==='done').length}</div><div class="l">Done</div></div>
+    <div class="stat"><div class="n">${all.filter(t=>t.status==='parked').length}</div><div class="l">Parked</div></div>
+    <div class="stat"><div class="n">${allData.projects.length}</div><div class="l">Projects</div></div>
+  `;
+
+  // Projects
+  document.getElementById('projects').innerHTML = allData.projects.map(p => {
+    const tasks = filteredTasks(p.id);
+    const pending = allData.tasks.filter(t=>t.project_id===p.id&&t.status==='pending').length;
+    const done = allData.tasks.filter(t=>t.project_id===p.id&&t.status==='done').length;
+    const parked = allData.tasks.filter(t=>t.project_id===p.id&&t.status==='parked').length;
+    const inprog = allData.tasks.filter(t=>t.project_id===p.id&&t.status==='in_progress').length;
+    return `
+      <div class="project">
+        <div class="project-header">
+          <h2>${p.name}</h2>
+          <div class="project-counts">
+            ${pending ? `<span class="badge badge-pending">${pending}</span>` : ''}
+            ${inprog ? `<span class="badge badge-in_progress">${inprog}</span>` : ''}
+            ${done ? `<span class="badge badge-done">${done}</span>` : ''}
+            ${parked ? `<span class="badge badge-parked">${parked}</span>` : ''}
+          </div>
+        </div>
+        <div class="task-list">
+          ${tasks.length === 0 ? '<div style="padding:12px 16px;font-size:0.8rem;color:var(--text-soft)">Nothing to show</div>' :
+            tasks.map(t => `
+              <div class="task ${t.status}" id="task-${t.id}">
+                <div class="task-check ${t.status==='done'?'checked':''}" onclick="toggleDone(${t.id}, '${t.status}')"></div>
+                <div class="task-body">
+                  <div class="task-title"><span style="color:var(--text-soft);font-size:0.72rem;font-weight:700;margin-right:6px">#${t.id}</span>${escHtml(t.title)}</div>
+                  <div class="task-meta">
+                    <span class="badge badge-${t.status}">${t.status.replace('_',' ')}</span>
+                    <span class="tag tag-${t.assigned_to}">${t.assigned_to}</span>
+                  </div>
+                  ${t.notes ? `<div class="task-notes">${escHtml(t.notes)}</div>` : ''}
+                </div>
+                <div class="task-actions">
+                  ${t.status !== 'in_progress' && t.status !== 'done' ? `<button class="task-btn" onclick="setStatus(${t.id},'in_progress')">▶</button>` : ''}
+                  ${t.status !== 'parked' && t.status !== 'done' ? `<button class="task-btn" onclick="setStatus(${t.id},'parked')">⏸</button>` : ''}
+                  ${t.status === 'parked' ? `<button class="task-btn" onclick="setStatus(${t.id},'pending')">↩</button>` : ''}
+                </div>
+              </div>
+            `).join('')
+          }
+        </div>
+        <div class="add-task-row">
+          <input type="text" placeholder="+ Add task…" onkeydown="if(event.key==='Enter')addTask('${p.id}',this)" />
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function toggleDone(id, currentStatus) {
+  const newStatus = currentStatus === 'done' ? 'pending' : 'done';
+  await fetch(`${API}/tasks/${id}`, {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ status: newStatus })
+  });
+  const task = allData.tasks.find(t => t.id === id);
+  if (task) task.status = newStatus;
+  render();
+}
+
+async function setStatus(id, status) {
+  await fetch(`${API}/tasks/${id}`, {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ status })
+  });
+  const task = allData.tasks.find(t => t.id === id);
+  if (task) task.status = status;
+  render();
+}
+
+async function addTask(projectId, input) {
+  const title = input.value.trim();
+  if (!title) return;
+  input.value = '';
+  const r = await fetch(`${API}/tasks`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ project_id: projectId, title, assigned_to: 'both', priority: 99 })
+  });
+  const d = await r.json();
+  allData.tasks.push(d.task);
+  render();
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleHandover(id) {
+  const box = document.getElementById('handover-' + id);
+  box.classList.toggle('open');
+}
+
+async function saveHandover(id) {
+  const text = document.getElementById('handover-text-' + id).value;
+  await fetch(`${API}/tasks/${id}`, {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ handover: text })
+  });
+  const task = allData.tasks.find(t => t.id === id);
+  if (task) task.handover = text;
+  // Update toggle button text
+  const btn = document.querySelector(`#task-${id} .handover-toggle`);
+  if (btn) btn.textContent = text ? '📋 Handover note' : '+ Add handover';
+  document.getElementById('handover-' + id).classList.remove('open');
+}
+
+load();
+</script>
+<script src="/staff/nav.js"></script>
+</body>
+</html>

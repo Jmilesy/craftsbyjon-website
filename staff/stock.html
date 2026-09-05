@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock — Crafts by Jon Staff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #E0F7FA;
+      --bg-card:   #ffffff;
+      --bg-muted:  #f0fbfc;
+      --text:      #4A4A4A;
+      --text-soft: #888;
+      --accent:    #FF7F50;
+      --accent-hover: #e86e40;
+      --teal:      #20B2AA;
+      --teal-light:#d0f0ee;
+      --teal-hover:#1a9992;
+      --border:    #c8ebed;
+      --radius:    10px;
+      --shadow:    0 2px 16px rgba(32,178,170,0.10);
+      --low:       #d9534f;
+      --low-light: #fbeceb;
+      --ok:        #2e9e6f;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 60px;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 24px 24px 4px;
+    }
+    p.sub { margin: 0 24px 20px; color: var(--text-soft); font-size: 0.9rem; }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+    section.card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    section.card h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+      color: var(--teal);
+    }
+    .note { font-size: 0.82rem; color: var(--text-soft); margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+    th { color: var(--text-soft); font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    tr.low td { background: var(--low-light); }
+    .qty-input {
+      width: 72px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.92rem;
+      font-family: inherit;
+    }
+    .save-btn {
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+    .save-btn:hover { background: var(--teal-hover); }
+    .save-btn:disabled { opacity: 0.5; cursor: default; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .badge.low { background: var(--low); color: #fff; }
+    .badge.ok { background: var(--ok); color: #fff; }
+    .status-msg { font-size: 0.8rem; margin-left: 8px; }
+    .filter-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-row button {
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .filter-row button.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .loading { color: var(--text-soft); font-size: 0.9rem; padding: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>📦 Stock Levels</h1>
+  <p class="sub">Design (UVDTF transfer) stock is customer-facing on the storefront. Blank stock is internal only — used to know when to reorder bookmark/keyring/mug blanks. Quantities save automatically when you click out of a field — no need to press Save (still there if you prefer it).</p>
+
+  <div class="wrap">
+
+    <section class="card">
+      <h2>Blanks (internal only)</h2>
+      <p class="note">Never shown to customers. Reorder when a row goes red.</p>
+      <table id="blanksTable">
+        <thead><tr><th>Blank type</th><th>Remaining</th><th>Low threshold</th><th>Status</th><th></th></tr></thead>
+        <tbody><tr><td colspan="5" class="loading">Loading…</td></tr></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Designs (transfer stock — customer-facing)</h2>
+      <p class="note">This is what shows as "X remaining" on the storefront. Under 2 shows in red to customers.</p>
+      <div class="filter-row">
+        <button data-filter="all" class="active">All</button>
+        <button data-filter="bookmark">Bookmarks</button>
+        <button data-filter="keyring">Keyrings</button>
+        <button data-filter="mug">Mugs</button>
+        <button data-filter="low">Low / zero only</button>
+      </div>
+      <table id="designsTable">
+        <thead><tr><th>Product ID</th><th>Title</th><th>Remaining</th><th></th></tr></thead>
+        <tbody><tr><td colspan="4" class="loading">Loading…</td></tr></tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <script>
+    const API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api';
+    let allDesigns = [];
+    let currentFilter = 'all';
+
+    async function saveBlank(type, btn, statusEl, input) {
+      const qty = parseInt(input.value, 10);
+      if (Number.isNaN(qty)) return;
+      btn.disabled = true;
+      statusEl.textContent = 'saving…';
+      statusEl.style.color = '#888';
+      try {
+        const r = await fetch(`${API}/stock/blanks/${type}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity_remaining: qty })
+        });
+        if (!r.ok) throw new Error('save failed');
+        statusEl.textContent = '✓ saved';
+        statusEl.style.color = '#2e9e6f';
+        await loadBlanks();
+      } catch (e) {
+        statusEl.textContent = '✗ error';
+        statusEl.style.color = '#d9534f';
+        btn.disabled = false;
+      }
+    }
+
+    async function loadBlanks() {
+      const res = await fetch(API + '/stock/blanks');
+      const data = await res.json();
+      const tbody = document.querySelector('#blanksTable tbody');
+      tbody.innerHTML = '';
+      data.blanks.forEach(b => {
+        const low = b.quantity_remaining < b.low_stock_threshold;
+        const tr = document.createElement('tr');
+        if (low) tr.className = 'low';
+        tr.innerHTML = `
+          <td>${b.blank_type}</td>
+          <td><input type="number" class="qty-input" value="${b.quantity_remaining}" data-type="${b.blank_type}" /></td>
+          <td>${b.low_stock_threshold}</td>
+          <td><span class="badge ${low ? 'low' : 'ok'}">${low ? 'LOW' : 'OK'}</span></td>
+          <td><button class="save-btn" data-save-blank="${b.blank_type}">Save</button><span class="status-msg"></span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('[data-save-blank]').forEach(btn => {
+        const type = btn.getAttribute('data-save-blank');
+        const input = tbody.querySelector(`input[data-type="${type}"]`);
+        const statusEl = btn.nextElementSibling;
+        btn.addEventListener('click', () => saveBlank(type, btn, statusEl, input));
+        input.addEventListener('blur', () => saveBlank(type, btn, statusEl, input));
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
+      });
+    }
+
+    async function saveDesign(pid, btn, statusEl, input) {
+      const qty = parseInt(input.value, 10);
+      if (Number.isNaN(qty)) return;
+      btn.disabled = true;
+      statusEl.textContent = 'saving…';
+      statusEl.style.color = '#888';
+      try {
+        const r = await fetch(`${API}/stock/designs/${pid}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ design_stock_qty: qty })
+        });
+        if (!r.ok) throw new Error('save failed');
+        statusEl.textContent = '✓ saved';
+        statusEl.style.color = '#2e9e6f';
+        await loadDesigns();
+      } catch (e) {
+        statusEl.textContent = '✗ error';
+        statusEl.style.color = '#d9534f';
+        btn.disabled = false;
+      }
+    }
+
+    async function loadDesigns() {
+      const res = await fetch(API + '/stock/designs');
+      const data = await res.json();
+      allDesigns = data.designs;
+      renderDesigns();
+    }
+
+    function renderDesigns() {
+      const tbody = document.querySelector('#designsTable tbody');
+      tbody.innerHTML = '';
+      let rows = allDesigns;
+      if (currentFilter === 'bookmark') rows = rows.filter(d => d.product_id.startsWith('bookmark-'));
+      else if (currentFilter === 'keyring') rows = rows.filter(d => d.product_id.startsWith('keyring-'));
+      else if (currentFilter === 'mug') rows = rows.filter(d => d.product_id.startsWith('mug-'));
+      else if (currentFilter === 'low') rows = rows.filter(d => d.design_stock_qty < 2);
+
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="loading">No matching designs.</td></tr>';
+        return;
+      }
+
+      rows.forEach(d => {
+        const low = d.design_stock_qty < 2;
+        const tr = document.createElement('tr');
+        if (low) tr.className = 'low';
+        tr.innerHTML = `
+          <td>${d.product_id}</td>
+          <td>${d.title}</td>
+          <td><input type="number" class="qty-input" value="${d.design_stock_qty}" data-pid="${d.product_id}" /></td>
+          <td><button class="save-btn" data-save-design="${d.product_id}">Save</button><span class="status-msg"></span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll('[data-save-design]').forEach(btn => {
+        const pid = btn.getAttribute('data-save-design');
+        const input = tbody.querySelector(`input[data-pid="${pid}"]`);
+        const statusEl = btn.nextElementSibling;
+        btn.addEventListener('click', () => saveDesign(pid, btn, statusEl, input));
+        input.addEventListener('blur', () => saveDesign(pid, btn, statusEl, input));
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
+      });
+    }
+
+    document.querySelectorAll('.filter-row button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-row button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        renderDesigns();
+      });
+    });
+
+    loadBlanks();
+    loadDesigns();
+  </script>
+
+  <script src="/staff/nav.js"></script>
+</body>
+</html>

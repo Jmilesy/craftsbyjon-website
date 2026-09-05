@@ -1,0 +1,3262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Listings — Crafts by Jon Staff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #E0F7FA;
+      --bg-card:   #ffffff;
+      --bg-muted:  #f0fbfc;
+      --text:      #4A4A4A;
+      --text-soft: #888;
+      --accent:    #FF7F50;
+      --accent-hover: #e86e40;
+      --teal:      #20B2AA;
+      --teal-light:#d0f0ee;
+      --teal-hover:#1a9992;
+      --border:    #c8ebed;
+      --copied:    #4CAF50;
+      --radius:    10px;
+      --shadow:    0 2px 16px rgba(32,178,170,0.10);
+      --social:    #7C3AED;
+      --social-hover: #6D28D9;
+      --social-light: #ede9fe;
+      --social-border: #c4b5fd;
+      --fbg:       #16a34a;
+      --fbg-hover: #15803d;
+      --fbg-light: #dcfce7;
+      --fbg-border: #86efac;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    header {
+      background: var(--teal);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(32,178,170,0.25);
+    }
+    header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    header a  { color: #fff; font-size: 0.82rem; opacity: 0.8; font-weight: 300; text-decoration: none; }
+    header a:hover { opacity: 1; }
+
+    .wrapper { max-width: 900px; margin: 0 auto; padding: 28px 20px 0; }
+
+    #status-bar {
+      text-align: center;
+      padding: 60px 20px;
+      font-size: 1rem;
+      color: var(--text-soft);
+    }
+    #status-bar .spinner {
+      display: inline-block;
+      width: 36px; height: 36px;
+      border: 3px solid var(--teal-light);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .nav-counter {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      color: var(--teal);
+      font-weight: 600;
+    }
+    .nav-counter span { color: var(--text-soft); font-weight: 400; font-size: 1rem; }
+    .nav-buttons { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: background 0.18s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-teal  { background: var(--teal); color: #fff; }
+    .btn-teal:hover  { background: var(--teal-hover); }
+    .btn-ghost { background: #fff; color: var(--teal); border: 1.5px solid var(--teal); }
+    .btn-ghost:hover { background: var(--teal-light); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .jump-wrap { display: flex; align-items: center; gap: 6px; }
+    .jump-wrap label { font-size: 0.82rem; color: var(--text-soft); }
+    .jump-wrap input {
+      width: 58px;
+      padding: 6px 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #fff;
+    }
+    .jump-wrap input:focus { outline: none; border-color: var(--teal); }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .card-header {
+      background: linear-gradient(135deg, var(--teal) 0%, #2ec4bb 100%);
+      padding: 20px 24px;
+    }
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.25;
+    }
+    .product-id-badge {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .status-flags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 14px 24px;
+      background: var(--bg-muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .flag {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .flag-yes  { background: #d4f5d4; color: #2a7a2a; }
+    .flag-no   { background: #fde8e8; color: #a33; }
+    .flag-label { color: var(--text-soft); font-weight: 400; }
+    .flag-toggle {
+      cursor: pointer;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .flag-toggle:hover:not(:disabled) { opacity: 0.78; }
+    .flag-toggle:active:not(:disabled) { transform: scale(0.95); }
+    .flag-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
+    .flag-toggle.flag-yes { background: #d4f5d4; color: #2a7a2a; }
+    .flag-toggle.flag-no  { background: #fde8e8; color: #a33; }
+
+    .fields { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+
+    .field-group { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .field-group-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--teal);
+      padding: 10px 14px 8px;
+      background: var(--bg-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .field-row {
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid #f0f5f5;
+    }
+    .field-row:last-child { border-bottom: none; }
+
+    .field-label {
+      min-width: 160px;
+      max-width: 160px;
+      padding: 12px 14px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #fafefe;
+      border-right: 1px solid #f0f5f5;
+    }
+
+    .field-value {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .field-value.empty { color: #bbb; font-style: italic; }
+
+    .field-copy { padding: 8px 10px; display: flex; align-items: flex-start; }
+
+    .copy-btn {
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .copy-btn:hover { background: var(--accent-hover); }
+    .copy-btn:active { transform: scale(0.95); }
+    .copy-btn.copied { background: var(--copied); }
+    .copy-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── Image URL panel ── */
+    .imgurl-panel {
+      margin: 0 24px 20px;
+      border: 2px solid var(--teal);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .imgurl-header {
+      background: var(--teal);
+      color: #fff;
+      padding: 10px 14px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .imgurl-header em {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      font-style: normal;
+      opacity: 0.85;
+    }
+    .imgurl-body { padding: 14px; background: #fff; }
+    .imgurl-current {
+      font-size: 0.82rem;
+      color: var(--text-soft);
+      margin-bottom: 10px;
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .imgurl-current a { color: var(--teal); text-decoration: none; }
+    .imgurl-current a:hover { text-decoration: underline; }
+    .imgurl-input-row { display: flex; gap: 8px; }
+    .imgurl-input {
+      flex: 1;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--bg-muted);
+    }
+    .imgurl-input:focus { outline: none; border-color: var(--teal); }
+    .imgurl-save {
+      padding: 9px 18px;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .imgurl-save:hover { background: var(--teal-hover); }
+    .imgurl-save:disabled { opacity: 0.5; cursor: not-allowed; }
+    .imgurl-status { margin-top: 8px; font-size: 0.8rem; min-height: 1.2em; }
+    .imgurl-status.ok    { color: var(--copied); }
+    .imgurl-status.error { color: #c00; }
+
+    /* ── Social Posts panel ── */
+    .social-panel {
+      margin: 0 24px 20px;
+      border: 2px solid var(--social);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .social-header {
+      background: var(--social);
+      color: #fff;
+      padding: 10px 14px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .social-header em {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      font-style: normal;
+      opacity: 0.85;
+    }
+    .social-body { padding: 14px; background: #fff; }
+    .social-generate-btn {
+      width: 100%;
+      padding: 11px 20px;
+      background: var(--social);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .social-generate-btn:hover:not(:disabled) { background: var(--social-hover); }
+    .social-generate-btn:active:not(:disabled) { transform: scale(0.98); }
+    .social-generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .social-generate-btn .btn-spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .social-generate-btn.loading .btn-spinner { display: inline-block; }
+    .social-not-ready {
+      font-size: 0.82rem;
+      color: #a33;
+      text-align: center;
+      padding: 6px 0 2px;
+    }
+    .social-results { margin-top: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .social-post-card {
+      border: 1.5px solid var(--social-border);
+      border-radius: 9px;
+      overflow: hidden;
+      background: var(--social-light);
+    }
+    .social-post-card-header {
+      background: var(--social);
+      color: #fff;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .social-post-text {
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #fff;
+      border-bottom: 1px solid var(--social-border);
+    }
+    .social-post-actions {
+      padding: 10px 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      background: var(--social-light);
+    }
+    .social-btn {
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .social-btn:active:not(:disabled) { transform: scale(0.95); }
+    .social-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .social-btn-copy { background: var(--accent); color: #fff; }
+    .social-btn-copy:hover:not(:disabled) { background: var(--accent-hover); }
+    .social-btn-copy.copied { background: var(--copied); }
+    .social-btn-facebook { background: #1877F2; color: #fff; }
+    .social-btn-facebook:hover:not(:disabled) { background: #1565d8; }
+    .social-btn-facebook.sent { background: var(--copied); }
+    .social-btn-instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff; }
+    .social-btn-instagram:hover:not(:disabled) { opacity: 0.88; }
+    .social-btn-instagram.sent { background: var(--copied); }
+    .social-post-status {
+      font-size: 0.75rem;
+      min-height: 1.1em;
+      margin-left: 4px;
+    }
+    .social-post-status.ok { color: var(--copied); }
+    .social-post-status.error { color: #c00; }
+    /* Already-sent state: strikethrough + muted, still clickable for re-send */
+    .social-btn.already-sent {
+      text-decoration: line-through;
+      opacity: 0.52;
+    }
+    .social-btn.already-sent:hover:not(:disabled) {
+      opacity: 0.82;
+      text-decoration: line-through;
+    }
+
+    /* ── FB Groups Posts panel ── */
+    .fbg-panel {
+      margin: 0 24px 20px;
+      border: 2px solid var(--fbg);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .fbg-header {
+      background: var(--fbg);
+      color: #fff;
+      padding: 10px 14px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .fbg-header em {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      font-style: normal;
+      opacity: 0.85;
+    }
+    .fbg-body { padding: 14px; background: #fff; }
+    .fbg-generate-btn {
+      width: 100%;
+      padding: 11px 20px;
+      background: var(--fbg);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .fbg-generate-btn:hover:not(:disabled) { background: var(--fbg-hover); }
+    .fbg-generate-btn:active:not(:disabled) { transform: scale(0.98); }
+    .fbg-generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .fbg-generate-btn .btn-spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .fbg-generate-btn.loading .btn-spinner { display: inline-block; }
+    .fbg-gen-status {
+      font-size: 0.8rem;
+      margin-top: 8px;
+      min-height: 1.2em;
+    }
+    .fbg-gen-status.ok    { color: var(--copied); }
+    .fbg-gen-status.error { color: #c00; }
+    .fbg-posts { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .fbg-post-card {
+      border: 1.5px solid var(--fbg-border);
+      border-radius: 9px;
+      overflow: hidden;
+      background: var(--fbg-light);
+    }
+    .fbg-post-card-header {
+      background: var(--fbg);
+      color: #fff;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .fbg-post-text {
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #fff;
+      border-bottom: 1px solid var(--fbg-border);
+      min-height: 2em;
+    }
+    .fbg-post-text .empty { color: #bbb; font-style: italic; }
+    .fbg-post-actions {
+      padding: 10px 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      background: var(--fbg-light);
+    }
+    .fbg-mark-btn {
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--fbg);
+      color: #fff;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .fbg-mark-btn:hover:not(:disabled) { background: var(--fbg-hover); }
+    .fbg-mark-btn:active:not(:disabled) { transform: scale(0.95); }
+    .fbg-mark-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .fbg-mark-btn.fbg-posted {
+      background: var(--copied);
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+    .fbg-mark-btn.fbg-posted:hover:not(:disabled) { opacity: 0.9; }
+    .fbg-post-status {
+      font-size: 0.75rem;
+      min-height: 1.1em;
+    }
+    .fbg-post-status.ok    { color: var(--copied); }
+    .fbg-post-status.error { color: #c00; }
+
+    /* ── Stripe panel ── */
+    .stripe-panel {
+      margin: 0 24px 20px;
+      border: 2px solid #635BFF;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .stripe-header {
+      background: #635BFF;
+      color: #fff;
+      padding: 10px 14px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .stripe-header em {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      font-style: normal;
+      opacity: 0.85;
+    }
+    .stripe-body { padding: 14px; background: #fff; }
+    .stripe-active { margin-bottom: 10px; }
+    .stripe-ok { display: inline-block; background: #e8f5e9; color: #2e7d32; font-size: 0.8rem; font-weight: 600; padding: 3px 10px; border-radius: 12px; margin-bottom: 4px; }
+    .stripe-url { display: block; font-size: 0.75rem; color: #888; word-break: break-all; margin-bottom: 8px; }
+    .stripe-btn {
+      width: 100%;
+      padding: 10px 20px;
+      background: #635BFF;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .stripe-btn:hover:not(:disabled) { background: #5248e8; }
+    .stripe-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .stripe-btn-spinner {
+      display: none;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .stripe-btn.loading .stripe-btn-spinner { display: inline-block; }
+    .stripe-status { margin-top: 8px; font-size: 0.8rem; }
+    .stripe-status.ok    { color: var(--copied); }
+    .stripe-status.error { color: #c00; }
+
+    /* ── Video Reel panel ── */
+    .reel-panel {
+      margin: 0 24px 20px;
+      border: 2px solid #DC2626;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .reel-header {
+      background: #DC2626;
+      color: #fff;
+      padding: 10px 14px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .reel-header em {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      font-style: normal;
+      opacity: 0.85;
+    }
+    .reel-body { padding: 14px; background: #fff; }
+    .reel-stamp {
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      margin-bottom: 10px;
+    }
+
+    /* ── Image ── */
+    .image-preview { padding: 12px 24px 20px; }
+    .image-preview img {
+      max-width: 220px; max-height: 220px;
+      border-radius: 8px; border: 2px solid var(--border);
+      object-fit: cover; display: block;
+    }
+    .no-image {
+      width: 120px; height: 80px;
+      background: var(--bg-muted); border: 2px dashed var(--border);
+      border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; color: var(--text-soft); font-size: 0.8rem;
+    }
+
+    .generated-at {
+      padding: 12px 24px;
+      background: var(--bg-muted);
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--text-soft);
+    }
+
+    .reload-wrap { text-align: right; margin-bottom: 10px; }
+    .btn-reload {
+      background: none; border: none; color: var(--teal);
+      font-size: 0.82rem; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; text-decoration: underline; padding: 0;
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 14px 16px; }
+      .wrapper { padding: 16px 10px 0; }
+      .fields { padding: 12px; }
+      .field-label { min-width: 100px; max-width: 100px; font-size: 0.72rem; }
+      .imgurl-panel { margin: 0 12px 16px; }
+      .imgurl-input-row { flex-direction: column; }
+      .social-panel { margin: 0 12px 16px; }
+      .social-post-actions { gap: 6px; }
+      .fbg-panel { margin: 0 12px 16px; }
+      .fbg-post-actions { gap: 6px; }
+    }
+    .field-edit-btn {
+      background: none;
+      border: 1px solid var(--teal);
+      color: var(--teal);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      margin-left: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .field-edit-btn:hover { background: var(--teal); color: #fff; }
+
+    .field-edit-area {
+      width: 100%;
+      min-height: 60px;
+      border: 1.5px solid var(--teal);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.97rem;
+      font-family: inherit;
+      resize: vertical;
+      box-sizing: border-box;
+      background: #f6fefe;
+    }
+
+    .field-edit-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .field-save-btn {
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .field-save-btn:hover { opacity: 0.85; }
+
+    .field-cancel-btn {
+      background: none;
+      border: 1px solid #aaa;
+      color: #666;
+      border-radius: 6px;
+      padding: 4px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .field-cancel-btn:hover { background: #eee; }
+
+    .field-edit-select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid var(--teal);
+      border-radius: 8px;
+      font-size: 0.97rem;
+      font-family: inherit;
+      background: #f6fefe;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2320B2AA' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px;
+    }
+
+    .field-save-status {
+      font-size: 0.82rem;
+      margin-top: 4px;
+      min-height: 18px;
+    }
+    .field-save-status.ok { color: #4CAF50; }
+    .field-save-status.error { color: #e74c3c; }
+
+    .delete-product-btn {
+      display: block;
+      width: 100%;
+      margin-top: 24px;
+      padding: 10px;
+      background: none;
+      border: 1.5px solid #e74c3c;
+      color: #e74c3c;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .delete-product-btn:hover { background: #e74c3c; color: #fff; }
+
+    /* ── Mug Details Panel ─────────────────────────────── */
+    .mug-panel {
+      margin: 0 24px 20px;
+      border: 2px solid #7C3AED;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .mug-panel-header {
+      background: #7C3AED;
+      color: #fff;
+      padding: 10px 14px 8px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .mug-panel-body { padding: 14px; background: #fff; display: flex; flex-direction: column; gap: 14px; }
+    .mug-img-field { display: flex; flex-direction: column; gap: 6px; }
+    .mug-img-label { font-size: 0.78rem; font-weight: 600; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; }
+    .mug-img-row { display: flex; gap: 8px; }
+    .mug-img-input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      background: var(--bg-muted);
+      color: var(--text);
+    }
+    .mug-img-input:focus { outline: none; border-color: var(--teal); }
+    .mug-save-btn {
+      padding: 8px 14px;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.15s;
+    }
+    .mug-save-btn:hover { background: var(--teal-hover); }
+    .mug-save-status { font-size: 0.78rem; min-height: 1em; }
+    .mug-save-status.ok { color: var(--copied); }
+    .mug-save-status.error { color: #c00; }
+    .mug-section-label { font-size: 0.9rem; font-weight: 600; color: var(--teal); margin-bottom: 4px; }
+
+    /* POD gallery review panel (t-shirts, totes, mouse mats, etc — anything with
+       pod_gallery_images: multiple colours, each with several named shots).
+       Added 24 Aug 2026 after a t-shirt import put the wrong photo on the Pier
+       design and nobody could see it here to catch it. */
+    .pod-gallery-panel { border: 1px solid #e0d8c8; border-radius: 10px; overflow: hidden; margin-top: 14px; }
+    .pod-gallery-panel-header { background: #8B6F4E; color: #fff; padding: 10px 14px; font-weight: 600; font-size: 0.92rem; display: flex; align-items: center; justify-content: space-between; }
+    .pod-gallery-panel-body { padding: 14px; background: #fff; display: flex; flex-direction: column; gap: 16px; }
+    .pod-colour-block { border: 1px solid #eee; border-radius: 8px; padding: 10px; }
+    .pod-colour-name { font-size: 0.85rem; font-weight: 700; color: #8B6F4E; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .pod-shot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+    .pod-shot-cell { display: flex; flex-direction: column; gap: 4px; }
+    .pod-shot-label { font-size: 0.68rem; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.03em; }
+    .pod-shot-thumb-wrap {
+      position: relative; width: 100%; aspect-ratio: 1; border-radius: 6px; border: 2px dashed #ccc;
+      background: #fafafa; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .pod-shot-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .pod-shot-thumb-wrap.dup-warning { border-color: #c00; border-style: solid; }
+    .pod-dup-badge {
+      position: absolute; top: 2px; right: 2px; background: #c00; color: #fff; font-size: 0.6rem;
+      padding: 1px 4px; border-radius: 4px; font-weight: 700; line-height: 1.4;
+    }
+    .pod-shot-filename { font-size: 0.62rem; color: #aaa; word-break: break-all; }
+    .pod-gallery-empty { font-size: 0.85rem; color: var(--text-soft); font-style: italic; }
+    .mug-swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .mug-swatch {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+      position: relative;
+      transition: transform 0.1s;
+    }
+    .mug-swatch:hover { transform: scale(1.12); }
+    .mug-swatch.selected { border-color: var(--teal); }
+    .mug-selected-colours { font-size: 0.82rem; color: var(--text-soft); margin-top: 4px; }
+
+    /* ── Image drop zones ── */
+    [data-img-drop] { cursor: pointer; position: relative; }
+    [data-img-drop].drag-over { outline: 2px dashed #4A90E2; outline-offset: 3px; border-radius: 8px; }
+    .img-drop-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(74,144,226,0.35);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+    [data-img-drop]:hover .img-drop-overlay,
+    [data-img-drop].drag-over .img-drop-overlay { display: flex; }
+    [data-img-drop].drag-over .img-drop-overlay { background: rgba(74,144,226,0.6); }
+
+    /* ── Product grid ── */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1.5px solid var(--teal);
+      color: var(--teal);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .back-btn:hover { background: var(--teal); color: #fff; }
+    .edit-top-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .filter-input {
+      flex: 1;
+      min-width: 160px;
+      padding: 8px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: #fff;
+    }
+    .filter-input:focus { outline: none; border-color: var(--teal); }
+    .filter-select {
+      padding: 8px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: #fff;
+      cursor: pointer;
+    }
+    .filter-select:focus { outline: none; border-color: var(--teal); }
+    .results-count {
+      font-size: 0.82rem;
+      color: var(--text-soft);
+      margin-bottom: 14px;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 800px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 540px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
+    .product-thumb-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 1px 6px rgba(32,178,170,0.08);
+      position: relative;
+    }
+    .product-thumb-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(32,178,170,0.18);
+    }
+    .product-thumb-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+      background: var(--bg-muted);
+    }
+    .product-thumb-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(18,18,26,0.72);
+      color: #fff;
+      padding: 8px 10px 10px;
+    }
+    .product-thumb-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .product-thumb-id {
+      font-size: 0.7rem;
+      opacity: 0.75;
+      margin-top: 2px;
+    }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .page-info {
+      font-size: 0.88rem;
+      color: var(--text-soft);
+    }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✂️ Crafts by Jon — Staff</h1>
+  <a href="/staff/staff-index.html">← Staff</a>
+</header>
+
+<div class="wrapper">
+  <div id="status-bar">
+    <div class="spinner"></div><br>Loading product data…
+  </div>
+
+  <div id="app" style="display:none">
+
+    <!-- ── Grid view ── -->
+    <div id="grid-view">
+      <div class="reload-wrap">
+        <button class="btn-reload" onclick="loadData()">↺ Reload</button>
+      </div>
+      <div class="filter-bar">
+        <input type="search" id="filter-search" class="filter-input" placeholder="Search name or ID…" oninput="applyFilters(true)" />
+        <select id="filter-collection" class="filter-select" onchange="applyFilters(true)">
+          <option value="">All Collections</option>
+        </select>
+        <select id="filter-type" class="filter-select" onchange="applyFilters(true)">
+          <option value="">All Types</option>
+          <option value="Bookmark">Bookmark</option>
+          <option value="Keyring">Keyring</option>
+          <option value="Sticker">Sticker</option>
+          <option value="Mug">Mug</option>
+          <option value="Tote Bag">Tote Bag</option>
+          <option value="T-Shirt">T-Shirt</option>
+          <option value="Print">Print</option>
+          <option value="Mouse Mat">Mouse Mat</option>
+          <option value="Coaster Set">Coaster Set</option>
+          <option value="Fridge Magnet">Fridge Magnet</option>
+        </select>
+        <select id="filter-ready" class="filter-select" onchange="applyFilters(true)">
+          <option value="">All — Ready to Go</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div class="results-count" id="results-count"></div>
+      <div class="product-grid" id="product-grid"></div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- ── Edit view ── -->
+    <div id="edit-view" style="display:none">
+      <div class="edit-top-row">
+        <button class="back-btn" onclick="backToGrid()">← Back to products</button>
+        <button class="btn-reload" onclick="loadData()">↺ Reload</button>
+      </div>
+      <div class="card" id="product-card"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── Config ───────────────────────────────────────────────────
+  const N8N_SOCIAL_GENERATE  = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/generate-social-posts';
+  const N8N_FACEBOOK_POST    = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/3ca7748b-1a7f-4e6a-8459-787307d1f671';
+  const N8N_INSTAGRAM_POST   = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/instagram-post';
+  const N8N_PINTEREST_POST   = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/pinterest-post';
+  const N8N_SAVE_SOCIAL_POSTS = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/save-social-posts';
+  const N8N_TOGGLE_READY      = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/toggle-ready-to-go';
+  const N8N_FB_GROUPS_GENERATE = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/generate-fb-groups';
+  const N8N_REGENERATE_LISTING = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/generate-product-descriptions';
+  const IMAGE_WEB_PFX        = 'https://images.craftsbyjon.co.uk/products/';
+
+  // ── State ────────────────────────────────────────────────────
+  let products = [], current = 0;
+  let generatedPosts = {};
+  let collectionsOptions = [];
+
+  // ── Shared helpers ────────────────────────────────────────────
+  // Bug found 18 Aug 2026: this only blacklisted '' and 'false', so the literal string
+  // 'No' (used by pod-intake.html, the only writer of that exact value) slipped through
+  // as truthy — 6 draft POD products showed as "Ready to Go" here despite correctly NOT
+  // being live on the store. Now also excludes 'no' explicitly.
+  const isYes = v => { const s = String(v ?? '').trim().toLowerCase(); return s !== '' && s !== 'false' && s !== 'no'; };
+
+  const COLS = [
+    'Product ID','Title','Short Description','Full Description',
+    'Bullet Point 1','Bullet Point 2','Bullet Point 3','Bullet Point 4','Bullet Point 5',
+    'Search Tags','Image URL',
+    'Added to Sales','Added to Facebook','Added to Instagram',
+    'Added to Pinterest','Added to Website','Ready to Go',
+    'Generated At',
+    'FB Teaser','FB Sales','FB Engagement','FB Repost',
+    'IG Post','Pinterest Post',
+    'FB Posts Sent','IG Posts Sent','Pinterest Posts Sent'
+  ];
+  const STATUS_COLS = [
+    'Added to Facebook','Added to Instagram','Added to Pinterest',
+    'Ready to Go'
+  ];
+
+  // ── Image URL conversion ──────────────────────────────────────
+  // Images are served with a 1-year Cache-Control header, but this page
+  // reuses the same filename on every re-upload — without a cache-buster
+  // the browser just keeps showing the old cached image after a reupload.
+  // PAGE_LOAD_TS changes on every page load/refresh, so a fresh visit always
+  // sees the latest file, while repeated re-renders within the same visit
+  // still benefit from the browser cache.
+  const PAGE_LOAD_TS = Date.now();
+  function toWebImageUrl(url) {
+    if (!url) return '';
+    if (url.startsWith('http')) return url + (url.includes('?') ? '&' : '?') + '_cb=' + PAGE_LOAD_TS;
+    return IMAGE_WEB_PFX + url.split('/').pop() + '?_cb=' + PAGE_LOAD_TS;
+  }
+
+  // ── Load collections ─────────────────────────────────────────
+  async function loadCollections() {
+    try {
+      const res = await fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/collections');
+      const { result } = await res.json();
+      collectionsOptions = (result || []).map(c => c.name);
+    } catch {}
+  }
+
+  // ── Load ─────────────────────────────────────────────────────
+  // Loads all products from SQLite products API
+  async function loadData() {
+    document.getElementById('status-bar').style.display = 'block';
+    document.getElementById('status-bar').innerHTML = '<div class="spinner"></div><br>Loading product data…';
+    document.getElementById('app').style.display = 'none';
+    generatedPosts = {};
+    try {
+      const res = await fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/products');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.result || !data.result.length) throw new Error('No product rows found.');
+
+      products = data.result.filter(p => p && p['Product ID']);
+      if (!products.length) throw new Error('No product rows found.');
+      current = 0;
+      document.getElementById('status-bar').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      showGrid();
+    } catch (err) {
+      document.getElementById('status-bar').innerHTML =
+        `<strong style="color:#c00">⚠ Could not load sheet</strong><br><br>
+         <span style="font-size:.85rem">${err.message}</span><br><br>
+         <button class="btn btn-teal" onclick="loadData()">Try again</button>`;
+    }
+  }
+
+  // ── Pre-load saved posts from sheet ──────────────────────────
+  function loadSavedPosts(p) {
+    const map = {
+      fbTeaser:      'FB Teaser',
+      fbSales:       'FB Sales',
+      fbEngagement:  'FB Engagement',
+      fbRepost:      'FB Repost',
+      igPost:        'IG Post',
+      pinterestPost: 'Pinterest Post'
+    };
+    const filled = {};
+    Object.entries(map).forEach(([key, col]) => {
+      if (p[col] && p[col].trim()) filled[key] = p[col].trim();
+    });
+    generatedPosts = Object.keys(filled).length > 0 ? filled : {};
+  }
+
+  function navigate(dir) {
+    current = Math.max(0, Math.min(products.length-1, current+dir));
+    loadSavedPosts(products[current]);
+    render();
+  }
+
+  // ── Grid state & pagination ──────────────────────────────────
+  const ITEMS_PER_PAGE = 12;
+  let filteredProducts = [];
+  let gridState = { page: 1, search: '', collection: '', productType: '', readyToGo: '', scrollY: 0 };
+
+  function showGrid() {
+    document.getElementById('grid-view').style.display = 'block';
+    document.getElementById('edit-view').style.display = 'none';
+    const sel = document.getElementById('filter-collection');
+    if (sel) {
+      const prev = sel.value;
+      const colsWithProducts = new Set(products.map(p => p['Collection']).filter(Boolean));
+      const visibleCols = collectionsOptions.filter(c => colsWithProducts.has(c));
+      while (sel.options.length > 1) sel.remove(1);
+      const hasUncollected = products.some(p => !p['Collection'] || p['Collection'].trim() === '');
+      if (hasUncollected) {
+        const noneOpt = document.createElement('option');
+        noneOpt.value = '__none__'; noneOpt.textContent = 'None';
+        if (prev === '__none__') noneOpt.selected = true;
+        sel.appendChild(noneOpt);
+      }
+      visibleCols.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        if (c === prev) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+    applyFilters(false);
+  }
+
+  function applyFilters(resetPage) {
+    if (resetPage) gridState.page = 1;
+    const search      = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
+    const collection  = document.getElementById('filter-collection')?.value || '';
+    const productType = document.getElementById('filter-type')?.value || '';
+    const readyToGo   = document.getElementById('filter-ready')?.value || '';
+    gridState.search = search; gridState.collection = collection;
+    gridState.productType = productType; gridState.readyToGo = readyToGo;
+
+    filteredProducts = products.filter(p => {
+      if (search) {
+        const hay = ((p['Title'] || '') + ' ' + (p['Product ID'] || '')).toLowerCase();
+        if (!hay.includes(search)) return false;
+      }
+      if (collection === '__none__' && (p['Collection'] || '').trim() !== '') return false;
+      if (collection && collection !== '__none__' && (p['Collection'] || '') !== collection) return false;
+      if (productType) {
+        const pt = (p['product_type'] || '').toLowerCase();
+        if (!pt.startsWith(productType.toLowerCase())) return false;
+      }
+      if (readyToGo === 'yes' && !isYes(p['Ready to Go'])) return false;
+      if (readyToGo === 'no'  &&  isYes(p['Ready to Go'])) return false;
+      return true;
+    });
+
+    const count = filteredProducts.length;
+    const totalPages = Math.max(1, Math.ceil(count / ITEMS_PER_PAGE));
+    if (gridState.page > totalPages) gridState.page = totalPages;
+    const start = (gridState.page - 1) * ITEMS_PER_PAGE;
+    const end   = Math.min(start + ITEMS_PER_PAGE, count);
+
+    const countEl = document.getElementById('results-count');
+    if (countEl) {
+      countEl.textContent = count === 0
+        ? 'No products match'
+        : `Showing ${start + 1}–${end} of ${count} product${count !== 1 ? 's' : ''}`;
+    }
+    renderGridCards(start, end);
+    renderPagination(totalPages);
+  }
+
+  function renderGridCards(start, end) {
+    const gridEl = document.getElementById('product-grid');
+    if (!gridEl) return;
+    const page = filteredProducts.slice(start, end);
+    if (page.length === 0) {
+      gridEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--text-soft)">No products match the current filters.</div>';
+      return;
+    }
+    gridEl.innerHTML = page.map(p => {
+      const idx    = products.indexOf(p);
+      const raw    = p['Image URL'] || '';
+      const imgUrl = raw ? toWebImageUrl(raw) : 'https://images.craftsbyjon.co.uk/missing.png';
+      return `<div class="product-thumb-card" onclick="openEdit(${idx})">
+        <img src="${escAttr(imgUrl)}" alt="${escAttr(p['Title'] || '')}"
+             onerror="this.src='https://images.craftsbyjon.co.uk/missing.png'" loading="lazy">
+        <div class="product-thumb-overlay">
+          <div class="product-thumb-name">${escHtml(p['Title'] || '(no title)')}</div>
+          <div class="product-thumb-id">${escHtml(p['Product ID'] || '')}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderPagination(totalPages) {
+    const el = document.getElementById('pagination');
+    if (!el) return;
+    if (totalPages <= 1) { el.innerHTML = ''; return; }
+    el.innerHTML =
+      `<button class="btn btn-ghost" onclick="changePage(-1)" ${gridState.page <= 1 ? 'disabled' : ''}>← Prev</button>
+       <span class="page-info">Page ${gridState.page} of ${totalPages}</span>
+       <button class="btn btn-teal"  onclick="changePage(1)"  ${gridState.page >= totalPages ? 'disabled' : ''}>Next →</button>`;
+  }
+
+  function changePage(dir) {
+    const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+    gridState.page = Math.max(1, Math.min(totalPages, gridState.page + dir));
+    applyFilters(false);
+    window.scrollTo(0, 0);
+  }
+
+  function openEdit(idx) {
+    gridState.scrollY = window.scrollY;
+    current = idx;
+    generatedPosts = {};
+    loadSavedPosts(products[current]);
+    document.getElementById('grid-view').style.display = 'none';
+    document.getElementById('edit-view').style.display = 'block';
+    window.scrollTo(0, 0);
+    render();
+  }
+
+  function backToGrid() {
+    document.getElementById('edit-view').style.display = 'none';
+    document.getElementById('grid-view').style.display = 'block';
+    const searchEl = document.getElementById('filter-search');
+    const colEl    = document.getElementById('filter-collection');
+    const typeEl   = document.getElementById('filter-type');
+    const readyEl  = document.getElementById('filter-ready');
+    if (searchEl) searchEl.value = gridState.search;
+    if (colEl)    colEl.value    = gridState.collection;
+    if (typeEl)   typeEl.value   = gridState.productType;
+    if (readyEl)  readyEl.value  = gridState.readyToGo;
+    applyFilters(false);
+    setTimeout(() => window.scrollTo(0, gridState.scrollY), 0);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadCollections();
+    loadData();
+
+    // Event delegation for image drag-and-drop
+    // dragenter must also be cancelled or some browsers refuse the drop
+    document.addEventListener('dragenter', e => {
+      e.preventDefault();
+      const zone = e.target.closest('[data-img-drop]');
+      if (zone) zone.classList.add('drag-over');
+    });
+    document.addEventListener('dragover', e => {
+      // Always prevent default — stops the browser navigating to a file dropped outside a zone
+      e.preventDefault();
+      const zone = e.target.closest('[data-img-drop]');
+      if (zone) zone.classList.add('drag-over');
+    });
+    document.addEventListener('dragleave', e => {
+      const zone = e.target.closest('[data-img-drop]');
+      if (!zone) return;
+      if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
+    });
+    document.addEventListener('drop', e => {
+      // Always prevent default, zone or not — a missed drop must never navigate the page away
+      e.preventDefault();
+      const zone = e.target.closest('[data-img-drop]');
+      if (!zone) return;
+      zone.classList.remove('drag-over');
+      const files = Array.from(e.dataTransfer.files || []);
+      if (!files.length) {
+        alert('That looks like a drag from a webpage rather than a file. Save the image to your computer first (right-click \u2192 Save Image As), then drag the saved file in.');
+        return;
+      }
+      if (zone.dataset.imgDrop === 'gallery') {
+        handleGalleryDrop(files.filter(f => f.type.startsWith('image/')));
+      } else {
+        handleListingsImageDrop(files[0], zone);
+      }
+    });
+  });
+
+  // ── Copy ─────────────────────────────────────────────────────
+  function copyField(btn) {
+    const text = btn.dataset.copy || '';
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copied'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent='Copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  // ── Toggle Ready to Go ────────────────────────────────────────
+  async function toggleReadyToGo(btn) {
+    const p = products[current];
+    const productId = p['Product ID'];
+    const currentlyReady = isYes(p['Ready to Go']);
+    const newValue = currentlyReady ? 'false' : 'yes';
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="flag-label">Ready:</span> Saving…';
+
+    try {
+      const res = await fetch(N8N_TOGGLE_READY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, value: newValue })
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+
+      // Update local state
+      p['Ready to Go'] = newValue;
+      const nowReady = isYes(newValue);
+
+      // Update button appearance
+      btn.className = 'flag flag-toggle ' + (nowReady ? 'flag-yes' : 'flag-no');
+      btn.innerHTML = `<span class="flag-label">Ready:</span> ${nowReady ? '✓ Yes — click to pause' : '✗ No — click to activate'}`;
+      btn.disabled = false;
+
+      // Update generate button state
+      const genBtn = document.getElementById('social-gen-btn');
+      if (genBtn) genBtn.disabled = !nowReady;
+
+      // Show/hide not-ready warning
+      const existingWarning = document.querySelector('.social-not-ready');
+      if (nowReady && existingWarning) {
+        existingWarning.remove();
+      } else if (!nowReady && !existingWarning) {
+        const socialBody = document.querySelector('.social-body');
+        if (socialBody) {
+          const warning = document.createElement('div');
+          warning.className = 'social-not-ready';
+          warning.textContent = '⚠ Set "Ready to Go" to Yes before generating posts';
+          socialBody.insertBefore(warning, socialBody.firstChild);
+        }
+      }
+    } catch (err) {
+      btn.disabled = false;
+      const yes = isYes(p['Ready to Go']);
+      btn.className = 'flag flag-toggle ' + (yes ? 'flag-yes' : 'flag-no');
+      btn.innerHTML = `<span class="flag-label">Ready:</span> ${yes ? '✓ Yes — click to pause' : '✗ No — click to activate'} ⚠ save failed`;
+    }
+  }
+
+  function renderImgCurrent(url) {
+    if (!url) return '<em style="color:#bbb">Not set yet</em>';
+    return `<a href="${escAttr(url)}" target="_blank">${escHtml(url)}</a>
+            <button class="copy-btn" style="font-size:.72rem;padding:3px 8px"
+              data-copy="${escAttr(url)}" onclick="copyField(this)">Copy</button>`;
+  }
+
+  // ── Inline field editing ──────────────────────────────────────
+  function startEditDropdown(fieldName, options) {
+    const safeId = fieldName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+    const valDiv = document.getElementById('val-' + safeId);
+    if (!valDiv) return;
+    const currentValue = products[current][fieldName] || products[current][fieldName.replace(/_/g,' ')] || '';
+    const optionsHtml = options.map(o =>
+      `<option value="${escAttr(o)}" ${o === currentValue ? 'selected' : ''}>${escHtml(o)}</option>`
+    ).join('');
+    valDiv.innerHTML = `
+      <select class="field-edit-select" id="edit-${safeId}">${optionsHtml}</select>
+      <div class="field-edit-actions">
+        <button class="field-save-btn" onclick="saveField('${fieldName}')">Save</button>
+        <button class="field-cancel-btn" onclick="cancelEdit('${fieldName}')">Cancel</button>
+      </div>
+      <div class="field-save-status" id="status-${safeId}"></div>
+    `;
+  }
+
+  function startEdit(fieldName) {
+    const safeId = fieldName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+    const valDiv = document.getElementById('val-' + safeId);
+    if (!valDiv) return;
+    const current_value = products[current][fieldName] || '';
+    valDiv.innerHTML = `
+      <textarea class="field-edit-area" id="edit-${safeId}">${escHtml(current_value)}</textarea>
+      <div class="field-edit-actions">
+        <button class="field-save-btn" onclick="saveField('${fieldName}')">Save</button>
+        <button class="field-cancel-btn" onclick="cancelEdit('${fieldName}')">Cancel</button>
+      </div>
+      <div class="field-save-status" id="status-${safeId}"></div>
+    `;
+  }
+
+  async function saveField(fieldName) {
+    const safeId = fieldName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+    const textarea = document.getElementById('edit-' + safeId);
+    const statusEl = document.getElementById('status-' + safeId);
+    if (!textarea) return;
+    const el = document.getElementById('edit-' + safeId);
+    const newValue = el ? (el.tagName === 'SELECT' ? el.value : el.value.trim()) : '';
+    const productId = products[current]['Product ID'];
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'field-save-status';
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [fieldName]: newValue })
+        }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      products[current][fieldName] = newValue;
+      statusEl.textContent = '✓ Saved';
+      statusEl.className = 'field-save-status ok';
+      setTimeout(() => {
+        const valDiv = document.getElementById('val-' + safeId);
+        if (valDiv) valDiv.innerHTML = escHtml(newValue) || '<span class="empty">(empty)</span>';
+      }, 800);
+    } catch (err) {
+      statusEl.textContent = '⚠ Failed: ' + err.message;
+      statusEl.className = 'field-save-status error';
+    }
+  }
+
+  function cancelEdit(fieldName) {
+    const safeId = fieldName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+    const valDiv = document.getElementById('val-' + safeId);
+    if (!valDiv) return;
+    const current_value = products[current][fieldName] || '';
+    valDiv.innerHTML = current_value ? escHtml(current_value) : '<span class="empty">(empty)</span>';
+  }
+
+  function startEditPrice() {
+    const valDiv = document.getElementById('val-price');
+    if (!valDiv) return;
+    const currentVal = parseFloat(products[current]['price'] || 3.50).toFixed(2);
+    valDiv.innerHTML = `
+      <input type="number" id="edit-price" step="0.01" min="0.50"
+        style="width:100px;padding:5px 8px;border:1.5px solid var(--teal);border-radius:6px;font-size:0.97rem;font-family:inherit;background:#f6fefe"
+        value="${currentVal}" />
+      <div class="field-edit-actions">
+        <button class="field-save-btn" onclick="savePriceField()">Save</button>
+        <button class="field-cancel-btn" onclick="cancelEditPrice()">Cancel</button>
+      </div>
+      <div class="field-save-status" id="status-price"></div>
+    `;
+  }
+
+  async function savePriceField() {
+    const input = document.getElementById('edit-price');
+    const statusEl = document.getElementById('status-price');
+    if (!input) return;
+    const newValue = parseFloat(input.value);
+    if (isNaN(newValue) || newValue < 0.50) {
+      statusEl.textContent = '⚠ Enter a valid price (min £0.50)';
+      statusEl.className = 'field-save-status error';
+      return;
+    }
+    const productId = products[current]['Product ID'];
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'field-save-status';
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ price: newValue }) }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      products[current]['price'] = newValue;
+      statusEl.textContent = '✓ Saved';
+      statusEl.className = 'field-save-status ok';
+      setTimeout(() => {
+        const valDiv = document.getElementById('val-price');
+        if (valDiv) valDiv.innerHTML = `£${newValue.toFixed(2)}`;
+      }, 800);
+    } catch (err) {
+      statusEl.textContent = '⚠ Failed: ' + err.message;
+      statusEl.className = 'field-save-status error';
+    }
+  }
+
+  function cancelEditPrice() {
+    const valDiv = document.getElementById('val-price');
+    if (!valDiv) return;
+    const val = parseFloat(products[current]['price'] || 3.50);
+    valDiv.innerHTML = `£${val.toFixed(2)}`;
+  }
+
+  async function deleteProduct() {
+    const p = products[current];
+    const productId = p['Product ID'];
+    const title = p['Title'] || productId;
+    if (!confirm(`Delete "${title}"?\n\nThis cannot be undone.`)) return;
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      products.splice(current, 1);
+      if (current >= products.length) current = Math.max(0, products.length - 1);
+      backToGrid();
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
+  }
+
+  // ── Save Image URL ────────────────────────────────────────────
+  async function saveImageUrl() {
+    const input  = document.getElementById('imgurl-input');
+    const btn    = document.getElementById('imgurl-save');
+    const status = document.getElementById('imgurl-status');
+    const url    = input.value.trim();
+    const productId = products[current]['Product ID'];
+
+    if (!url) {
+      status.textContent = 'Please enter a URL first.';
+      status.className = 'imgurl-status error';
+      return;
+    }
+
+    const filename = url.split('/').pop();
+    if (!filename) {
+      status.textContent = 'Could not extract a filename.';
+      status.className = 'imgurl-status error';
+      return;
+    }
+
+    btn.disabled = true; btn.textContent = 'Saving…'; status.textContent = ''; status.className = 'imgurl-status';
+
+    try {
+      const res = await fetch(`https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 'Image URL': filename })
+      });
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      products[current]['Image URL'] = filename;
+      status.textContent = '✓ Saved';
+      status.className = 'imgurl-status ok';
+      document.getElementById('imgurl-current').innerHTML = renderImgCurrent(filename);
+      const previewDiv = document.getElementById('img-preview');
+      if (previewDiv) {
+        const webImg = toWebImageUrl(filename);
+        if (webImg) {
+          previewDiv.innerHTML = `
+            <div class="field-group-title" style="margin-bottom:10px">Product Image</div>
+            <img src="${escAttr(webImg)}" alt="Product image" onerror="this.style.display='none'" />
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+              <a href="${escAttr(webImg)}" target="_blank" style="font-size:.8rem;color:var(--teal)">Open full ↗</a>
+              <button class="copy-btn" data-copy="${escAttr(webImg)}" onclick="copyField(this)">Copy URL</button>
+            </div>`;
+        } else {
+          previewDiv.innerHTML = '<div class="no-image">No image</div>';
+        }
+      }
+    } catch (err) {
+      status.textContent = `⚠ Failed: ${err.message}`;
+      status.className = 'imgurl-status error';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Save';
+    }
+  }
+
+  // ── Save generated posts to sheet ────────────────────────────
+  async function saveSocialPosts(posts, productId, clearSentFlags) {
+    try {
+      await fetch(N8N_SAVE_SOCIAL_POSTS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          fbTeaser:       posts.fbTeaser      || '',
+          fbSales:        posts.fbSales       || '',
+          fbEngagement:   posts.fbEngagement  || '',
+          fbRepost:       posts.fbRepost      || '',
+          igPost:         posts.igPost        || '',
+          pinterestPost:  posts.pinterestPost || '',
+          clearSentFlags
+        })
+      });
+      // Update local product state so UI reflects changes without a reload
+      const p = products[current];
+      p['FB Teaser']       = posts.fbTeaser      || '';
+      p['FB Sales']        = posts.fbSales       || '';
+      p['FB Engagement']   = posts.fbEngagement  || '';
+      p['FB Repost']       = posts.fbRepost      || '';
+      p['IG Post']         = posts.igPost        || '';
+      p['Pinterest Post']  = posts.pinterestPost || '';
+      if (clearSentFlags) {
+        p['FB Posts Sent'] = '';
+        p['IG Posts Sent'] = '';
+      }
+    } catch(e) { /* silent — posts are shown even if save fails */ }
+  }
+
+  // ── Generate Social Posts ────────────────────────────────────
+  async function generateSocialPosts() {
+    const p = products[current];
+    const btn = document.getElementById('social-gen-btn');
+    const resultsDiv = document.getElementById('social-results');
+    const statusDiv = document.getElementById('social-gen-status');
+    const isRegen = Object.keys(generatedPosts).length > 0;
+
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.querySelector('.btn-label').textContent = 'Generating…';
+    statusDiv.textContent = '';
+    resultsDiv.innerHTML = '';
+
+    try {
+      const res = await fetch(N8N_SOCIAL_GENERATE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId:        p['Product ID'],
+          title:            p['Title'],
+          shortDescription: p['Short Description'],
+          fullDescription:  p['Full Description'],
+          bulletPoints: [
+            p['Bullet Point 1'], p['Bullet Point 2'], p['Bullet Point 3'],
+            p['Bullet Point 4'], p['Bullet Point 5']
+          ].filter(Boolean),
+          searchTags:    p['Search Tags'],
+          imageUrl:      toWebImageUrl(p['Image URL']),
+          variants:      p['variants'] || ''
+        })
+      });
+      if (!res.ok) throw new Error(`Webhook returned ${res.status}`);
+      const data = await res.json();
+      generatedPosts = data;
+      // Save to sheet; clear sent flags only if regenerating
+      await saveSocialPosts(data, p['Product ID'], isRegen);
+      renderSocialResults(p);
+    } catch (err) {
+      statusDiv.textContent = `⚠ Failed: ${err.message}`;
+      statusDiv.className = 'madebyme-status error';
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      const hasPosts = Object.keys(generatedPosts).length > 0;
+      btn.querySelector('.btn-label').textContent = hasPosts ? '🔄 Regenerate Posts' : '🐝 Generate Social Posts';
+    }
+  }
+
+  function openReelStudio() {
+    const p = products[current];
+    const productId = p['Product ID'];
+    window.open('/staff/reel-studio.html?productId=' + productId, '_blank');
+  }
+
+  async function generateReel() {
+    const p = products[current];
+    const productId = p['Product ID'];
+    const occasion = document.getElementById('reel-occasion-select')?.value || '';
+    const btn = document.getElementById('reel-gen-btn-' + productId);
+    const statusDiv = document.getElementById('reel-gen-status');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.querySelector('.btn-label').textContent = 'Generating…';
+    statusDiv.textContent = '';
+    try {
+      const res = await fetch('https://craftsbyjon.co.uk/n8n-proxy/webhook/reel-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, occasion })
+      });
+      if (!res.ok) throw new Error('Webhook returned ' + res.status);
+      const today = new Date().toISOString().split('T')[0];
+      await fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/products/' + productId, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reel_generated_at: today })
+      });
+      p['reel_generated_at'] = today;
+      statusDiv.textContent = '✅ Check Telegram for Firefly prompts';
+      btn.querySelector('.btn-label').textContent = '🔄 Regenerate Reel';
+    } catch (err) {
+      statusDiv.textContent = '⚠ Failed: ' + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+
+  function renderSocialResults(p) {
+    const resultsDiv = document.getElementById('social-results');
+    if (!resultsDiv) return;
+    const imageUrl   = toWebImageUrl(p['Image URL']);
+    const hasImage   = !!imageUrl;
+    const productId  = p['Product ID'];
+
+    // Parse sent flags from sheet (comma-separated, e.g. "fbTeaser,fbSales")
+    const fbSent = (p['FB Posts Sent'] || '').split(',').map(s => s.trim()).filter(Boolean);
+    const igSent = (p['IG Posts Sent'] || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    const postTypes = [
+      { key: 'fbTeaser',      emoji: '📘', label: 'FB Teaser' },
+      { key: 'fbSales',       emoji: '🛒', label: 'FB Sales' },
+      { key: 'fbEngagement',  emoji: '❤️',  label: 'FB Engagement' },
+      { key: 'fbRepost',      emoji: '🔁', label: 'FB Repost' },
+      { key: 'igPost',        emoji: '📸', label: 'Instagram Post' },
+      { key: 'pinterestPost', emoji: '📌', label: 'Pinterest Post' }
+    ];
+
+    resultsDiv.innerHTML = postTypes.map(pt => {
+      const text = generatedPosts[pt.key] || '(no content generated)';
+
+      const fbAlreadySent = fbSent.includes(pt.key);
+      const igAlreadySent = igSent.includes(pt.key);
+      const fbExtraClass  = fbAlreadySent ? ' already-sent' : '';
+      const igExtraClass  = igAlreadySent ? ' already-sent' : '';
+
+      // Pass only the KEY in onclick — functions look up text from generatedPosts
+      // This avoids quote/apostrophe/newline breakage in HTML attributes
+      const isFb        = ['fbTeaser','fbSales','fbEngagement','fbRepost'].includes(pt.key);
+      const isIg        = pt.key === 'igPost';
+      const isPinterest = pt.key === 'pinterestPost';
+      const platformBtn = isFb
+        ? `<button class="social-btn social-btn-facebook${fbExtraClass}" id="fb-${pt.key}"
+              onclick="fireToFacebook(this, '${pt.key}')">📘 → Facebook</button>`
+        : isIg
+        ? `<button class="social-btn social-btn-instagram${igExtraClass}" id="ig-${pt.key}"
+              onclick="fireToInstagram(this, '${pt.key}')"
+              ${hasImage ? '' : 'disabled title="No image URL set for this product"'}>
+              📸 → Instagram
+            </button>`
+        : isPinterest
+        ? `<button class="social-btn social-btn-instagram" id="pin-${pt.key}"
+              onclick="fireToPinterest(this, '${pt.key}')"
+              ${hasImage ? '' : 'disabled title="No image URL set for this product"'}>
+              📌 → Pinterest
+            </button>`
+        : '';
+      return `
+        <div class="social-post-card" id="card-${pt.key}">
+          <div class="social-post-card-header">${pt.emoji} ${pt.label}</div>
+          <div class="social-post-text">${escHtml(text)}</div>
+          <div class="social-post-actions">
+            <button class="social-btn social-btn-copy" id="copy-${pt.key}"
+              onclick="copySocialPost(this, '${pt.key}')">📋 Copy</button>
+            ${platformBtn}
+            <span class="social-post-status" id="status-${pt.key}"></span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function copySocialPost(btn, key) {
+    const text = generatedPosts[key] || '';
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copied'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent='📋 Copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  async function fireToFacebook(btn, key) {
+    const p         = products[current];
+    const text      = generatedPosts[key] || '';
+    const imageUrl  = toWebImageUrl(p['Image URL']);
+    const productId = p['Product ID'];
+    const statusEl  = btn.closest('.social-post-actions').querySelector('.social-post-status');
+
+    // Build tracked store URL — always use /src/fb-page/ format, never bare /collection/
+    const collectionSlug = (p['Collection'] || '').toLowerCase().trim().replace(/\s+/g, '-');
+    const productUrl    = 'https://craftsbyjon.co.uk/src/fb-page/' + productId;
+    const collectionUrl = collectionSlug
+      ? 'https://craftsbyjon.co.uk/src/fb-page/collection/' + collectionSlug
+      : null;
+    const store_url = productUrl; // product URL is default for listing posts
+
+    // Pre-flight: check URL is live before posting
+    btn.disabled = true; btn.textContent = 'Checking URL…';
+    statusEl.textContent = ''; statusEl.className = 'social-post-status';
+    try {
+      const urlCheck = await fetch(store_url, { method: 'HEAD', redirect: 'follow' });
+      if (urlCheck.status === 404) {
+        btn.disabled = false; btn.textContent = '📘 → Facebook';
+        statusEl.className = 'social-post-status error';
+        const collectionNote = collectionUrl
+          ? `\n\nCollection URL (if needed): ${collectionUrl}`
+          : '';
+        statusEl.textContent =
+          `⛔ URL check failed — ${store_url} returned 404. Do not post.${collectionNote}`;
+        return;
+      }
+    } catch (checkErr) {
+      // Network error on preflight — warn but don't block (could be CORS)
+      console.warn('URL preflight error (non-blocking):', checkErr.message);
+    }
+
+    btn.textContent = 'Sending…';
+    try {
+      const res = await fetch(N8N_FACEBOOK_POST, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, image_url: imageUrl, store_url })
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      btn.textContent = '✓ Sent!'; btn.classList.add('sent'); btn.classList.add('already-sent');
+
+      // Show success + reminder
+      const collectionLine = collectionUrl
+        ? `\n🔗 Collection URL: ${collectionUrl}`
+        : '';
+      statusEl.innerHTML =
+        (imageUrl ? '✓ Posted to Facebook (live)' : '✓ Saved to Facebook drafts') +
+        `<br><small>First comment will be: <code>${store_url}</code>${collectionLine}</small>` +
+        `<br><small style="color:#b45309">⚠ Wait for Facebook preview. If it shows 404, do not post. If preview is ugly but link works, remove preview.</small>`;
+      statusEl.className = 'social-post-status ok';
+      await stampPlatform(productId, 'facebook', key);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = '📘 → Facebook';
+      statusEl.textContent = `⚠ Failed: ${err.message}`;
+      statusEl.className = 'social-post-status error';
+    }
+  }
+
+  async function fireToInstagram(btn, key) {
+    const p        = products[current];
+    const text     = generatedPosts[key] || '';
+    const imageUrl = toWebImageUrl(p['Image URL']);
+    const productId = p['Product ID'];
+    const statusEl = btn.closest('.social-post-actions').querySelector('.social-post-status');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    statusEl.textContent = ''; statusEl.className = 'social-post-status';
+    try {
+      const res = await fetch(N8N_INSTAGRAM_POST, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, image_url: imageUrl })
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      btn.textContent = '✓ Sent!'; btn.classList.add('sent'); btn.classList.add('already-sent');
+      statusEl.textContent = '✓ Posted to Instagram';
+      statusEl.className = 'social-post-status ok';
+      await stampPlatform(productId, 'instagram', key);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = '📸 → Instagram';
+      statusEl.textContent = `⚠ Failed: ${err.message}`;
+      statusEl.className = 'social-post-status error';
+    }
+  }
+
+  async function fireToPinterest(btn, key) {
+    const p        = products[current];
+    const text     = generatedPosts[key] || '';
+    const imageUrl = toWebImageUrl(p['Image URL']);
+    const productId = p['Product ID'];
+    const statusEl = btn.closest('.social-post-actions').querySelector('.social-post-status');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    statusEl.textContent = ''; statusEl.className = 'social-post-status';
+    try {
+      const res = await fetch(N8N_PINTEREST_POST, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, image_url: imageUrl, title: p['Title'], link: 'https://craftsbyjon.co.uk/store/#' + productId })
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      btn.textContent = '✓ Sent!'; btn.classList.add('sent'); btn.classList.add('already-sent');
+      statusEl.textContent = '✓ Posted to Pinterest';
+      statusEl.className = 'social-post-status ok';
+      await stampPlatform(productId, 'pinterest', key);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = '📌 → Pinterest';
+      statusEl.textContent = `⚠ Failed: ${err.message}`;
+      statusEl.className = 'social-post-status error';
+    }
+  }
+
+  async function stampPlatform(productId, platform, postKey) {
+    try {
+      const p = products[current];
+      if (!p || p['Product ID'] !== productId) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      const dateCol = platform === 'facebook' ? 'Added to Facebook'
+                    : platform === 'instagram' ? 'Added to Instagram'
+                    : platform === 'pinterest' ? 'Added to Pinterest'
+                    : null;
+      const sentCol = platform === 'facebook' ? 'FB Posts Sent'
+                    : platform === 'instagram' ? 'IG Posts Sent'
+                    : null;
+
+      const patch = {};
+      if (dateCol && (!p[dateCol] || !/\d/.test(p[dateCol]))) {
+        patch[dateCol] = today;
+        p[dateCol] = today;
+      }
+      if (sentCol) {
+        const existing = (p[sentCol] || '').split(',').map(s => s.trim()).filter(Boolean);
+        if (!existing.includes(postKey)) existing.push(postKey);
+        patch[sentCol] = existing.join(',');
+        p[sentCol] = patch[sentCol];
+      }
+
+      if (Object.keys(patch).length) {
+        await fetch(
+          `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+          { method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch) }
+        );
+      }
+
+      const flags = document.querySelector('.status-flags');
+      if (flags) {
+        flags.innerHTML = STATUS_COLS.map(c => {
+          const yes = isYes(p[c]);
+          if (c === 'Ready to Go') {
+            return `<button class="flag flag-toggle ${yes?'flag-yes':'flag-no'}" id="rtg-toggle"
+                      onclick="toggleReadyToGo(this)" title="Click to toggle">
+                      <span class="flag-label">Ready:</span> ${yes?'✓ Yes — click to pause':'✗ No — click to activate'}
+                    </button>`;
+          }
+          return `<span class="flag ${yes?'flag-yes':'flag-no'}">
+                    <span class="flag-label">${c.replace('Added to ','')}:</span> ${yes?'✓ Yes':'✗ No'}
+                  </span>`;
+        }).join('');
+      }
+    } catch(e) { /* silent */ }
+  }
+
+  // ── Regenerate Listing (Title / Short & Full Description / Bullets / Tags) ──
+  async function regenerateListing() {
+    const p = products[current];
+    const productId = p['Product ID'];
+    const btn = document.getElementById('regen-listing-btn');
+    const statusDiv = document.getElementById('regen-listing-status');
+
+    btn.disabled = true;
+    btn.textContent = 'Regenerating…';
+    statusDiv.textContent = '';
+    statusDiv.style.color = '';
+
+    try {
+      const res = await fetch(N8N_REGENERATE_LISTING, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId })
+      });
+      if (!res.ok) throw new Error(`Webhook returned ${res.status}`);
+      const data = await res.json();
+      if (!data.title && !data.full_description) {
+        throw new Error('No listing data returned');
+      }
+
+      // Update local state
+      p['Title'] = data.title || p['Title'];
+      p['Short Description'] = data.short_description || p['Short Description'];
+      p['Full Description'] = data.full_description || p['Full Description'];
+      (data.bullet_points || []).forEach((bp, i) => { p[`Bullet Point ${i + 1}`] = bp; });
+      if (data.search_tags) p['Search Tags'] = data.search_tags.join(', ');
+
+      // Re-render the product card so every field reflects the new content
+      render();
+
+      statusDiv.textContent = '✓ Listing regenerated';
+      statusDiv.style.color = 'var(--teal, #20B2AA)';
+    } catch (err) {
+      statusDiv.textContent = `⚠ Failed: ${err.message}`;
+      statusDiv.style.color = '#c0392b';
+    } finally {
+      const freshBtn = document.getElementById('regen-listing-btn');
+      if (freshBtn) { freshBtn.disabled = false; freshBtn.textContent = '🔄 Regenerate Listing'; }
+    }
+  }
+
+  // ── FB Groups Posts ───────────────────────────────────────────
+  async function generateFbGroupsPosts() {
+    const p = products[current];
+    const btn = document.getElementById('fbg-gen-btn');
+    const statusDiv = document.getElementById('fbg-gen-status');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.querySelector('.btn-label').textContent = 'Generating…';
+    if (statusDiv) { statusDiv.textContent = ''; statusDiv.className = 'fbg-gen-status'; }
+    try {
+      const res = await fetch(N8N_FB_GROUPS_GENERATE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: p['Product ID'] })
+      });
+      if (!res.ok) throw new Error(`Webhook returned ${res.status}`);
+      const data = await res.json();
+      if (data.fb_groups_post)      p['fb_groups_post']      = data.fb_groups_post;
+      if (data.fb_groups_deal_post) p['fb_groups_deal_post'] = data.fb_groups_deal_post;
+      const ukDiv   = document.getElementById('val-fbgroupspost');
+      const dealDiv = document.getElementById('val-fbgroupsdealpost');
+      if (ukDiv)   ukDiv.innerHTML   = data.fb_groups_post      ? escHtml(data.fb_groups_post)      : '<span class="empty">(empty)</span>';
+      if (dealDiv) dealDiv.innerHTML = data.fb_groups_deal_post ? escHtml(data.fb_groups_deal_post) : '<span class="empty">(empty)</span>';
+      if (statusDiv) { statusDiv.textContent = '✓ Generated!'; statusDiv.className = 'fbg-gen-status ok'; }
+      btn.querySelector('.btn-label').textContent = '🔄 Regenerate';
+    } catch (err) {
+      if (statusDiv) { statusDiv.textContent = `⚠ Failed: ${err.message}`; statusDiv.className = 'fbg-gen-status error'; }
+      btn.querySelector('.btn-label').textContent = '📘 Generate FB Groups Posts';
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+
+  function copyFbGroupsPost(btn, field) {
+    const text = products[current][field] || '';
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copied'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  async function markFbGroupsPosted(postedField) {
+    const p = products[current];
+    const productId = p['Product ID'];
+    const today = new Date().toISOString().split('T')[0];
+    const isUk = postedField === 'fb_groups_posted';
+    const btnEl    = document.getElementById(isUk ? 'fbg-mark-uk'   : 'fbg-mark-deal');
+    const statusEl = document.getElementById(isUk ? 'fbg-status-uk' : 'fbg-status-deal');
+    if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Saving…'; }
+    if (statusEl) { statusEl.textContent = ''; statusEl.className = 'fbg-post-status'; }
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [postedField]: today }) }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      p[postedField] = today;
+      if (btnEl) { btnEl.textContent = `✓ Posted ${today}`; btnEl.classList.add('fbg-posted'); btnEl.disabled = false; }
+      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.className = 'fbg-post-status ok'; }
+    } catch (err) {
+      if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Mark Posted'; }
+      if (statusEl) { statusEl.textContent = `⚠ Failed: ${err.message}`; statusEl.className = 'fbg-post-status error'; }
+    }
+  }
+
+  // ── Variants Panel ───────────────────────────────────────────
+  function renderVariantsPanel(p) {
+    const productId = p['Product ID'] || '';
+    const currentVariants = p['variants'] || '';
+    const currentList = currentVariants.split(',').map(s => s.trim()).filter(Boolean);
+
+    let knownOptions = [];
+    if (productId.startsWith('bookmark-') || productId.startsWith('keyring-')) {
+      knownOptions = ['Clear', 'Black'];
+    } else if (productId.startsWith('sticker-')) {
+      knownOptions = ['Matt', 'Gloss', 'Silver', 'Gold'];
+    } else {
+      return '';
+    }
+
+    const otherValues = currentList.filter(v => !knownOptions.includes(v));
+    const otherChecked = otherValues.length > 0;
+
+    const checkboxesHtml = knownOptions.map(opt => {
+      const checked = currentList.includes(opt) ? 'checked' : '';
+      return `<label style="display:inline-flex;align-items:center;gap:5px;font-size:0.9rem;cursor:pointer">
+        <input type="checkbox" class="variants-cb" value="${escAttr(opt)}" ${checked} />
+        ${escHtml(opt)}
+      </label>`;
+    }).join('');
+
+    return `
+      <div class="field-group">
+        <div class="field-group-title">Variants</div>
+        <div style="padding:10px 14px">
+          <div style="font-size:0.82rem;color:var(--text-soft);margin-bottom:10px">
+            Current: <strong id="variants-current-display">${escHtml(currentVariants || '(none)')}</strong>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:12px">
+            ${checkboxesHtml}
+            <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.9rem;cursor:pointer">
+              <input type="checkbox" id="variants-other-cb" class="variants-cb" value=""
+                ${otherChecked ? 'checked' : ''}
+                onchange="document.getElementById('variants-other-text').style.display=this.checked?'inline-block':'none'" />
+              Other
+            </label>
+            <input type="text" id="variants-other-text"
+              style="display:${otherChecked ? 'inline-block' : 'none'};padding:5px 9px;border:1.5px solid var(--teal);border-radius:6px;font-size:0.88rem;width:180px"
+              placeholder="e.g. Red, Glitter"
+              value="${escAttr(otherValues.join(', '))}" />
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="field-save-btn" onclick="saveVariants()">Save</button>
+            <span id="variants-save-status" class="field-save-status"></span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  async function saveVariants() {
+    const p = products[current];
+    const productId = p['Product ID'];
+    const statusEl = document.getElementById('variants-save-status');
+
+    const checked = Array.from(document.querySelectorAll('.variants-cb:checked'))
+      .map(cb => cb.value)
+      .filter(v => v !== '');
+
+    const otherCb = document.getElementById('variants-other-cb');
+    const otherText = document.getElementById('variants-other-text');
+    if (otherCb && otherCb.checked && otherText) {
+      otherText.value.split(',').map(s => s.trim()).filter(Boolean).forEach(v => checked.push(v));
+    }
+
+    const variantsStr = checked.join(', ');
+    if (statusEl) { statusEl.textContent = 'Saving…'; statusEl.className = 'field-save-status'; }
+
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variants: variantsStr })
+        }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      p['variants'] = variantsStr;
+      const currentEl = document.getElementById('variants-current-display');
+      if (currentEl) currentEl.textContent = variantsStr || '(none)';
+      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.className = 'field-save-status ok'; }
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2500);
+    } catch (err) {
+      if (statusEl) { statusEl.textContent = '⚠ Failed: ' + err.message; statusEl.className = 'field-save-status error'; }
+    }
+  }
+
+  // ── Variant Images Panel ─────────────────────────────────────
+  function renderVariantImagesPanel(p) {
+    const variantList = (p['variants'] || '').split(',').map(s => s.trim()).filter(Boolean);
+    const hasBlack = variantList.some(v => v.toLowerCase() === 'black');
+    if (!hasBlack) return '';
+
+    let existing = {};
+    try { existing = JSON.parse(p['variant_images'] || '{}'); } catch {}
+
+    const url = existing['black'] || '';
+    const thumbSrc = url ? toWebImageUrl(url) : '';
+
+    return `
+      <div class="field-group">
+        <div class="field-group-title">Variant Images</div>
+        <div style="padding:10px 14px">
+          <div style="margin-bottom:14px">
+            <div style="font-size:0.78rem;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px">Black Finish Image URL</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text"
+                id="vi-black-input"
+                style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:0.88rem;font-family:inherit;background:var(--bg-muted)"
+                placeholder="https://images.craftsbyjon.co.uk/products/…"
+                value="${escAttr(url)}"
+                oninput="updateBlackThumb(this)" />
+              <div data-img-drop="variant"
+                   style="width:48px;height:48px;flex-shrink:0;border-radius:6px;border:1.5px dashed #ccc;background:var(--bg-muted);overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative">
+                <div class="img-drop-overlay" style="font-size:0.6rem">📎</div>
+                <img id="vi-thumb-black" src="${escAttr(thumbSrc)}"
+                  style="width:100%;height:100%;object-fit:cover;${thumbSrc ? '' : 'display:none'}" alt="" />
+                ${!thumbSrc ? `<span style="font-size:0.6rem;color:#bbb;text-align:center;padding:2px">No img</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="field-save-btn" onclick="saveBlackFinishUrl()">Save</button>
+            <span id="vi-save-status" class="field-save-status"></span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function updateBlackThumb(input) {
+    const thumb = document.getElementById('vi-thumb-black');
+    if (!thumb) return;
+    const url = toWebImageUrl(input.value.trim());
+    const noImgSpan = thumb.nextElementSibling;
+    if (url) {
+      thumb.src = url; thumb.style.display = 'block';
+      if (noImgSpan) noImgSpan.style.display = 'none';
+    } else {
+      thumb.style.display = 'none';
+      if (noImgSpan) noImgSpan.style.display = 'block';
+    }
+  }
+
+  async function saveBlackFinishUrl() {
+    const p = products[current];
+    const productId = p['Product ID'];
+    const statusEl = document.getElementById('vi-save-status');
+    const input = document.getElementById('vi-black-input');
+    if (!input) return;
+
+    let existing = {};
+    try { existing = JSON.parse(p['variant_images'] || '{}'); } catch {}
+    const val = input.value.trim();
+    if (val) {
+      existing['black'] = val;
+    } else {
+      delete existing['black'];
+    }
+    const jsonStr = JSON.stringify(existing);
+
+    if (statusEl) { statusEl.textContent = 'Saving…'; statusEl.className = 'field-save-status'; }
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variant_images: jsonStr })
+        }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      p['variant_images'] = jsonStr;
+      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.className = 'field-save-status ok'; }
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2500);
+    } catch (err) {
+      if (statusEl) { statusEl.textContent = '⚠ Failed: ' + err.message; statusEl.className = 'field-save-status error'; }
+    }
+  }
+
+  // ── Mug Details Panel ─────────────────────────────────────────
+  const MUG_COLOUR_PRESETS = [
+    { hex: '#000000', label: 'Black' },
+    { hex: '#003087', label: 'Navy' },
+    { hex: '#CC0000', label: 'Red' },
+    { hex: '#1B5E20', label: 'Dark Green' },
+    { hex: '#4A0080', label: 'Purple' },
+    { hex: '#FFB300', label: 'Gold' },
+    { hex: '#FFD700', label: 'Yellow' },
+  ];
+
+  function renderMugPanel(p) {
+    if ((p['product_type'] || '').toLowerCase() !== 'mug') return '';
+
+    let selColours = [];
+    try { selColours = JSON.parse(p['mug_text_colours'] || '[]'); } catch {}
+
+    let messages = [];
+    try { messages = JSON.parse(p['mug_messages'] || '[]'); } catch {}
+
+    const presetHexes = MUG_COLOUR_PRESETS.map(c => c.hex);
+    const swatchesHtml = MUG_COLOUR_PRESETS.map(c => {
+      const isSel = selColours.includes(c.hex);
+      const tickColour = ['#FFB300','#FFD700'].includes(c.hex) ? '#333' : '#fff';
+      return `<button class="mug-swatch${isSel ? ' selected' : ''}" style="background:${c.hex}"
+        title="${escHtml(c.label)}" onclick="toggleMugColour('${c.hex}', this)">
+        ${isSel ? `<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:0.65rem;font-weight:700;color:${tickColour}">✓</span>` : ''}
+      </button>`;
+    }).join('');
+
+    const customHex = selColours.find(c => !presetHexes.includes(c));
+    const otherChecked = !!customHex;
+
+    function imgRow(label, field, inputId, statusId) {
+      const val = p[field] || '';
+      const thumbSrc = val ? (val.startsWith('http') ? val : `https://images.craftsbyjon.co.uk/products/${val.split('/').pop()}`) : '';
+      return `<div class="mug-img-field">
+        <div class="mug-img-label">${label}</div>
+        <div class="mug-img-row">
+          <input class="mug-img-input" id="${inputId}" type="text" placeholder="filename.jpg"
+            value="${escAttr(val)}"
+            onkeydown="if(event.key==='Enter') saveMugImageUrl('${field}','${inputId}','${statusId}')" />
+          <div id="${inputId}-thumb"
+               data-img-drop="mug" data-mug-input-id="${inputId}" data-mug-field="${field}" data-mug-status-id="${statusId}"
+               style="width:44px;height:44px;border-radius:6px;border:2px dashed #ccc;background:#fafafa;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative">
+            <div class="img-drop-overlay" style="font-size:0.6rem">📎</div>
+            ${thumbSrc ? `<img src="${escAttr(thumbSrc)}" style="width:100%;height:100%;object-fit:cover" />` : `<span style="font-size:0.6rem;color:#bbb;text-align:center;line-height:1.2;pointer-events:none">Drop<br>img</span>`}
+          </div>
+          <button class="mug-save-btn" onclick="saveMugImageUrl('${field}','${inputId}','${statusId}')">Save</button>
+        </div>
+        <div class="mug-save-status" id="${statusId}"></div>
+      </div>`;
+    }
+
+    return `
+      <div class="mug-panel">
+        <div class="mug-panel-header">☕ Mug Details</div>
+        <div class="mug-panel-body">
+          ${imgRow('Front Image', 'mug_image_front', 'mug-img-front', 'mug-status-front')}
+          ${imgRow('Scene 1 Image', 'mug_image_scene1', 'mug-img-scene1', 'mug-status-scene1')}
+          ${imgRow('Scene 2 Image', 'mug_image_scene2', 'mug-img-scene2', 'mug-status-scene2')}
+          ${imgRow('Wrap / Design Image', 'mug_image_wrap', 'mug-img-wrap', 'mug-status-wrap')}
+
+          <div>
+            <div class="mug-section-label">Message Options</div>
+            <div style="font-size:0.8rem;color:var(--text-soft);margin-bottom:6px">Comma-separated — last option should be "Custom"</div>
+            <div class="mug-img-row">
+              <input class="mug-img-input" id="mug-messages-input" type="text"
+                placeholder="Best Teacher Ever, Thank You for Everything, Custom"
+                value="${escAttr(messages.join(', '))}" />
+              <button class="mug-save-btn" onclick="saveMugMessages()">Save</button>
+            </div>
+            <div class="mug-save-status" id="mug-status-messages"></div>
+          </div>
+
+          <div>
+            <div class="mug-section-label">Text Colour Options</div>
+            <div class="mug-swatches">
+              ${swatchesHtml}
+              <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.85rem;cursor:pointer">
+                <input type="checkbox" id="mug-colour-other-cb" ${otherChecked ? 'checked' : ''}
+                  onchange="toggleMugOtherColour(this)" /> Other
+              </label>
+              <input type="color" id="mug-colour-other-picker"
+                style="display:${otherChecked ? 'inline-block' : 'none'};width:32px;height:32px;border:none;cursor:pointer;background:none"
+                value="${escAttr(customHex || '#000000')}"
+                oninput="addMugOtherColour(this.value)" />
+            </div>
+            <div class="mug-selected-colours" id="mug-selected-colours-display">
+              Selected: ${escHtml(selColours.join(', ') || '(none)')}
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+              <button class="mug-save-btn" onclick="saveMugColours()">Save Colours</button>
+              <span class="mug-save-status" id="mug-status-colours"></span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  async function saveMugImageUrl(field, inputId, statusId) {
+    const input = document.getElementById(inputId);
+    const statusEl = document.getElementById(statusId);
+    if (!input || !statusEl) return;
+    const filename = input.value.trim().split('/').pop();
+    const productId = products[current]['Product ID'];
+    statusEl.textContent = 'Saving…'; statusEl.className = 'mug-save-status';
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: filename }) }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      products[current][field] = filename;
+      statusEl.textContent = '✓ Saved'; statusEl.className = 'mug-save-status ok';
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);
+    } catch (err) {
+      statusEl.textContent = '⚠ ' + err.message; statusEl.className = 'mug-save-status error';
+    }
+  }
+
+  // POD gallery review panel — shows every colour and every shot for products using
+  // pod_gallery_images (t-shirts, totes, mouse mats, etc). Added 24 Aug 2026: listings.html
+  // previously had no way to see these images at all, which is how a duplicate/wrong image
+  // (Pier t-shirt using the Anchor design's photo) went live unnoticed.
+  function renderPodGalleryPanel(p) {
+    let gallery = {};
+    try { gallery = JSON.parse(p['pod_gallery_images'] || '{}'); } catch { gallery = {}; }
+    const colours = Object.keys(gallery);
+    if (colours.length === 0) return '';
+
+    // Duplicate detection: same URL used for more than one colour/shot slot is almost
+    // always a mistake (as it was here) — flag it so it's obvious without opening every image.
+    // size_chart is deliberately the same image across every colour — excluded from
+    // duplicate detection, or every product would show a false "duplicate" warning on it.
+    const urlCounts = {};
+    colours.forEach(c => {
+      Object.entries(gallery[c] || {}).forEach(([shot, url]) => {
+        if (!url || shot === 'size_chart') return;
+        urlCounts[url] = (urlCounts[url] || 0) + 1;
+      });
+    });
+
+    function shotCell(colour, shot, url) {
+      const isDup = url && urlCounts[url] > 1;
+      const cellId = `pod-shot-${slugifyId(colour)}-${shot}`;
+      const filename = url ? url.split('/').pop() : '';
+      return `<div class="pod-shot-cell">
+        <div class="pod-shot-label">${escHtml(shot.replace(/_/g, ' '))}</div>
+        <div class="pod-shot-thumb-wrap${isDup ? ' dup-warning' : ''}"
+             id="${cellId}-thumb"
+             data-img-drop="pod" data-pod-colour="${escAttr(colour)}" data-pod-shot="${escAttr(shot)}"
+             onclick="if(!event.target.closest('[data-img-drop]').classList.contains('drag-over')) openPodShotLightbox('${escAttr(url || '')}')">
+          <div class="img-drop-overlay" style="font-size:0.55rem">📎</div>
+          ${url ? `<img src="${escAttr(url)}" alt="${escAttr(colour)} ${escAttr(shot)}">` : '<span style="font-size:0.55rem;color:#bbb">no image</span>'}
+          ${isDup ? `<span class="pod-dup-badge" title="This exact image is used for ${urlCounts[url]} different shots — check it's not a mistake">DUPLICATE</span>` : ''}
+        </div>
+        <div class="pod-shot-filename" title="${escAttr(filename)}">${escHtml(filename)}</div>
+      </div>`;
+    }
+
+    const blocksHtml = colours.map(colour => {
+      const shots = gallery[colour] || {};
+      const shotKeys = Object.keys(shots);
+      const cellsHtml = shotKeys.map(shot => shotCell(colour, shot, shots[shot])).join('');
+      return `<div class="pod-colour-block">
+        <div class="pod-colour-name">${escHtml(colour)}</div>
+        <div class="pod-shot-grid">${cellsHtml}</div>
+      </div>`;
+    }).join('');
+
+    const dupCount = Object.values(urlCounts).filter(n => n > 1).length;
+
+    return `
+      <div class="pod-gallery-panel" id="pod-gallery-panel-container">
+        <div class="pod-gallery-panel-header">
+          <span>🖼️ POD Gallery — ${colours.length} colour${colours.length === 1 ? '' : 's'}</span>
+          ${dupCount > 0 ? `<span style="background:#c00;padding:2px 8px;border-radius:10px;font-size:0.75rem">⚠ ${dupCount} duplicate image${dupCount === 1 ? '' : 's'} found</span>` : ''}
+        </div>
+        <div class="pod-gallery-panel-body">
+          <div style="font-size:0.78rem;color:var(--text-soft)">Click any thumbnail to preview full-size. Drop a new image onto a thumbnail to replace it.</div>
+          ${blocksHtml}
+        </div>
+      </div>`;
+  }
+
+  function slugifyId(s) {
+    return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+
+  function openPodShotLightbox(url) {
+    if (!url) return;
+    if (typeof openLightbox === 'function') { openLightbox(url, '', [url]); return; }
+    window.open(url, '_blank');
+  }
+
+  async function savePodGalleryShot(colour, shot, url, zone) {
+    const p = products[current];
+    if (!p) return;
+    const productId = p['Product ID'];
+    let gallery = {};
+    try { gallery = JSON.parse(p['pod_gallery_images'] || '{}'); } catch { gallery = {}; }
+    if (!gallery[colour]) gallery[colour] = {};
+    gallery[colour][shot] = url;
+    const newJson = JSON.stringify(gallery);
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${encodeURIComponent(productId)}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pod_gallery_images: newJson }) }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      products[current]['pod_gallery_images'] = newJson;
+      // Re-render just this panel so duplicate badges recompute against the new data.
+      const container = document.getElementById('pod-gallery-panel-container');
+      if (container && container.parentNode) {
+        container.outerHTML = renderPodGalleryPanel(products[current]);
+      }
+    } catch (err) {
+      alert('Failed to save image: ' + err.message);
+    }
+  }
+
+  async function saveMugMessages() {
+    const input = document.getElementById('mug-messages-input');
+    const statusEl = document.getElementById('mug-status-messages');
+    if (!input) return;
+    const messages = input.value.split(',').map(s => s.trim()).filter(Boolean);
+    const productId = products[current]['Product ID'];
+    statusEl.textContent = 'Saving…'; statusEl.className = 'mug-save-status';
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mug_messages: JSON.stringify(messages) }) }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      products[current]['mug_messages'] = JSON.stringify(messages);
+      statusEl.textContent = '✓ Saved'; statusEl.className = 'mug-save-status ok';
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);
+    } catch (err) {
+      statusEl.textContent = '⚠ ' + err.message; statusEl.className = 'mug-save-status error';
+    }
+  }
+
+  function toggleMugColour(hex, btn) {
+    let colours = [];
+    try { colours = JSON.parse(products[current]['mug_text_colours'] || '[]'); } catch {}
+    const idx = colours.indexOf(hex);
+    if (idx === -1) { colours.push(hex); btn.classList.add('selected'); }
+    else { colours.splice(idx, 1); btn.classList.remove('selected'); }
+    products[current]['mug_text_colours'] = JSON.stringify(colours);
+    const el = document.getElementById('mug-selected-colours-display');
+    if (el) el.textContent = 'Selected: ' + (colours.join(', ') || '(none)');
+  }
+
+  function toggleMugOtherColour(cb) {
+    const picker = document.getElementById('mug-colour-other-picker');
+    if (!picker) return;
+    picker.style.display = cb.checked ? 'inline-block' : 'none';
+    if (!cb.checked) {
+      const presetHexes = MUG_COLOUR_PRESETS.map(c => c.hex);
+      let colours = [];
+      try { colours = JSON.parse(products[current]['mug_text_colours'] || '[]'); } catch {}
+      colours = colours.filter(c => presetHexes.includes(c));
+      products[current]['mug_text_colours'] = JSON.stringify(colours);
+      const el = document.getElementById('mug-selected-colours-display');
+      if (el) el.textContent = 'Selected: ' + (colours.join(', ') || '(none)');
+    }
+  }
+
+  function addMugOtherColour(hex) {
+    const presetHexes = MUG_COLOUR_PRESETS.map(c => c.hex);
+    let colours = [];
+    try { colours = JSON.parse(products[current]['mug_text_colours'] || '[]'); } catch {}
+    colours = colours.filter(c => presetHexes.includes(c));
+    colours.push(hex.toUpperCase());
+    products[current]['mug_text_colours'] = JSON.stringify(colours);
+    const el = document.getElementById('mug-selected-colours-display');
+    if (el) el.textContent = 'Selected: ' + colours.join(', ');
+  }
+
+  async function saveMugColours() {
+    const productId = products[current]['Product ID'];
+    const statusEl = document.getElementById('mug-status-colours');
+    let colours = [];
+    try { colours = JSON.parse(products[current]['mug_text_colours'] || '[]'); } catch {}
+    if (statusEl) { statusEl.textContent = 'Saving…'; statusEl.className = 'mug-save-status'; }
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mug_text_colours: JSON.stringify(colours) }) }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      if (statusEl) { statusEl.textContent = '✓ Saved'; statusEl.className = 'mug-save-status ok'; }
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);
+    } catch (err) {
+      if (statusEl) { statusEl.textContent = '⚠ ' + err.message; statusEl.className = 'mug-save-status error'; }
+    }
+  }
+
+  // ── Image upload helpers ─────────────────────────────────────
+  const UPLOAD_API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api/upload-image';
+
+  async function uploadImage(file, targetInput, previewImg) {
+    const fd = new FormData();
+    fd.append('image', file);
+    try {
+      const res = await fetch(UPLOAD_API, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!data.success) { alert('Upload failed: ' + (data.error || 'Unknown error')); return; }
+      targetInput.value = data.url;
+      if (previewImg) {
+        previewImg.src = data.url;
+        previewImg.style.display = 'block';
+        const ph = previewImg.nextElementSibling;
+        if (ph) ph.style.display = 'none';
+      }
+    } catch (err) {
+      alert('Upload error: ' + err.message);
+    }
+  }
+
+  // ── Gallery (multiple lifestyle/hero shots) ──────────────────
+  document.addEventListener('click', e => {
+    const zone = e.target.closest('#gallery-zone');
+    if (!zone || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
+    input.addEventListener('change', ev => {
+      const files = Array.from(ev.target.files || []);
+      if (files.length) handleGalleryDrop(files);
+    });
+    input.click();
+  });
+
+  function getGalleryArr() {
+    try { return JSON.parse(products[current]['gallery_images'] || '[]'); } catch (e) { return []; }
+  }
+
+  async function saveGallery(arr) {
+    const productId = products[current]['Product ID'];
+    const res = await fetch(`https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gallery_images: JSON.stringify(arr) })
+    });
+    if (!res.ok) throw new Error(`API returned ${res.status}`);
+    products[current]['gallery_images'] = JSON.stringify(arr);
+  }
+
+  async function handleGalleryDrop(files) {
+    if (!files.length) return;
+    const productId = products[current]['Product ID'];
+    const arr = getGalleryArr();
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append('productId', `${productId}-gallery-${arr.length + 1}`);
+      fd.append('image', file);
+      try {
+        const res = await fetch(UPLOAD_API, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!data.success) { alert('Upload failed: ' + (data.error || 'Unknown error')); return; }
+        arr.push(data.filename);
+      } catch (err) { alert('Upload error: ' + err.message); return; }
+    }
+    try { await saveGallery(arr); } catch (err) { alert('Save failed: ' + err.message); return; }
+    render();
+  }
+
+  async function removeGalleryImage(idx) {
+    const arr = getGalleryArr();
+    arr.splice(idx, 1);
+    try { await saveGallery(arr); } catch (err) { alert('Save failed: ' + err.message); return; }
+    render();
+  }
+
+  async function handleListingsImageDrop(file, zone) {
+    const productId = (products[current] && products[current]['Product ID']) || 'unknown';
+    const fd = new FormData();
+    fd.append('productId', productId);
+    fd.append('image', file);
+    let data;
+    try {
+      const res = await fetch(UPLOAD_API, { method: 'POST', body: fd });
+      data = await res.json();
+      if (!data.success) { alert('Upload failed: ' + (data.error || 'Unknown error')); return; }
+    } catch (err) {
+      alert('Upload error: ' + err.message);
+      return;
+    }
+    const type = zone.dataset.imgDrop;
+    if (type === 'hero') {
+      const input = document.getElementById('imgurl-input');
+      if (input) {
+        input.value = data.filename;
+        await saveImageUrl();
+      }
+    } else if (type === 'mug') {
+      const inputId  = zone.dataset.mugInputId;
+      const field    = zone.dataset.mugField;
+      const statusId = zone.dataset.mugStatusId;
+      const input = document.getElementById(inputId);
+      if (input) {
+        input.value = data.filename;
+        // Update thumb
+        const thumb = document.getElementById(inputId + '-thumb');
+        if (thumb) {
+          const img = thumb.querySelector('img');
+          if (img) { img.src = data.url; img.style.display = 'block'; }
+          else { thumb.innerHTML = `<img src="${data.url}" style="width:100%;height:100%;object-fit:cover" />`; }
+          const ph = thumb.querySelector('span');
+          if (ph) ph.style.display = 'none';
+        }
+        await saveMugImageUrl(field, inputId, statusId);
+      }
+    } else if (type === 'personalisation') {
+      const input = document.getElementById('pers-imgurl-input');
+      if (input) {
+        input.value = data.filename;
+        await savePersImageUrl(data.url);
+      }
+    } else if (type === 'variant') {
+      const input = document.getElementById('vi-black-input');
+      if (input) {
+        input.value = data.url;
+        updateBlackThumb(input);
+        await saveBlackFinishUrl();
+      }
+    } else if (type === 'pod') {
+      const colour = zone.dataset.podColour;
+      const shot = zone.dataset.podShot;
+      await savePodGalleryShot(colour, shot, data.url, zone);
+    }
+  }
+
+  async function savePersImageUrl(url) {
+    const p = products[current];
+    if (!p) return;
+    const productId = p['Product ID'];
+    try {
+      const res = await fetch(`https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${encodeURIComponent(productId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personalisation_image_url: url })
+      });
+      if (res.ok) {
+        p['personalisation_image_url'] = url;
+        const preview = document.getElementById('pers-img-preview');
+        if (preview) {
+          preview.innerHTML = `<div class="img-drop-overlay">📎 Drop to replace</div>
+            <div class="field-group-title" style="margin-bottom:10px">Personalisation Preview Image</div>
+            <img src="${url}" alt="Personalisation preview" onerror="this.style.display='none'" />
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+              <a href="${url}" target="_blank" style="font-size:.8rem;color:var(--teal)">Open full ↗</a>
+              <button class="copy-btn" style="background:#c0392b;color:#fff" onclick="clearPersImage()">Remove</button>
+            </div>`;
+        }
+      }
+    } catch(e) { alert('Save failed: ' + e.message); }
+  }
+
+  async function clearPersImage() {
+    const p = products[current];
+    if (!p) return;
+    if (!confirm('Remove personalisation image?')) return;
+    const productId = p['Product ID'];
+    try {
+      await fetch(`https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${encodeURIComponent(productId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personalisation_image_url: '' })
+      });
+      p['personalisation_image_url'] = '';
+      render();
+    } catch(e) { alert('Clear failed: ' + e.message); }
+  }
+
+  // ── Render ────────────────────────────────────────────────────
+  function render() {
+    const p = products[current];
+    loadSavedPosts(p);
+    const idxEl = document.getElementById('idx-display');
+    const prevBtn = document.getElementById('btn-prev');
+    const nextBtn = document.getElementById('btn-next');
+    if (idxEl) idxEl.textContent = current + 1;
+    if (prevBtn) prevBtn.disabled = current === 0;
+    if (nextBtn) nextBtn.disabled = current === products.length - 1;
+
+    const readyToGo = isYes(p['Ready to Go']);
+    const hasImage  = !!toWebImageUrl(p['Image URL']);
+    const hasPosts  = Object.keys(generatedPosts).length > 0;
+
+    const fbGroupsPost       = p['fb_groups_post']       || '';
+    const fbGroupsDealPost   = p['fb_groups_deal_post']   || '';
+    const fbGroupsPosted     = p['fb_groups_posted']      || '';
+    const fbGroupsDealPosted = p['fb_groups_deal_posted'] || '';
+    const hasFbGroupsPosts   = !!(fbGroupsPost || fbGroupsDealPost);
+
+    const fieldRow = (label, value, fieldName, editable = false) => {
+      const empty = !value;
+      const safeId = fieldName ? fieldName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '') : '';
+      const editBtn = editable && fieldName
+        ? `<button class="field-edit-btn" onclick="startEdit('${escAttr(fieldName)}')">Edit</button>`
+        : '';
+      return `<div class="field-row" id="row-${safeId}">
+        <div class="field-label">${label}</div>
+        <div class="field-value${empty?' empty':''}" id="val-${safeId}">${empty?'(empty)':escHtml(value)}</div>
+        <div class="field-copy">
+          <button class="copy-btn" data-copy="${escAttr(value||'')}" onclick="copyField(this)"
+            ${empty?'disabled':''}>Copy</button>
+          ${editBtn}
+        </div>
+      </div>`;
+    };
+
+    const fieldDropdown = (label, value, fieldName, options) => {
+      const safeId = fieldName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+      const display = value || '(not set)';
+      const optionsEncoded = encodeURIComponent(JSON.stringify(options));
+      return `<div class="field-row" id="row-${safeId}">
+        <div class="field-label">${label}</div>
+        <div class="field-value" id="val-${safeId}">${escHtml(display)}</div>
+        <div class="field-copy">
+          <button class="field-edit-btn"
+            data-field="${escAttr(fieldName)}"
+            data-options="${escAttr(optionsEncoded)}"
+            onclick="startEditDropdown(this.dataset.field, JSON.parse(decodeURIComponent(this.dataset.options)))">Edit</button>
+        </div>
+      </div>`;
+    };
+
+    const flagHtml = col => {
+      const yes = isYes(p[col]);
+      if (col === 'Ready to Go') {
+        return `<button class="flag flag-toggle ${yes?'flag-yes':'flag-no'}" id="rtg-toggle"
+                  onclick="toggleReadyToGo(this)" title="Click to toggle">
+                  <span class="flag-label">Ready:</span> ${yes?'✓ Yes — click to pause':'✗ No — click to activate'}
+                </button>`;
+      }
+      return `<span class="flag ${yes?'flag-yes':'flag-no'}">
+                <span class="flag-label">${col.replace('Added to ','')}:</span> ${yes?'✓ Yes':'✗ No'}
+              </span>`;
+    };
+
+    const bulletRows = [1,2,3,4,5].map(n =>
+      fieldRow(`Bullet ${n}`, p[`Bullet Point ${n}`], `Bullet Point ${n}`, true)
+    ).join('');
+
+    const webImg = toWebImageUrl(p['Image URL']);
+    const imageHtml = webImg
+      ? `<div class="image-preview" id="img-preview" data-img-drop="hero" style="position:relative">
+           <div class="img-drop-overlay">📎 Drop to replace</div>
+           <div class="field-group-title" style="margin-bottom:10px">Product Image</div>
+           <img src="${escAttr(webImg)}" alt="Product image" onerror="this.style.display='none'" />
+           <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+             <a href="${escAttr(webImg)}" target="_blank" style="font-size:.8rem;color:var(--teal)">Open full ↗</a>
+             <button class="copy-btn" data-copy="${escAttr(webImg)}" onclick="copyField(this)">Copy URL</button>
+           </div>
+         </div>`
+      : `<div class="image-preview" id="img-preview" data-img-drop="hero" style="position:relative">
+           <div class="img-drop-overlay">📎 Drop image here to add</div>
+           <div class="no-image">No image — drop file here</div>
+         </div>`;
+
+    let galleryArr = [];
+    try { galleryArr = JSON.parse(p['gallery_images'] || '[]'); } catch (e) { galleryArr = []; }
+    const galleryThumbs = galleryArr.map((fn, i) => {
+      const u = toWebImageUrl(fn);
+      return `<div style="position:relative;display:inline-block">
+        <img src="${escAttr(u)}" alt="${escAttr(fn)}" style="width:74px;height:74px;object-fit:cover;border-radius:6px;border:1px solid #ddd" onerror="this.style.opacity='0.3'">
+        <button onclick="removeGalleryImage(${i})" title="Remove" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#c0392b;color:#fff;font-size:11px;line-height:1;cursor:pointer">✕</button>
+      </div>`;
+    }).join('');
+    const galleryHtml = `<div class="image-preview" id="gallery-zone" data-img-drop="gallery" style="position:relative;margin-top:12px">
+        <div class="img-drop-overlay">📎 Drop images here (multiple OK)</div>
+        <div class="field-group-title" style="margin-bottom:10px">Gallery — lifestyle &amp; extra shots <span style="font-weight:400;color:#888;font-size:0.78rem">(shown as thumbnails in the store product view)</span></div>
+        <div id="gallery-thumbs" style="display:flex;flex-wrap:wrap;gap:10px">${galleryThumbs || '<span style="color:#999;font-size:0.85rem">No gallery images yet — drag photos here or click to choose</span>'}</div>
+      </div>`;
+
+    const persImgUrl = toWebImageUrl(p['personalisation_image_url'] || '');
+    const persImageHtml = persImgUrl
+      ? `<div class="image-preview" id="pers-img-preview" data-img-drop="personalisation" style="position:relative;margin-top:12px">
+           <div class="img-drop-overlay">📎 Drop to replace</div>
+           <div class="field-group-title" style="margin-bottom:10px">Personalisation Preview Image</div>
+           <img src="${escAttr(persImgUrl)}" alt="Personalisation preview" onerror="this.style.display='none'" />
+           <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+             <a href="${escAttr(persImgUrl)}" target="_blank" style="font-size:.8rem;color:var(--teal)">Open full ↗</a>
+             <button class="copy-btn" data-copy="${escAttr(persImgUrl)}" onclick="copyField(this)">Copy URL</button>
+             <button class="copy-btn" style="background:#c0392b;color:#fff" onclick="clearPersImage()">Remove</button>
+           </div>
+         </div>`
+      : `<div class="image-preview" id="pers-img-preview" data-img-drop="personalisation" style="position:relative;margin-top:12px">
+           <div class="img-drop-overlay">📎 Drop personalisation image here</div>
+           <div class="no-image" style="font-size:0.85rem;color:#999">Optional: Drop personalised version here</div>
+         </div>`;
+
+    const existingPostsHtml = generatedPosts && Object.keys(generatedPosts).length > 0
+      ? `<div class="social-results" id="social-results"></div>`
+      : `<div class="social-results" id="social-results"></div>`;
+
+    const productId = p['Product ID'] || '';
+    const reelGenAt = p['reel_generated_at'] || '';
+    const reelLabel = reelGenAt ? '🔄 Regenerate Reel' : '🎬 Generate Reel';
+    const reelStatus = reelGenAt ? `<div class="reel-stamp">Last generated: ${reelGenAt}</div>` : '';
+
+    document.getElementById('product-card').innerHTML = `
+      <div class="card-header">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <div class="product-id-badge">ID: ${escHtml(p['Product ID']||'—')}</div>
+          <a href="https://craftsbyjon.co.uk/store/?preview=${encodeURIComponent(productId)}" target="_blank" rel="noopener"
+             style="background:rgba(255,255,255,0.2);color:#fff;font-size:.75rem;padding:4px 10px;border-radius:20px;text-decoration:none;font-weight:500;white-space:nowrap">
+             👁 Preview
+          </a>
+        </div>
+        <div class="card-title">${escHtml(p['Title']||'Untitled Product')}</div>
+      </div>
+
+      <div class="status-flags">${STATUS_COLS.map(flagHtml).join('')}</div>
+
+      <div class="fields">
+        <div class="field-group">
+          <div class="field-group-title">Core Listing Fields</div>
+          ${fieldRow('Product ID',        p['Product ID'],         null,                  false)}
+          ${fieldRow('Title',             p['Title'],              'Title',               true)}
+          ${fieldRow('Short Description', p['Short Description'],  'Short Description',   true)}
+          ${fieldRow('Full Description',  p['Full Description'],   'Full Description',    true)}
+          <div class="field-row" id="row-regenerate-listing">
+            <div class="field-label"></div>
+            <div class="field-value"></div>
+            <div class="field-copy">
+              <button class="field-edit-btn" id="regen-listing-btn" onclick="regenerateListing()">🔄 Regenerate Listing</button>
+            </div>
+          </div>
+          <div id="regen-listing-status" style="font-size:.8rem;margin-top:-6px;margin-bottom:8px"></div>
+        </div>
+        <div class="field-group">
+          <div class="field-group-title">Bullet Points</div>
+          ${bulletRows}
+        </div>
+        <div class="field-group">
+          <div class="field-group-title">Production Details</div>
+          ${fieldDropdown('Product Type', p['product_type'] || '', 'product_type', ['', 'Bookmark', 'Keyring', 'Sticker', 'Mug', 'Tote Bag', 'T-Shirt', 'Print', 'Mouse Mat', 'Coaster Set', 'Fridge Magnet'])}
+          ${fieldDropdown('Material', p['material'] || p['Material'], 'material', ['Acrylic', 'Sticker Sheet', 'Cotton', 'Cotton Canvas', 'Ceramic', 'Neoprene'])}
+          ${fieldDropdown('Application Method', p['application_method'] || p['Application Method'], 'application_method', ['UV DTF', 'Cut Vinyl', 'UV DTF + Cut Vinyl', 'Print on Demand (Gelato)', 'Print on Demand (Papello)'])}
+          ${fieldDropdown('Original Design', p['original_design'] || p['Original Design'], 'original_design', ['Yes', 'No'])}
+          <div class="field-row" id="row-personalised">
+            <div class="field-label">Personalised available</div>
+            <div class="field-value" id="val-personalised">${p.personalised === 1 ? 'Yes (+£1.50)' : 'No'}</div>
+            <div class="field-copy">
+              <button class="field-edit-btn" onclick="startEditPersonalised()">Edit</button>
+            </div>
+          </div>
+          ${p.personalised === 1 ? `<div class="field-row" id="row-personalisationnote">
+            <div class="field-label">Personalisation note</div>
+            <div class="field-value${!p.personalisation_note ? ' empty' : ''}" id="val-personalisationnote">${p.personalisation_note ? escHtml(p.personalisation_note) : '(empty)'}</div>
+            <div class="field-copy">
+              <button class="copy-btn" data-copy="${escAttr(p.personalisation_note || '')}" onclick="copyField(this)"${!p.personalisation_note ? ' disabled' : ''}>Copy</button>
+              <button class="field-edit-btn" onclick="startEdit('personalisation_note')">Edit</button>
+            </div>
+          </div>` : ''}
+          ${fieldDropdown('Collection', p['Collection'] || '', 'Collection', ['', ...collectionsOptions])}
+          <div class="field-row" id="row-price">
+            <div class="field-label">Price</div>
+            <div class="field-value" id="val-price">£${parseFloat(p.price || 3.50).toFixed(2)}</div>
+            <div class="field-copy">
+              <button class="field-edit-btn" onclick="startEditPrice()">Edit</button>
+            </div>
+          </div>
+        </div>
+        ${renderVariantsPanel(p)}
+        ${renderVariantImagesPanel(p)}
+        ${renderMugPanel(p)}
+        ${renderPodGalleryPanel(p)}
+        <div class="field-group">
+          <div class="field-group-title">Search Tags</div>
+          ${fieldRow('Search Tags', p['Search Tags'])}
+        </div>
+      </div>
+
+      ${imageHtml}
+      ${galleryHtml}
+      ${persImageHtml}
+      <input type="hidden" id="pers-imgurl-input" value="${escAttr(p['personalisation_image_url'] || '')}" />
+
+      <div class="social-panel">
+        <div class="social-header">
+          🐝 Generate Social Posts
+          <em>Powered by Groq AI</em>
+        </div>
+        <div class="social-body">
+          ${!readyToGo ? `<div class="social-not-ready">⚠ Set "Ready to Go" to Yes before generating posts</div>` : ''}
+          ${!hasImage ? `<div class="social-not-ready" style="color:#b45309">⚠ No image set — Instagram button will be disabled</div>` : ''}
+          <button class="social-generate-btn" id="social-gen-btn"
+            onclick="generateSocialPosts()"
+            ${readyToGo ? '' : 'disabled'}>
+            <span class="btn-spinner"></span>
+            <span class="btn-label">${hasPosts ? '🔄 Regenerate Posts' : '🐝 Generate Social Posts'}</span>
+          </button>
+          <div id="social-gen-status" class="madebyme-status" style="margin-top:8px"></div>
+          <div id="social-results"></div>
+        </div>
+      </div>
+
+      <div class="fbg-panel">
+        <div class="fbg-header">
+          📘 Facebook Groups Posts
+          <em>UK Groups &amp; Deal Community</em>
+        </div>
+        <div class="fbg-body">
+          <button class="fbg-generate-btn" id="fbg-gen-btn" onclick="generateFbGroupsPosts()">
+            <span class="btn-spinner"></span>
+            <span class="btn-label">${hasFbGroupsPosts ? '🔄 Regenerate' : '📘 Generate FB Groups Posts'}</span>
+          </button>
+          <div id="fbg-gen-status" class="fbg-gen-status"></div>
+          <div class="fbg-posts">
+            <div class="fbg-post-card">
+              <div class="fbg-post-card-header">🇬🇧 UK Groups</div>
+              <div class="fbg-post-text" id="val-fbgroupspost">${fbGroupsPost ? escHtml(fbGroupsPost) : '<span class="empty">(not generated yet)</span>'}</div>
+              <div class="fbg-post-actions">
+                <button class="social-btn social-btn-copy" onclick="copyFbGroupsPost(this, 'fb_groups_post')">📋 Copy</button>
+                <button class="field-edit-btn" onclick="startEdit('fb_groups_post')">Edit</button>
+                <button class="fbg-mark-btn${fbGroupsPosted ? ' fbg-posted' : ''}" id="fbg-mark-uk"
+                  onclick="markFbGroupsPosted('fb_groups_posted')">${fbGroupsPosted ? `✓ Posted ${escHtml(fbGroupsPosted)}` : 'Mark Posted'}</button>
+                <span class="fbg-post-status" id="fbg-status-uk"></span>
+              </div>
+            </div>
+            <div class="fbg-post-card">
+              <div class="fbg-post-card-header">📍 Deal Groups</div>
+              <div class="fbg-post-text" id="val-fbgroupsdealpost">${fbGroupsDealPost ? escHtml(fbGroupsDealPost) : '<span class="empty">(not generated yet)</span>'}</div>
+              <div class="fbg-post-actions">
+                <button class="social-btn social-btn-copy" onclick="copyFbGroupsPost(this, 'fb_groups_deal_post')">📋 Copy</button>
+                <button class="field-edit-btn" onclick="startEdit('fb_groups_deal_post')">Edit</button>
+                <button class="fbg-mark-btn${fbGroupsDealPosted ? ' fbg-posted' : ''}" id="fbg-mark-deal"
+                  onclick="markFbGroupsPosted('fb_groups_deal_posted')">${fbGroupsDealPosted ? `✓ Posted ${escHtml(fbGroupsDealPosted)}` : 'Mark Posted'}</button>
+                <span class="fbg-post-status" id="fbg-status-deal"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reel-panel">
+        <div class="reel-header">
+          🎬 Video Reel
+          <em>ElevenLabs + FFmpeg</em>
+        </div>
+        <div class="reel-body">
+          ${reelStatus}
+          <label style="font-size:0.78rem;font-weight:600;color:var(--text-soft);
+                        text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:5px">
+            Occasion (optional)
+          </label>
+          <select id="reel-occasion-select"
+            style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;
+                   font-family:'DM Sans',sans-serif;font-size:0.88rem;background:var(--bg-muted);
+                   color:var(--text);margin-bottom:10px">
+            <option value="">— None —</option>
+            <option value="Father's Day">Father's Day</option>
+            <option value="Mother's Day">Mother's Day</option>
+            <option value="Birthday">Birthday</option>
+            <option value="Christmas">Christmas</option>
+            <option value="Valentine's Day">Valentine's Day</option>
+            <option value="Easter">Easter</option>
+            <option value="Teacher gift">Teacher gift</option>
+            <option value="End of school year">End of school year</option>
+            <option value="Wedding or anniversary">Wedding or anniversary</option>
+            <option value="New baby">New baby</option>
+            <option value="Retirement">Retirement</option>
+            <option value="Thank you gift">Thank you gift</option>
+          </select>
+          <button class="social-generate-btn" id="reel-gen-btn-${productId}"
+            onclick="openReelStudio()">
+            <span class="btn-label">${reelLabel}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="stripe-panel">
+        <div class="stripe-header">
+          💳 Stripe
+          <em>Payment links</em>
+        </div>
+        <div class="stripe-body">
+          ${p.stripe_payment_link
+            ? `<div class="stripe-active">
+                 <span class="stripe-ok">✓ Stripe link active</span>
+                 <span class="stripe-url">${escHtml(p.stripe_payment_link)}</span>
+               </div>
+               <button class="stripe-btn" id="stripe-btn" onclick="createStripeLink()">
+                 <span class="stripe-btn-spinner"></span>
+                 <span class="stripe-btn-label">🔄 Recreate</span>
+               </button>`
+            : `<button class="stripe-btn" id="stripe-btn" onclick="createStripeLink()">
+                 <span class="stripe-btn-spinner"></span>
+                 <span class="stripe-btn-label">💳 Create Stripe Link</span>
+               </button>`
+          }
+          <div id="stripe-status" class="stripe-status"></div>
+        </div>
+      </div>
+
+      <div class="imgurl-panel">
+        <div class="imgurl-header">
+          Hero Image (filename only, e.g. bee-kind-bookmark.jpg)
+          <em>Also used for Clear finish</em>
+        </div>
+        <div class="imgurl-body">
+          <div class="imgurl-current" id="imgurl-current">
+            ${renderImgCurrent(p['Image URL'])}
+          </div>
+          <div class="imgurl-input-row">
+            <input id="imgurl-input" class="imgurl-input" type="text"
+              placeholder="e.g. bee-kind-bookmark.jpg"
+              value="${escAttr(p['Image URL'] || '')}"
+              onkeydown="if(event.key==='Enter') saveImageUrl()" />
+            <button id="imgurl-save" class="imgurl-save" onclick="saveImageUrl()">Save</button>
+          </div>
+          <div id="imgurl-status" class="imgurl-status"></div>
+        </div>
+      </div>
+
+      <div class="generated-at">Generated at: ${escHtml(p['Generated At']||'—')}</div>
+      <button class="delete-product-btn" onclick="deleteProduct()">🗑 Delete this product</button>
+    `;
+
+    if (generatedPosts && Object.keys(generatedPosts).length > 0) {
+      renderSocialResults(p);
+    }
+  }
+
+  function startEditPersonalised() {
+    const valDiv = document.getElementById('val-personalised');
+    if (!valDiv) return;
+    const currentVal = products[current].personalised === 1 ? '1' : '0';
+    valDiv.innerHTML = `
+      <select class="field-edit-select" id="edit-personalised">
+        <option value="0" ${currentVal === '0' ? 'selected' : ''}>No</option>
+        <option value="1" ${currentVal === '1' ? 'selected' : ''}>Yes (+£1.50)</option>
+      </select>
+      <div class="field-edit-actions">
+        <button class="field-save-btn" onclick="savePersonalisedField()">Save</button>
+        <button class="field-cancel-btn" onclick="cancelEditPersonalised()">Cancel</button>
+      </div>
+      <div class="field-save-status" id="status-personalised"></div>
+    `;
+  }
+
+  async function savePersonalisedField() {
+    const select = document.getElementById('edit-personalised');
+    const statusEl = document.getElementById('status-personalised');
+    if (!select) return;
+    const newValue = parseInt(select.value, 10);
+    const productId = products[current]['Product ID'];
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'field-save-status';
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ personalised: newValue }) }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      products[current].personalised = newValue;
+      statusEl.textContent = '✓ Saved';
+      statusEl.className = 'field-save-status ok';
+      setTimeout(() => {
+        const valDiv = document.getElementById('val-personalised');
+        if (valDiv) valDiv.innerHTML = newValue === 1 ? 'Yes (+£1.50)' : 'No';
+        const noteRow = document.getElementById('row-personalisationnote');
+        if (newValue === 1 && !noteRow) {
+          const persRow = document.getElementById('row-personalised');
+          if (persRow) {
+            persRow.insertAdjacentHTML('afterend',
+              `<div class="field-row" id="row-personalisationnote">
+                <div class="field-label">Personalisation note</div>
+                <div class="field-value empty" id="val-personalisationnote">(empty)</div>
+                <div class="field-copy">
+                  <button class="copy-btn" data-copy="" onclick="copyField(this)" disabled>Copy</button>
+                  <button class="field-edit-btn" onclick="startEdit('personalisation_note')">Edit</button>
+                </div>
+              </div>`
+            );
+          }
+        } else if (newValue === 0 && noteRow) {
+          noteRow.remove();
+        }
+      }, 800);
+    } catch (err) {
+      statusEl.textContent = '⚠ Failed: ' + err.message;
+      statusEl.className = 'field-save-status error';
+    }
+  }
+
+  function cancelEditPersonalised() {
+    const valDiv = document.getElementById('val-personalised');
+    if (!valDiv) return;
+    valDiv.innerHTML = products[current].personalised === 1 ? 'Yes (+£1.50)' : 'No';
+  }
+
+  async function createStripeLink() {
+    const p = products[current];
+    const productId = p['Product ID'];
+    const btn = document.getElementById('stripe-btn');
+    const statusEl = document.getElementById('stripe-status');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    if (statusEl) statusEl.textContent = '';
+    try {
+      const res = await fetch(
+        `https://craftsbyjon.co.uk/n8n-proxy/products-api/products/${productId}/create-stripe-link`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      products[current].stripe_payment_link = data.stripe_payment_link;
+      render();
+    } catch (e) {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      if (statusEl) { statusEl.className = 'stripe-status error'; statusEl.textContent = 'Error: ' + e.message; }
+    }
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escAttr(s) {
+    return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+</script>
+<script src="/staff/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff Dashboard — Crafts by Jon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #E0F7FA;
+      --bg-card:      #ffffff;
+      --bg-muted:     #f0fbfc;
+      --text:         #4A4A4A;
+      --text-soft:    #888;
+      --accent:       #FF7F50;
+      --accent-hover: #e86e40;
+      --teal:         #20B2AA;
+      --teal-light:   #d0f0ee;
+      --teal-hover:   #1a9992;
+      --border:       #c8ebed;
+      --green:        #4CAF50;
+      --green-light:  #e8f5e9;
+      --radius:       12px;
+      --shadow:       0 2px 16px rgba(32,178,170,0.10);
+      --social:       #7C3AED;
+      --social-light: #ede9fe;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    header {
+      background: var(--teal);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(32,178,170,0.25);
+    }
+    header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    header span { font-size: 0.82rem; opacity: 0.8; font-weight: 300; }
+
+    .wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 36px 20px 0;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--teal);
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .section { margin-bottom: 36px; }
+
+    /* ── Tool cards grid ── */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .tool-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 20px;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .tool-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(32,178,170,0.15);
+      border-color: var(--teal);
+    }
+    .tool-card-icon {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+    .tool-card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--teal);
+    }
+    .tool-card-desc {
+      font-size: 0.82rem;
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+    .tool-card-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-top: 4px;
+      align-self: flex-start;
+    }
+    .badge-teal  { background: var(--teal-light); color: var(--teal-hover); }
+    .badge-social { background: var(--social-light); color: var(--social); }
+    .badge-green { background: var(--green-light); color: #2e7d32; }
+
+    @media (max-width: 600px) {
+      header { padding: 14px 16px; }
+      .wrapper { padding: 20px 12px 0; }
+      .tool-grid, .action-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✂️ Crafts by Jon — Staff</h1>
+  <span>Dashboard</span>
+</header>
+
+<div class="wrapper">
+
+  <div class="page-title">Staff Dashboard</div>
+
+  <!-- ── Live status tiles ── -->
+  <div id="live-tiles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:34px;">
+    <a href="/staff/orders.html" style="text-decoration:none;background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--text);">
+      <div id="tile-pending" style="font-size:1.9rem;font-weight:700;color:var(--accent);">—</div>
+      <div style="font-size:0.78rem;color:var(--text-soft);margin-top:2px;">Pending orders</div>
+    </a>
+    <a href="/staff/orders.html" style="text-decoration:none;background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--text);">
+      <div id="tile-revenue" style="font-size:1.9rem;font-weight:700;color:var(--green);">—</div>
+      <div style="font-size:0.78rem;color:var(--text-soft);margin-top:2px;">Total revenue</div>
+    </a>
+    <a href="/staff/traffic.html" style="text-decoration:none;background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--text);">
+      <div id="tile-clicks" style="font-size:1.9rem;font-weight:700;color:var(--teal);">—</div>
+      <div style="font-size:0.78rem;color:var(--text-soft);margin-top:2px;">Clicks (24h)</div>
+    </a>
+    <a href="/staff/listings.html" style="text-decoration:none;background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--text);">
+      <div id="tile-unposted" style="font-size:1.9rem;font-weight:700;color:var(--social);">—</div>
+      <div style="font-size:0.78rem;color:var(--text-soft);margin-top:2px;">Unposted products</div>
+    </a>
+    <a href="/staff/priorities.html" style="text-decoration:none;background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--text);">
+      <div id="tile-tasks" style="font-size:1.9rem;font-weight:700;color:#4A90E2;">—</div>
+      <div style="font-size:0.78rem;color:var(--text-soft);margin-top:2px;">Open tasks</div>
+    </a>
+    <a href="/staff/stock.html" style="text-decoration:none;background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;text-align:center;color:var(--text);">
+      <div id="tile-lowstock" style="font-size:1.9rem;font-weight:700;color:#d9342b;">—</div>
+      <div style="font-size:0.78rem;color:var(--text-soft);margin-top:2px;">Low / zero stock</div>
+    </a>
+  </div>
+
+  <!-- ── Products ── -->
+  <div class="section">
+    <div class="section-title">📦 Products</div>
+    <div class="tool-grid">
+
+      <a class="tool-card" href="/staff/listings.html">
+        <div class="tool-card-icon">📋</div>
+        <div class="tool-card-title">Product Listings</div>
+        <div class="tool-card-desc">Browse and manage all products, copy social posts, update listing content.</div>
+        <span class="tool-card-badge badge-teal">Browse & Edit</span>
+      </a>
+
+      <a class="tool-card" href="/staff/new-product.html">
+        <div class="tool-card-icon">➕</div>
+        <div class="tool-card-title">Add New Product</div>
+        <div class="tool-card-desc">Add a bookmark, keyring or other product. Auto-generates ID and triggers description generation.</div>
+        <span class="tool-card-badge badge-teal">Products</span>
+      </a>
+
+      <a class="tool-card" href="/staff/collections.html">
+        <div class="tool-card-icon">🗂</div>
+        <div class="tool-card-title">Collections</div>
+        <div class="tool-card-desc">Manage collections. Add, rename, archive, set sort order and campaign focus.</div>
+        <span class="tool-card-badge badge-teal">Organise</span>
+      </a>
+
+      <a class="tool-card" href="/staff/stock.html">
+        <div class="tool-card-icon">📦</div>
+        <div class="tool-card-title">Stock Levels</div>
+        <div class="tool-card-desc">Design (UVDTF transfer) and blank stock counts. Enter your physical stock count here.</div>
+        <span class="tool-card-badge badge-teal">Inventory</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── Orders & Store ── -->
+  <div class="section">
+    <div class="section-title">🛒 Orders & Store</div>
+    <div class="tool-grid">
+
+      <a class="tool-card" href="/staff/orders.html">
+        <div class="tool-card-icon">📦</div>
+        <div class="tool-card-title">Orders</div>
+        <div class="tool-card-desc">View all orders, mark as dispatched, trigger dispatch emails.</div>
+        <span class="tool-card-badge badge-green">Orders</span>
+      </a>
+
+      <a class="tool-card" href="/staff/promo-codes.html">
+        <div class="tool-card-icon">🏷</div>
+        <div class="tool-card-title">Promo Codes</div>
+        <div class="tool-card-desc">Create discount codes, link campaigns for auto-apply, toggle on/off.</div>
+        <span class="tool-card-badge badge-green">Discounts</span>
+      </a>
+
+      <a class="tool-card" href="https://dashboard.stripe.com" target="_blank">
+        <div class="tool-card-icon">💳</div>
+        <div class="tool-card-title">Stripe Dashboard</div>
+        <div class="tool-card-desc">Full order details, addresses, payments and payouts. Use for dispatch labels.</div>
+        <span class="tool-card-badge badge-green">Payments</span>
+      </a>
+
+      <a class="tool-card" href="https://craftsbyjon.co.uk/store/" target="_blank">
+        <div class="tool-card-icon">🛍</div>
+        <div class="tool-card-title">Live Store</div>
+        <div class="tool-card-desc">The live customer-facing store. Check it's working correctly.</div>
+        <span class="tool-card-badge badge-green">Live Shop</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── Finance ── -->
+  <div class="section">
+    <div class="section-title">💷 Finance</div>
+    <div class="tool-grid">
+
+      <a class="tool-card" href="/staff/finance.html">
+        <div class="tool-card-icon">💷</div>
+        <div class="tool-card-title">Log Transaction</div>
+        <div class="tool-card-desc">Manually log an expense or income. Penny will send a classify link via Telegram.</div>
+        <span class="tool-card-badge badge-teal">Finance</span>
+      </a>
+
+      <a class="tool-card" href="https://docs.google.com/spreadsheets/d/1zWvD1970tf1LQ5PH0SPy2rp0C21bDPVcDkjCYNFx_Cw" target="_blank">
+        <div class="tool-card-icon">📊</div>
+        <div class="tool-card-title">Finance Sheet</div>
+        <div class="tool-card-desc">Full transaction ledger. Income, expenses, P&L. Managed by Penny.</div>
+        <span class="tool-card-badge badge-green">Google Sheets</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── Workflow ── -->
+  <div class="section">
+    <div class="section-title">🛠 Workflow</div>
+    <div class="tool-grid">
+
+      <a class="tool-card" href="/staff/priorities.html">
+        <div class="tool-card-icon">✅</div>
+        <div class="tool-card-title">Priorities</div>
+        <div class="tool-card-desc">Project and task tracker. What Claude and Jon are working on, status and handovers.</div>
+        <span class="tool-card-badge badge-teal">Tasks</span>
+      </a>
+
+      <a class="tool-card" href="/staff/reel-studio.html">
+        <div class="tool-card-icon">🎬</div>
+        <div class="tool-card-title">Reel Studio</div>
+        <div class="tool-card-desc">Generate product reels — six styles, voiceover, music, render and post.</div>
+        <span class="tool-card-badge badge-social">Video</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── Redirects & Tracking ── -->
+  <div class="section">
+    <div class="section-title">🔗 Redirects & Tracking</div>
+    <div class="tool-grid">
+
+      <a class="tool-card" href="/staff/traffic.html">
+        <div class="tool-card-icon">📈</div>
+        <div class="tool-card-title">Traffic</div>
+        <div class="tool-card-desc">Clicks by source, product and day from all tracked links. See which Facebook groups actually convert.</div>
+        <span class="tool-card-badge badge-teal">Analytics</span>
+      </a>
+
+    </div>
+  </div>
+
+
+</div>
+
+<script>
+(async function () {
+  function set(id, v) { document.getElementById(id).textContent = v; }
+  // Orders stats
+  try {
+    const r = await fetch('https://craftsbyjon.co.uk/n8n-proxy/orders-api/orders/stats');
+    const { result } = await r.json();
+    set('tile-pending', result.pending);
+    set('tile-revenue', result.revenue_formatted);
+  } catch (e) { set('tile-pending', '?'); set('tile-revenue', '?'); }
+  // Clicks last 24h
+  try {
+    const r = await fetch('/staff/clicks.json?days=1');
+    const { count } = await r.json();
+    set('tile-clicks', count);
+  } catch (e) { set('tile-clicks', '?'); }
+  // Open tasks (pending + in_progress)
+  try {
+    const r = await fetch('https://craftsbyjon.co.uk/n8n-proxy/priorities-api/tasks');
+    const { tasks } = await r.json();
+    const n = (tasks || []).filter(t => t.status === 'pending' || t.status === 'in_progress').length;
+    set('tile-tasks', n);
+  } catch (e) { set('tile-tasks', '?'); }
+  // Unposted products (has pre-written FB post, never sent)
+  try {
+    const r = await fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/products');
+    const { result } = await r.json();
+    const n = result.filter(p => p['FB Sales'] && !p['FB Posts Sent']).length;
+    set('tile-unposted', n);
+  } catch (e) { set('tile-unposted', '?'); }
+  // Low/zero stock (blanks below threshold + tracked designs under 2)
+  try {
+    const [blanksRes, designsRes] = await Promise.all([
+      fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/stock/blanks'),
+      fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/stock/designs')
+    ]);
+    const { blanks } = await blanksRes.json();
+    const { designs } = await designsRes.json();
+    const lowBlanks = (blanks || []).filter(b => b.quantity_remaining < b.low_stock_threshold).length;
+    const lowDesigns = (designs || []).filter(d => d.design_stock_tracked === 1 && d.design_stock_qty < 2).length;
+    set('tile-lowstock', lowBlanks + lowDesigns);
+  } catch (e) { set('tile-lowstock', '?'); }
+})();
+</script>
+
+<script src="/staff/nav.js"></script>
+</body>
+</html>

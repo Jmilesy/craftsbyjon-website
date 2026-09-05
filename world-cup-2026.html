@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>World Cup 2026 — AI Prediction Battle | craftsbyjon.co.uk</title>
+<meta name="description" content="6 AI models predict the FIFA World Cup 2026 top 4. Track results and find out who got it right.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070d14;--surface:#0e1a25;--card:#12202e;--card2:#172535;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --gold:#f0c040;--gold-dim:#a88420;--gold-bg:rgba(240,192,64,.08);
+  --green:#3ecf8e;--red:#f87171;--blue:#60a5fa;
+  --text:#e8f0f8;--muted:#6a849e;--muted2:#4a6478;
+  --font-head:'Bebas Neue',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+html{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:16px;line-height:1.6;scroll-behavior:smooth}
+body{min-height:100vh;padding-bottom:4rem}
+a{color:var(--gold-dim);text-decoration:none}a:hover{color:var(--gold)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 1.25rem}
+
+/* Header */
+header{border-bottom:1px solid var(--border);padding:1rem 0;position:sticky;top:0;background:rgba(7,13,20,.95);backdrop-filter:blur(8px);z-index:100}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.site-tag{font-size:12px;color:var(--muted);font-family:var(--font-mono);letter-spacing:.06em}
+.live-badge{font-size:11px;font-family:var(--font-mono);color:var(--green);background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.2);border-radius:20px;padding:3px 10px;display:none}
+.live-badge.visible{display:inline-block}
+.live-dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-right:5px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Nav tabs */
+.nav-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:.75rem 0 0}
+.nav-tab{font-size:12px;font-family:var(--font-mono);color:var(--muted);background:none;border:1px solid var(--border);border-radius:6px;padding:4px 12px;cursor:pointer;transition:all .2s;text-decoration:none}
+.nav-tab:hover{border-color:var(--border2);color:var(--text)}
+
+/* Hero */
+.hero{padding:3rem 0 2rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-80px;right:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(240,192,64,.05) 0%,transparent 65%);pointer-events:none;z-index:0}
+.hero-content{position:relative;z-index:1}
+.eyebrow{font-family:var(--font-mono);font-size:11px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem}
+.hero-title{font-family:var(--font-head);font-size:clamp(56px,10vw,96px);line-height:.92;color:var(--text);margin-bottom:.75rem;letter-spacing:.01em}
+.hero-title .accent{color:var(--gold)}
+.hero-sub{font-size:16px;color:var(--muted);max-width:540px;line-height:1.7;margin-bottom:1.5rem}
+#last-updated{font-size:12px;color:var(--muted2);font-family:var(--font-mono);margin-top:.5rem}
+
+/* Countdown */
+.countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:460px;margin-bottom:1rem}
+.cd-unit{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.875rem .75rem;text-align:center}
+.cd-num{font-family:var(--font-mono);font-size:clamp(26px,4.5vw,38px);font-weight:500;color:var(--text);display:block;font-variant-numeric:tabular-nums}
+.cd-label{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:3px;display:block}
+
+/* Sections */
+.section{padding:2.5rem 0;border-top:1px solid var(--border)}
+.section-title{font-family:var(--font-head);font-size:clamp(26px,4vw,34px);letter-spacing:.02em;color:var(--text);margin-bottom:4px}
+.section-title .accent{color:var(--gold)}
+.section-sub{font-size:14px;color:var(--muted);margin-bottom:1.25rem;line-height:1.6}
+
+/* Consensus */
+.consensus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.c-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem 1rem;text-align:center;transition:border-color .2s}
+.c-card:hover{border-color:var(--border2)}
+.c-card.first{border-color:var(--gold-dim)}
+.c-flag{font-size:38px;line-height:1.3;margin-bottom:.5rem}
+.c-pos{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.c-team{font-family:var(--font-head);font-size:21px;letter-spacing:.03em;color:var(--text)}
+.c-pts{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:4px}
+
+/* Prediction cards */
+.pred-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.pred-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color .2s}
+.pred-card:hover{border-color:var(--border2)}
+.pred-top-bar{height:4px}
+.pred-body{padding:1.25rem}
+.pred-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem}
+.pred-name{font-family:var(--font-head);font-size:22px;letter-spacing:.03em;line-height:1}
+.pred-maker{font-size:12px;color:var(--muted);margin-top:2px}
+.pred-conf-label{font-size:11px;color:var(--muted);text-align:right}
+.pred-conf-val{font-family:var(--font-mono);font-size:18px;font-weight:500;text-align:right}
+.pos-list{margin-bottom:12px}
+.pos-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.pos-row:last-child{border-bottom:none}
+.pos-num{font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:28px}
+.pos-flag{font-size:20px;line-height:1}
+.pos-team{font-size:14px;font-weight:500}
+.pos-team.eliminated{color:var(--muted2);text-decoration:line-through}
+.pos-alive-dot{width:7px;height:7px;background:var(--green);border-radius:50%;margin-left:auto;flex-shrink:0}
+.pos-out-tag{font-size:10px;color:var(--red);font-family:var(--font-mono);margin-left:auto;flex-shrink:0}
+.dark-horse-pill{display:flex;align-items:center;gap:7px;background:var(--surface);border-radius:8px;padding:7px 10px;margin-bottom:10px}
+.dh-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.dh-team{font-size:13px;font-weight:500}
+.dh-team.eliminated{color:var(--muted2);text-decoration:line-through}
+.dh-alive{font-size:11px;color:var(--green);margin-left:auto;font-family:var(--font-mono)}
+.dh-out{font-size:11px;color:var(--red);margin-left:auto;font-family:var(--font-mono)}
+.toggle-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--muted);font-size:13px;font-family:var(--font-body);cursor:pointer;transition:border-color .2s,color .2s}
+.toggle-btn:hover{border-color:var(--border2);color:var(--text)}
+.toggle-arrow{transition:transform .25s;font-size:11px}
+.toggle-arrow.open{transform:rotate(180deg)}
+.reasons{display:none;border-top:1px solid var(--border);margin-top:12px;padding-top:12px}
+.reasons.open{display:block}
+.reason-item{margin-bottom:12px}
+.reason-item:last-child{margin-bottom:0}
+.reason-team-head{font-size:13px;font-weight:500;margin-bottom:3px}
+.reason-text{font-size:13px;color:var(--muted);line-height:1.65}
+
+/* Group tables */
+.groups-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.group-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.group-header{background:var(--card2);padding:.625rem 1rem;font-family:var(--font-head);font-size:18px;letter-spacing:.04em;color:var(--gold);display:flex;align-items:center;gap:8px}
+.group-table{width:100%;border-collapse:collapse;font-size:13px}
+.group-table th{padding:5px 8px;color:var(--muted);font-weight:400;font-family:var(--font-mono);font-size:11px;text-align:right;border-bottom:1px solid var(--border)}
+.group-table th:first-child{text-align:left}
+.group-table td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:right}
+.group-table td:first-child{text-align:left;display:flex;align-items:center;gap:7px}
+.group-table tr:last-child td{border-bottom:none}
+.group-table tr.qualified td:first-child{border-left:3px solid var(--green)}
+.group-table tr.danger td:first-child{border-left:3px solid var(--red)}
+.g-pts{font-weight:500;font-family:var(--font-mono)}
+.g-pos{font-family:var(--font-mono);color:var(--muted);font-size:11px;min-width:14px}
+
+/* Results */
+.results-list{display:flex;flex-direction:column;gap:8px}
+.result-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.875rem 1.25rem;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem}
+.result-home{text-align:right}
+.result-away{text-align:left}
+.result-team{font-size:14px;font-weight:500}
+.result-score{font-family:var(--font-mono);font-size:20px;font-weight:500;text-align:center;min-width:60px;color:var(--gold)}
+.result-meta{font-size:11px;color:var(--muted);text-align:center;margin-top:3px;font-family:var(--font-mono)}
+.result-stage{font-size:11px;color:var(--muted2)}
+.result-date{font-size:11px;color:var(--muted2);font-family:var(--font-mono)}
+.result-home-flag,.result-away-flag{font-size:20px;line-height:1}
+
+/* Survival tracker */
+.survival-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.survival-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.25rem}
+.survival-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.survival-name{font-family:var(--font-head);font-size:18px;letter-spacing:.03em}
+.survival-alive{font-size:12px;font-family:var(--font-mono)}
+.survival-picks{display:flex;flex-direction:column;gap:5px}
+.survival-pick{display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--surface);border-radius:7px;transition:opacity .3s}
+.survival-pick.out{opacity:.5}
+.survival-pick-flag{font-size:16px;line-height:1}
+.survival-pick-team{font-size:13px;font-weight:500}
+.survival-pick-team.eliminated{text-decoration:line-through;color:var(--muted2)}
+.survival-pick-pos{font-size:11px;color:var(--muted);margin-left:auto;font-family:var(--font-mono)}
+.survival-pick-status{font-size:10px;font-family:var(--font-mono);margin-left:4px}
+.survival-pick-status.alive{color:var(--green)}
+.survival-pick-status.out{color:var(--red)}
+
+/* Dark horses + Confidence */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.horse-list{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem}
+.horse-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.horse-row:last-child{margin-bottom:0}
+.horse-flag{font-size:22px;line-height:1}
+.horse-name{font-size:14px;font-weight:500;min-width:90px}
+.horse-bar-bg{flex:1;height:6px;background:var(--surface);border-radius:3px}
+.horse-bar-fill{height:100%;border-radius:3px;background:var(--gold-dim)}
+.horse-count{font-family:var(--font-mono);font-size:12px;color:var(--muted);min-width:44px;text-align:right}
+.conf-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem}
+.conf-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.conf-row:last-child{margin-bottom:0}
+.conf-name{font-size:13px;font-weight:500;min-width:70px}
+.conf-bar-bg{flex:1;height:5px;background:var(--surface);border-radius:3px}
+.conf-bar-fill{height:100%;border-radius:3px}
+.conf-val{font-family:var(--font-mono);font-size:12px;color:var(--muted);min-width:36px;text-align:right}
+.conf-avg{border-top:1px solid var(--border);padding-top:10px;margin-top:4px;font-size:13px;color:var(--muted)}
+
+/* Fixtures */
+.fixtures-list{display:flex;flex-direction:column;gap:10px}
+.fixture{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.fixture-teams{font-size:15px;font-weight:500}
+.fixture-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.fixture-date{font-family:var(--font-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.opening-badge{font-size:11px;color:var(--gold);background:var(--gold-bg);border:1px solid rgba(240,192,64,.2);border-radius:6px;padding:2px 8px;margin-top:4px;display:inline-block}
+
+/* Scoring */
+.scoring-rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1.5rem}
+.score-rule{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem}
+.score-rule-label{font-size:12px;color:var(--muted);margin-bottom:4px;line-height:1.4}
+.score-rule-pts{font-family:var(--font-mono);font-size:18px;font-weight:500;color:var(--gold)}
+.leaderboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.lb-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;position:relative;overflow:hidden;transition:border-color .2s}
+.lb-card:hover{border-color:var(--border2)}
+.lb-card-top{height:3px;position:absolute;top:0;left:0;right:0}
+.lb-name{font-size:12px;color:var(--muted);margin-bottom:4px;margin-top:4px}
+.lb-pts{font-family:var(--font-head);font-size:34px;line-height:1;color:var(--text)}
+.lb-alive{font-size:11px;font-family:var(--font-mono);margin-top:4px}
+.lb-alive-count{color:var(--green)}
+
+/* Placeholder states */
+.placeholder-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:2rem;text-align:center}
+.placeholder-big{font-family:var(--font-head);font-size:32px;color:var(--muted2);margin-bottom:.5rem}
+.placeholder-text{font-size:14px;color:var(--muted)}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:1.5rem 0;text-align:center}
+footer p{font-size:12px;color:var(--muted)}
+
+/* Responsive */
+@media(max-width:640px){
+  .two-col{grid-template-columns:1fr}
+  .result-item{grid-template-columns:1fr auto 1fr}
+  .countdown{max-width:100%}
+  .hero-title{font-size:52px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="header-inner">
+      <div class="site-tag">
+        <a href="https://craftsbyjon.co.uk">craftsbyjon.co.uk</a>
+        <span style="margin:0 6px;opacity:.3">/</span>
+        <span>World Cup 2026</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
+        <span class="site-tag">A Miles family production</span>
+      </div>
+    </div>
+    <nav class="nav-tabs">
+      <a href="#predictions" class="nav-tab">Predictions</a>
+      <a href="#groups" class="nav-tab">Group tables</a>
+      <a href="#results" class="nav-tab">Results</a>
+      <a href="#survival" class="nav-tab">Survival tracker</a>
+      <a href="#leaderboard" class="nav-tab">Leaderboard</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">FIFA World Cup 2026 · USA · Canada · Mexico</p>
+        <h1 class="hero-title">AI<br>PREDICTION<br><span class="accent">BATTLE</span></h1>
+        <p class="hero-sub">6 AI models. One question. Who wins the World Cup? The predictions are in — now we wait to see who was right.</p>
+        <div class="countdown" id="countdown">
+          <div class="cd-unit"><span class="cd-num" id="cd-d">--</span><span class="cd-label">Days</span></div>
+          <div class="cd-unit"><span class="cd-num" id="cd-h">--</span><span class="cd-label">Hours</span></div>
+          <div class="cd-unit"><span class="cd-num" id="cd-m">--</span><span class="cd-label">Mins</span></div>
+          <div class="cd-unit"><span class="cd-num" id="cd-s">--</span><span class="cd-label">Secs</span></div>
+        </div>
+        <p style="font-size:13px;color:var(--muted)">Kick-off: Mexico vs South Africa · 11 June 2026 · Estadio Azteca</p>
+        <p id="last-updated"></p>
+      </div>
+    </section>
+
+    <!-- Consensus -->
+    <section class="section" id="predictions">
+      <h2 class="section-title">The <span class="accent">Consensus</span></h2>
+      <p class="section-sub">Weighted by predicted finish (4–3–2–1 pts). If all 6 were one brain, this is their answer.</p>
+      <div class="consensus-grid" id="consensus-grid"></div>
+    </section>
+
+    <!-- Individual predictions -->
+    <section class="section">
+      <h2 class="section-title">The <span class="accent">Predictions</span></h2>
+      <p class="section-sub">Tap any card to reveal the full argument. Predicted teams are crossed off as they're eliminated.</p>
+      <div class="pred-grid" id="pred-grid"></div>
+    </section>
+
+    <!-- Group tables -->
+    <section class="section" id="groups">
+      <h2 class="section-title">Group <span class="accent">Tables</span></h2>
+      <p class="section-sub">Live standings updated by n8n every 15 minutes from football-data.org.</p>
+      <div id="groups-container">
+        <div class="placeholder-box">
+          <div class="placeholder-big">AWAITING KICK-OFF</div>
+          <p class="placeholder-text">Group tables will appear here once the tournament begins on 11 June 2026.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section class="section" id="results">
+      <h2 class="section-title">Match <span class="accent">Results</span></h2>
+      <p class="section-sub">Most recent results first.</p>
+      <div id="results-container">
+        <div class="placeholder-box">
+          <div class="placeholder-big">NO RESULTS YET</div>
+          <p class="placeholder-text">Results will feed in automatically from 11 June 2026.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Survival Tracker -->
+    <section class="section" id="survival">
+      <h2 class="section-title">Survival <span class="accent">Tracker</span></h2>
+      <p class="section-sub">Which predicted teams are still alive? Picks are crossed off as teams are eliminated.</p>
+      <div class="survival-grid" id="survival-grid"></div>
+    </section>
+
+    <!-- Dark horses + confidence -->
+    <section class="section">
+      <div class="two-col">
+        <div>
+          <h2 class="section-title" style="font-size:28px">Dark <span class="accent">Horses</span></h2>
+          <div class="horse-list" id="horse-list"></div>
+        </div>
+        <div>
+          <h2 class="section-title" style="font-size:28px">How <span class="accent">Confident?</span></h2>
+          <div class="conf-card" id="conf-card"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key fixtures -->
+    <section class="section">
+      <h2 class="section-title">Key <span class="accent">Fixtures</span></h2>
+      <p class="section-sub">Selected upcoming matches.</p>
+      <div class="fixtures-list" id="fixtures-list"></div>
+    </section>
+
+    <!-- Leaderboard -->
+    <section class="section" id="leaderboard">
+      <h2 class="section-title">Score the <span class="accent">Predictions</span></h2>
+      <p class="section-sub">Points awarded when the tournament concludes. Leaderboard updates automatically.</p>
+      <div class="scoring-rules" id="scoring-rules"></div>
+      <h3 style="font-family:var(--font-head);font-size:22px;letter-spacing:.03em;margin-bottom:1rem;color:var(--muted)">Current Leaderboard</h3>
+      <div class="leaderboard" id="leaderboard-grid"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Predictions collected May 2026 · Tournament 11 Jun – 19 Jul 2026 · Data: football-data.org</p>
+    <p style="margin-top:6px"><a href="https://craftsbyjon.co.uk">craftsbyjon.co.uk</a> · A Miles family production</p>
+  </div>
+</footer>
+
+<script>
+// ─── Static data ─────────────────────────────────────────────────────────────
+const F={France:"🇫🇷",Spain:"🇪🇸",England:"🏴󠁧󠁢󠁥󠁮󠁧󠁬󠁿",Argentina:"🇦🇷",Brazil:"🇧🇷",Morocco:"🇲🇦",Norway:"🇳🇴",Portugal:"🇵🇹",Ecuador:"🇪🇨",Mexico:"🇲🇽","South Africa":"🇿🇦",USA:"🇺🇸",Paraguay:"🇵🇾",Croatia:"🇭🇷","Costa Rica":"🇨🇷","New Zealand":"🇳🇿",Germany:"🇩🇪",Netherlands:"🇳🇱",Belgium:"🇧🇪",Japan:"🇯🇵",Senegal:"🇸🇳",Uruguay:"🇺🇾",Colombia:"🇨🇴",Switzerland:"🇨🇭",Denmark:"🇩🇰",Poland:"🇵🇱",Australia:"🇦🇺",Wales:"🏴󠁧󠁢󠁷󠁬󠁳󠁿",Scotland:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",Italy:"🇮🇹","Saudi Arabia":"🇸🇦",Iran:"🇮🇷",Egypt:"🇪🇬",Cameroon:"🇨🇲",Ghana:"🇬🇭",Tunisia:"🇹🇳",Serbia:"🇷🇸",Ukraine:"🇺🇦",Czechia:"🇨🇿",Hungary:"🇭🇺"};
+const POS=["1st","2nd","3rd","4th"];
+
+const MODELS=[
+  {id:"claude",name:"Claude",maker:"Anthropic",color:"#da7756",top4:["France","Spain","England","Argentina"],darkHorse:"Norway",confidence:5,
+   reasons:{France:"Deschamps' final tournament — every reason to go out on a high. Best top-to-bottom squad in the field. Mbappé motivated, depth unmatched.",Spain:"Reigning European champions. Settled fluid system under De la Fuente. Yamal's fitness is the one concern keeping them off the top spot.",England:"Tuchel has brought tactical stability and a favourable early draw. Kane in a system built for him.",Argentina:"Defending champions. Messi's last World Cup. Álvarez, Fernández and Lautaro give elite depth beyond Messi."},
+   darkHorseReason:"Haaland in his prime at Norway's first World Cup. Built around the most clinical striker on the planet, with something to prove."},
+  {id:"gemini",name:"Gemini",maker:"Google",color:"#4285F4",top4:["France","Spain","England","Argentina"],darkHorse:"Morocco",confidence:6.5,
+   reasons:{France:"Unparalleled squad depth. Mbappé fresh off a 42-goal club season. Unmatched tactical discipline under Deschamps with a proven blueprint for deep tournament runs.",Spain:"Married traditional possession identity with explosive wing play. Lamine Yamal provides game-changing flair. Technically superior to almost everyone.",England:"Consistently reaches the business end of tournaments. Bellingham, Kane, Foden, Saka. Sheer firepower will carry them far.",Argentina:"Ultimate tournament know-how, but Messi carrying a hamstring strain and key defenders Romero and Emi Martínez recovering."},
+   darkHorseReason:"8th in world rankings. Transitioned from 2022's defensive underdogs into a genuinely balanced elite unit. Massive crowd support expected across North America."},
+  {id:"chatgpt",name:"ChatGPT",maker:"OpenAI",color:"#10a37f",top4:["Spain","France","Brazil","England"],darkHorse:"Portugal",confidence:5.5,
+   reasons:{Spain:"They look like a club side playing international football. Winning Euro 2024 wasn't a fluke. Lamine Yamal, Rodri, Pedri — the age profile is frightening.",France:"Most terrifying squad on pure talent. Always survive ugly games. Mbappé is still the best transition weapon in world football.",Brazil:"First Brazil side in a while with a genuine tactical ceiling. Carlo Ancelotti changes the equation massively. Vinícius Júnior entering peak years.",England:"Absolutely have the talent to win it. Tuchel is a better tournament tactician than Southgate. But England still hesitate when games tighten."},
+   darkHorseReason:"Slightly overlooked because everyone frames them around Ronaldo. The real story is the midfield and creative core. One of the few sides where a title wouldn't shock."},
+  {id:"deepseek",name:"DeepSeek",maker:"DeepSeek AI",color:"#4A90D9",top4:["Spain","France","Argentina","England"],darkHorse:"Ecuador",confidence:5,
+   reasons:{Spain:"Reigning European champions and Nations League finalists. Rodri, Pedri and Gavi offer unmatched midfield control. Bold decision to omit all Real Madrid players signals a unified squad.",France:"Deepest squad in the tournament. Reached the last two World Cup finals. Giving Deschamps a winning send-off is a powerful motivational factor.",Argentina:"Defending champions with Messi still capable of deciding matches at 38. Tournament DNA is unmatched.",England:"Tuchel has the tactical discipline. Controversy around omitting Palmer and Foden could backfire against top opposition."},
+   darkHorseReason:"Finished qualifying runners-up behind Argentina, conceding only 5 goals in 16 matches — clean sheets against both Argentina and Brazil. Caicedo is genuinely elite."},
+  {id:"copilot",name:"Copilot",maker:"Microsoft",color:"#0078D4",top4:["France","Argentina","Brazil","England"],darkHorse:"Morocco",confidence:6,
+   reasons:{France:"Most complete, deepest, consistently elite team of the past decade. Four of the last five major finals. Their floor is higher than anyone else's.",Argentina:"Defending champions. Best xG differential in CONMEBOL since 2022. Added Copa América 2024 and Finalissima 2025. Messi still elevates them.",Brazil:"Talent ceiling remains enormous. Broke Argentina's long unbeaten run in March 2026. Endrick, Rodrygo and Vinícius Jr capable of game-breaking moments.",England:"Deep squad. Consistent tournament progression. Concern: conservative in big moments."},
+   darkHorseReason:"Elite defensive structure, a golden generation in its prime, and a proven ability to beat top nations — historic 2022 semi-final run."},
+  {id:"grok",name:"Grok",maker:"xAI",color:"#888787",top4:["Spain","France","Argentina","England"],darkHorse:"Morocco",confidence:6,
+   reasons:{Spain:"Strongest team on current form and squad cohesion. Won Euro 2024 beating France, Germany and England. Pedri, Yamal, Nico Williams, Rodri. Dominant in a grueling expanded tournament.",France:"Incredible depth. Mbappé leading the line. Shown flashes of dominance in Nations League. Perennial contenders — the biggest threat to Spain.",Argentina:"Defending champions with Messi likely in his final tournament. Experience and winning mentality intact. Defending the title adds significant pressure.",England:"Very strong squad. Consistently reaches knockouts. Improved tactical discipline. Sometimes lacks the final clinical edge."},
+   darkHorseReason:"4th-place finish in 2022. Hakimi remains world-class. Defensive solidity, counter-attacking speed, ability to grind results. The expanded format suits their style."}
+];
+
+const STATIC_FIXTURES=[
+  {date:"Thu 11 Jun",teams:"Mexico vs South Africa",label:"Group A",venue:"Estadio Azteca, Mexico City",highlight:true},
+  {date:"Fri 12 Jun",teams:"USA vs Paraguay",label:"Group D",venue:"SoFi Stadium, Inglewood"},
+  {date:"Tue 17 Jun",teams:"England vs Croatia",label:"Group L",venue:"TBC"}
+];
+
+const SCORING_RULES=[["Correct winner","10 pts"],["Correct finalist","6 pts"],["Correct semi (×2)","3 pts ea"],["Dark horse semi","5 bonus"]];
+
+// ─── Live data ────────────────────────────────────────────────────────────────
+let liveData = null;
+
+async function fetchLiveData() {
+  try {
+    const res = await fetch('/wc2026-data.json?t=' + Date.now(), {cache:'no-store'});
+    if (!res.ok) return;
+    const data = await res.json();
+    liveData = data;
+    applyLiveData();
+  } catch(e) { /* graceful — live data optional */ }
+}
+
+function applyLiveData() {
+  if (!liveData) return;
+  const {meta, groups, results, eliminated, scores, alive_counts} = liveData;
+
+  // Last updated
+  if (meta && meta.updated) {
+    const el = document.getElementById('last-updated');
+    if (el) el.textContent = 'Last updated: ' + new Date(meta.updated).toLocaleString('en-GB', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  }
+
+  // Live badge
+  if (meta && meta.tournament_started) {
+    const badge = document.getElementById('live-badge');
+    if (badge) badge.classList.add('visible');
+  }
+
+  // Group tables
+  if (groups && Object.keys(groups).length > 0) renderGroups(groups);
+
+  // Results
+  if (results && results.length > 0) renderResults(results);
+
+  // Survival — update eliminated teams on cards
+  const elim = eliminated || [];
+  updateSurvival(elim, alive_counts);
+
+  // Leaderboard scores
+  if (scores) {
+    MODELS.forEach(m => {
+      const el = document.getElementById('lb-pts-' + m.id);
+      if (el) el.textContent = scores[m.id] || 0;
+    });
+  }
+  if (alive_counts) {
+    MODELS.forEach(m => {
+      const el = document.getElementById('lb-alive-' + m.id);
+      if (el) el.innerHTML = '<span class="lb-alive-count">' + (alive_counts[m.id] || 0) + '</span>/4 picks alive';
+    });
+  }
+}
+
+// ─── Render functions ────────────────────────────────────────────────────────
+
+function calcConsensus() {
+  const s = {};
+  MODELS.forEach(m => m.top4.forEach((t,i) => s[t] = (s[t]||0) + [4,3,2,1][i]));
+  return Object.entries(s).sort((a,b) => b[1]-a[1]);
+}
+
+function calcHorses() {
+  const s = {};
+  MODELS.forEach(m => s[m.darkHorse] = (s[m.darkHorse]||0) + 1);
+  return Object.entries(s).sort((a,b) => b[1]-a[1]);
+}
+
+function pad(n) { return String(n).padStart(2,'0'); }
+function flag(team) { return F[team] || '🌍'; }
+
+function renderAll() {
+  // Consensus
+  const cons = calcConsensus();
+  document.getElementById('consensus-grid').innerHTML = cons.slice(0,4).map(([team,pts],i) => `
+    <div class="c-card${i===0?' first':''}">
+      <div class="c-flag">${flag(team)}</div>
+      <div class="c-pos">${POS[i]}</div>
+      <div class="c-team">${team}</div>
+      <div class="c-pts">${pts} pts</div>
+    </div>`).join('');
+
+  // Prediction cards
+  document.getElementById('pred-grid').innerHTML = MODELS.map(m => `
+    <div class="pred-card" id="card-${m.id}">
+      <div class="pred-top-bar" style="background:${m.color}"></div>
+      <div class="pred-body">
+        <div class="pred-header">
+          <div>
+            <div class="pred-name">${m.name}</div>
+            <div class="pred-maker">${m.maker}</div>
+          </div>
+          <div>
+            <div class="pred-conf-label">confidence</div>
+            <div class="pred-conf-val" style="color:${m.color}">${m.confidence}/10</div>
+          </div>
+        </div>
+        <div class="pos-list">
+          ${m.top4.map((team,i) => `
+            <div class="pos-row" id="pos-${m.id}-${team.replace(/\s/g,'_')}">
+              <span class="pos-num">${POS[i]}</span>
+              <span class="pos-flag">${flag(team)}</span>
+              <span class="pos-team">${team}</span>
+            </div>`).join('')}
+        </div>
+        <div class="dark-horse-pill" id="dh-${m.id}">
+          <span style="font-size:16px">⭐</span>
+          <span class="dh-label">Dark horse</span>
+          <span class="dh-team">${flag(m.darkHorse)} ${m.darkHorse}</span>
+        </div>
+        <button class="toggle-btn" onclick="toggleCard('${m.id}')">
+          <span id="toggle-label-${m.id}">Show reasoning</span>
+          <span class="toggle-arrow" id="toggle-arrow-${m.id}">▼</span>
+        </button>
+        <div class="reasons" id="reasons-${m.id}">
+          ${m.top4.map(team => `
+            <div class="reason-item">
+              <div class="reason-team-head">${flag(team)} ${team}</div>
+              <div class="reason-text">${m.reasons[team]||''}</div>
+            </div>`).join('')}
+          <div class="reason-item">
+            <div class="reason-team-head">${flag(m.darkHorse)} ${m.darkHorse} — dark horse pick</div>
+            <div class="reason-text">${m.darkHorseReason||''}</div>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Survival tracker
+  document.getElementById('survival-grid').innerHTML = MODELS.map(m => `
+    <div class="survival-card">
+      <div class="survival-header">
+        <span class="survival-name" style="color:${m.color}">${m.name}</span>
+        <span class="survival-alive" id="survival-count-${m.id}" style="color:var(--green)">4/4 alive</span>
+      </div>
+      <div class="survival-picks">
+        ${m.top4.map((team,i) => `
+          <div class="survival-pick" id="survival-${m.id}-${team.replace(/\s/g,'_')}">
+            <span class="survival-pick-flag">${flag(team)}</span>
+            <span class="survival-pick-team">${team}</span>
+            <span class="survival-pick-pos">${POS[i]}</span>
+            <span class="survival-pick-status alive" id="survival-status-${m.id}-${team.replace(/\s/g,'_')}">✓</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  // Dark horses
+  const horses = calcHorses();
+  document.getElementById('horse-list').innerHTML = horses.map(([team,votes]) => `
+    <div class="horse-row">
+      <span class="horse-flag">${flag(team)}</span>
+      <span class="horse-name">${team}</span>
+      <div class="horse-bar-bg"><div class="horse-bar-fill" style="width:${votes/6*100}%"></div></div>
+      <span class="horse-count">${votes}/6</span>
+    </div>`).join('');
+
+  // Confidence
+  const avg = (MODELS.reduce((s,m) => s+m.confidence, 0) / MODELS.length).toFixed(1);
+  document.getElementById('conf-card').innerHTML =
+    MODELS.map(m => `
+      <div class="conf-row">
+        <span class="conf-name">${m.name}</span>
+        <div class="conf-bar-bg"><div class="conf-bar-fill" style="width:${m.confidence*10}%;background:${m.color}"></div></div>
+        <span class="conf-val">${m.confidence}/10</span>
+      </div>`).join('') +
+    `<div class="conf-avg">Average: <strong>${avg}/10</strong> — nobody's betting the house on this.</div>`;
+
+  // Fixtures
+  document.getElementById('fixtures-list').innerHTML = STATIC_FIXTURES.map(f => `
+    <div class="fixture">
+      <div>
+        <div class="fixture-teams">${f.teams}</div>
+        <div class="fixture-meta">${f.label} · ${f.venue}</div>
+        ${f.highlight ? '<span class="opening-badge">Opening match</span>' : ''}
+      </div>
+      <div class="fixture-date">${f.date}</div>
+    </div>`).join('');
+
+  // Scoring rules
+  document.getElementById('scoring-rules').innerHTML = SCORING_RULES.map(([l,v]) => `
+    <div class="score-rule">
+      <div class="score-rule-label">${l}</div>
+      <div class="score-rule-pts">${v}</div>
+    </div>`).join('');
+
+  // Leaderboard
+  document.getElementById('leaderboard-grid').innerHTML = MODELS.map(m => `
+    <div class="lb-card">
+      <div class="lb-card-top" style="background:${m.color}"></div>
+      <div class="lb-name">${m.name}</div>
+      <div class="lb-pts" id="lb-pts-${m.id}">0</div>
+      <div class="lb-alive" id="lb-alive-${m.id}"><span class="lb-alive-count">4</span>/4 picks alive</div>
+    </div>`).join('');
+}
+
+function renderGroups(groups) {
+  const sorted = Object.entries(groups).sort(([a],[b]) => a.localeCompare(b));
+  document.getElementById('groups-container').innerHTML = `
+    <div class="groups-container">
+      ${sorted.map(([grp, table]) => `
+        <div class="group-card">
+          <div class="group-header">Group ${grp}</div>
+          <table class="group-table">
+            <thead>
+              <tr>
+                <th>#  Team</th>
+                <th>P</th><th>W</th><th>D</th><th>L</th>
+                <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${table.map((row,i) => `
+                <tr class="${i < 2 ? 'qualified' : i === table.length-1 ? 'danger' : ''}">
+                  <td><span class="g-pos">${i+1}</span>${flag(row.team)} ${row.team}</td>
+                  <td>${row.played}</td>
+                  <td>${row.won}</td>
+                  <td>${row.drawn}</td>
+                  <td>${row.lost}</td>
+                  <td>${row.gf}</td>
+                  <td>${row.ga}</td>
+                  <td>${row.gd > 0 ? '+' : ''}${row.gd}</td>
+                  <td class="g-pts">${row.points}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderResults(results) {
+  if (!results.length) return;
+  document.getElementById('results-container').innerHTML = `
+    <div class="results-list">
+      ${results.slice(0,30).map(r => `
+        <div class="result-item">
+          <div class="result-home">
+            <div class="result-team">${r.home} ${flag(r.home)}</div>
+            <div class="result-stage">${r.stage||''}</div>
+          </div>
+          <div>
+            <div class="result-score">${r.home_score} – ${r.away_score}</div>
+            <div class="result-meta">${r.date||''}</div>
+          </div>
+          <div class="result-away">
+            <div class="result-team">${flag(r.away)} ${r.away}</div>
+            <div class="result-date">${r.group||''}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function updateSurvival(eliminated, aliveCounts) {
+  MODELS.forEach(m => {
+    let alive = 0;
+    m.top4.forEach(team => {
+      const key = team.replace(/\s/g,'_');
+      const pickEl = document.getElementById('survival-' + m.id + '-' + key);
+      const teamEl = pickEl ? pickEl.querySelector('.survival-pick-team') : null;
+      const statusEl = document.getElementById('survival-status-' + m.id + '-' + key);
+      const posRowTeam = document.querySelector('#pos-' + m.id + '-' + key + ' .pos-team');
+
+      if (eliminated.includes(team)) {
+        if (pickEl) pickEl.classList.add('out');
+        if (teamEl) teamEl.classList.add('eliminated');
+        if (statusEl) { statusEl.textContent = '✗'; statusEl.className = 'survival-pick-status out'; }
+        if (posRowTeam) posRowTeam.classList.add('eliminated');
+      } else {
+        alive++;
+        if (pickEl) pickEl.classList.remove('out');
+        if (teamEl) teamEl.classList.remove('eliminated');
+        if (statusEl) { statusEl.textContent = '✓'; statusEl.className = 'survival-pick-status alive'; }
+        if (posRowTeam) posRowTeam.classList.remove('eliminated');
+      }
+    });
+
+    const countEl = document.getElementById('survival-count-' + m.id);
+    if (countEl) {
+      countEl.textContent = alive + '/4 alive';
+      countEl.style.color = alive > 0 ? 'var(--green)' : 'var(--red)';
+    }
+
+    // Dark horse
+    const dhTeamEl = document.querySelector('#dh-' + m.id + ' .dh-team');
+    if (eliminated.includes(m.darkHorse)) {
+      if (dhTeamEl) dhTeamEl.classList.add('eliminated');
+    }
+  });
+}
+
+function toggleCard(id) {
+  const r = document.getElementById('reasons-' + id);
+  const arrow = document.getElementById('toggle-arrow-' + id);
+  const label = document.getElementById('toggle-label-' + id);
+  const isOpen = r.classList.toggle('open');
+  arrow.classList.toggle('open', isOpen);
+  label.textContent = isOpen ? 'Hide reasoning' : 'Show reasoning';
+}
+
+// ─── Countdown ───────────────────────────────────────────────────────────────
+const target = new Date('2026-06-11T20:00:00-05:00');
+function tick() {
+  const diff = target - Date.now();
+  const el = document.getElementById('countdown');
+  if (diff <= 0) { if (el) el.style.display = 'none'; return; }
+  document.getElementById('cd-d').textContent = pad(Math.floor(diff/86400000));
+  document.getElementById('cd-h').textContent = pad(Math.floor(diff%86400000/3600000));
+  document.getElementById('cd-m').textContent = pad(Math.floor(diff%3600000/60000));
+  document.getElementById('cd-s').textContent = pad(Math.floor(diff%60000/1000));
+}
+tick(); setInterval(tick, 1000);
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+renderAll();
+fetchLiveData();
+setInterval(fetchLiveData, 5 * 60 * 1000); // refresh every 5 mins
+</script>
+</body>
+</html>

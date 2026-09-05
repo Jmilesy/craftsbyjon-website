@@ -1,0 +1,6 @@
+*.bak
+*.bak-*
+*.bak.*
+node_modules/
+__pycache__/
+*.backup-*

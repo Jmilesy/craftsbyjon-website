@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miles/Dadd League — Family FPL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a1a2e;
+    --navy-light: #2d2d4d;
+    --gold: #F5A623;
+    --silver: #B0B8C1;
+    --bronze: #C97A3D;
+    --yellow: #FFD54F;
+    --red: #FF6B6B;
+    --green: #2ECC71;
+    --blue: #4A90E2;
+    --font-head: 'Nunito', sans-serif;
+    --font-body: 'Open Sans', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    background: #f5f5f7;
+    color: var(--navy);
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: #fff;
+    padding: 28px 16px 24px;
+    text-align: center;
+    border-bottom: 3px solid var(--gold);
+  }
+  header h1 {
+    font-family: var(--font-head);
+    margin: 0 0 4px;
+    font-size: 1.7rem;
+    letter-spacing: -0.01em;
+  }
+  header p { margin: 0; opacity: 0.75; font-size: 0.9rem; }
+  main { max-width: 720px; margin: 0 auto; padding: 16px; }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    animation: cardIn 0.35s ease-out both;
+  }
+  .card:nth-of-type(2) { animation-delay: 0.06s; }
+  .card:nth-of-type(3) { animation-delay: 0.12s; }
+  .card h2 {
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    margin: 0 0 12px;
+    color: var(--navy);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid #eee; }
+  th { font-family: var(--font-head); color: #777; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
+  tbody tr { transition: background 0.15s ease; }
+  tbody tr:hover { background: #fafafa; }
+  tr:last-child td { border-bottom: none; }
+  .rank {
+    font-family: var(--font-head);
+    font-weight: 800;
+    color: var(--navy);
+    width: 30px;
+  }
+  .rank-medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 0.9rem;
+  }
+  .rank-1 .rank-medal { background: var(--gold); }
+  .rank-2 .rank-medal { background: var(--silver); }
+  .rank-3 .rank-medal { background: var(--bronze); }
+  .rank-1 td { background: rgba(245, 166, 35, 0.06); }
+  .points { font-family: var(--font-head); font-weight: 800; font-size: 1.05rem; }
+  .manager-name { font-weight: 600; }
+  .team-name { color: #888; font-size: 0.85rem; }
+  .team-link { color: var(--blue); cursor: pointer; text-decoration: none; }
+  .team-link:hover { text-decoration: underline; }
+  .move { font-family: var(--font-head); font-weight: 800; font-size: 0.85rem; white-space: nowrap; }
+  .move-up { color: var(--green); }
+  .move-down { color: var(--red); }
+  .move-same { color: #bbb; }
+  select {
+    font-family: var(--font-body);
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+  }
+  .pick-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+  .pick-row:last-child { border-bottom: none; }
+  .badge {
+    display: inline-block;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 6px;
+    margin-left: 6px;
+  }
+  .badge.captain { background: var(--gold); color: #fff; }
+  .badge.vice { background: var(--blue); color: #fff; }
+  .state-msg { text-align: center; color: #999; padding: 28px 0; font-size: 0.95rem; }
+  .state-msg .state-icon { display: block; font-size: 1.6rem; margin-bottom: 6px; opacity: 0.6; }
+  .error-box {
+    background: #fff0f0;
+    border: 1px solid var(--red);
+    color: #c0392b;
+    padding: 16px;
+    border-radius: 8px;
+    text-align: center;
+  }
+  canvas { max-width: 100%; }
+  footer { text-align: center; color: #aaa; font-size: 0.75rem; padding: 20px 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="league-name">Family FPL</h1>
+  <p id="last-refreshed"></p>
+</header>
+
+<main id="main">
+  <div class="state-msg">Loading…</div>
+</main>
+
+<footer>Crafts by Jon — family dashboard</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const KEY = params.get('key');
+const API = '/n8n-proxy/fpl-api';
+
+function withKey(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  return `${API}${path}${sep}key=${encodeURIComponent(KEY || '')}`;
+}
+
+async function apiGet(path) {
+  const res = await fetch(withKey(path));
+  if (res.status === 401) throw new Error('WRONG_KEY');
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
+
+function initials(first, last) {
+  const f = (first || '').charAt(0);
+  const l = (last || '').charAt(0);
+  return (f + l).toUpperCase() || '?';
+}
+
+async function loadDashboard() {
+  const main = document.getElementById('main');
+
+  if (!KEY) {
+    main.innerHTML = `<div class="error-box">This link needs a passcode. Ask Jon for the family link.</div>`;
+    return;
+  }
+
+  let meta, standings, history;
+  try {
+    [meta, standings, history] = await Promise.all([
+      apiGet('/meta'),
+      apiGet('/standings'),
+      apiGet('/history'),
+    ]);
+  } catch (err) {
+    if (err.message === 'WRONG_KEY') {
+      main.innerHTML = `<div class="error-box">That passcode isn't right. Double check the link.</div>`;
+    } else {
+      main.innerHTML = `<div class="error-box">Couldn't load the league right now. Try again in a bit.</div>`;
+    }
+    return;
+  }
+
+  document.getElementById('league-name').textContent = meta.league_name || 'Family FPL';
+  if (meta.last_refreshed) {
+    const d = new Date(meta.last_refreshed);
+    document.getElementById('last-refreshed').textContent = `Updated ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} at ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  main.innerHTML = '';
+
+  main.addEventListener('click', (e) => {
+    const link = e.target.closest('.team-link');
+    if (!link) return;
+    const select = document.getElementById('manager-select');
+    if (!select) return;
+    select.value = link.dataset.entryId;
+    select.dispatchEvent(new Event('change'));
+    select.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // ── Standings table ──────────────────────────────────────────────
+  const standingsCard = document.createElement('div');
+  standingsCard.className = 'card';
+  const hasScores = standings.some(s => s.total_points !== null);
+  if (!hasScores) {
+    standingsCard.innerHTML = `<h2>League Table</h2><div class="state-msg"><span class="state-icon">\u26bd</span>No gameweeks played yet \u2014 table will fill in once the season kicks off.</div>`;
+  } else {
+    function moveIndicator(change) {
+      if (change === null || change === undefined) return '<span class="move move-same">—</span>';
+      if (change > 0) return `<span class="move move-up">▲ ${change}</span>`;
+      if (change < 0) return `<span class="move move-down">▼ ${Math.abs(change)}</span>`;
+      return '<span class="move move-same">— 0</span>';
+    }
+    let rows = standings.map((s, i) => `
+      <tr class="rank-${i + 1}">
+        <td class="rank">${i < 3 ? `<span class="rank-medal">${i + 1}</span>` : i + 1}</td>
+        <td>
+          <div class="manager-name">${i === 0 ? '👑 ' : ''}${s.player_name || ''}</div>
+          <div class="team-name team-link" data-entry-id="${s.entry_id}">${s.entry_name || ''} →</div>
+        </td>
+        <td class="points">${s.total_points ?? '—'}</td>
+        <td>${s.last_event_points ?? '—'}</td>
+        <td>${moveIndicator(s.rank_change)}</td>
+      </tr>
+    `).join('');
+    standingsCard.innerHTML = `
+      <h2>League Table</h2>
+      <table>
+        <thead><tr><th></th><th>Manager</th><th>Total</th><th>GW${standings[0]?.last_event ?? ''}</th><th>Move</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+  main.appendChild(standingsCard);
+
+  // ── History chart ────────────────────────────────────────────────
+  if (history.length > 0) {
+    const historyCard = document.createElement('div');
+    historyCard.className = 'card';
+    historyCard.innerHTML = `<h2>Points by Gameweek</h2><canvas id="history-chart" height="200"></canvas>`;
+    main.appendChild(historyCard);
+
+    try {
+      if (typeof Chart === 'undefined') throw new Error('Chart.js did not load');
+
+      const byManager = {};
+      for (const row of history) {
+        if (!byManager[row.entry_id]) byManager[row.entry_id] = { name: row.entry_name, points: {} };
+        byManager[row.entry_id].points[row.event] = row.total_points;
+      }
+      const events = [...new Set(history.map(h => h.event))].sort((a, b) => a - b);
+      const colors = ['#F5A623', '#4A90E2', '#FF6B6B', '#2ECC71', '#9B59B6', '#1a1a2e'];
+      const datasets = Object.values(byManager).map((m, i) => ({
+        label: m.name,
+        data: events.map(e => m.points[e] ?? null),
+        borderColor: colors[i % colors.length],
+        backgroundColor: colors[i % colors.length],
+        tension: 0.25,
+        spanGaps: true,
+      }));
+
+      new Chart(document.getElementById('history-chart'), {
+        type: 'line',
+        data: { labels: events.map(e => `GW${e}`), datasets },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom', labels: { font: { family: 'Open Sans' } } } },
+          scales: { y: { title: { display: true, text: 'Total points' } } },
+        },
+      });
+    } catch (err) {
+      // Chart.js failed to load (CDN hiccup etc.) — degrade gracefully rather than
+      // taking the rest of the page down with it (squad picker still needs to render).
+      historyCard.innerHTML = `<h2>Points by Gameweek</h2><div class="state-msg"><span class="state-icon">\ud83d\udcc9</span>Chart couldn't load right now \u2014 try refreshing the page.</div>`;
+    }
+  }
+
+  // ── Squad picks ──────────────────────────────────────────────────
+  if (standings.length > 0) {
+    const picksCard = document.createElement('div');
+    picksCard.className = 'card';
+    const managerOptions = standings.map(s => `<option value="${s.entry_id}">${s.entry_name}</option>`).join('');
+    const eventOptions = [...new Set(history.map(h => h.event))].sort((a, b) => b - a)
+      .map(e => `<option value="${e}">Gameweek ${e}</option>`).join('');
+
+    if (!eventOptions) {
+      picksCard.innerHTML = `<h2>Squad</h2><div class="state-msg"><span class="state-icon">\ud83d\udcc4</span>No gameweeks to show picks for yet.</div>`;
+      main.appendChild(picksCard);
+    } else {
+      picksCard.innerHTML = `
+        <h2>Squad</h2>
+        <select id="manager-select">${managerOptions}</select>
+        <select id="event-select">${eventOptions}</select>
+        <div id="picks-list"><div class="state-msg">Loading squad…</div></div>
+      `;
+      main.appendChild(picksCard);
+
+      async function refreshPicks() {
+        const entryId = document.getElementById('manager-select').value;
+        const event = document.getElementById('event-select').value;
+        const list = document.getElementById('picks-list');
+        list.innerHTML = `<div class="state-msg">Loading squad…</div>`;
+        try {
+          const picks = await apiGet(`/picks/${entryId}/${event}`);
+          if (picks.length === 0) {
+            list.innerHTML = `<div class="state-msg">No picks recorded for this gameweek.</div>`;
+            return;
+          }
+          list.innerHTML = picks.map(p => `
+            <div class="pick-row">
+              <span>${p.web_name} <span style="color:#999">(${p.team})</span></span>
+              <span>
+                ${p.multiplier === 0 ? '<span style="color:#bbb">Bench</span>' : ''}
+                ${p.is_captain ? '<span class="badge captain">C</span>' : ''}
+                ${p.is_vice_captain ? '<span class="badge vice">VC</span>' : ''}
+              </span>
+            </div>
+          `).join('');
+        } catch {
+          list.innerHTML = `<div class="state-msg">Couldn't load this squad.</div>`;
+        }
+      }
+
+      document.getElementById('manager-select').addEventListener('change', refreshPicks);
+      document.getElementById('event-select').addEventListener('change', refreshPicks);
+      refreshPicks();
+    }
+  }
+}
+
+loadDashboard();
+</script>
+
+</body>
+</html>

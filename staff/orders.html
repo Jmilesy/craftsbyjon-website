@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orders — Crafts by Jon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #E0F7FA;
+      --bg-card:      #ffffff;
+      --bg-muted:     #f0fbfc;
+      --text:         #4A4A4A;
+      --text-soft:    #888;
+      --accent:       #FF7F50;
+      --accent-hover: #e86e40;
+      --teal:         #20B2AA;
+      --teal-light:   #d0f0ee;
+      --teal-hover:   #1a9992;
+      --border:       #c8ebed;
+      --green:        #4CAF50;
+      --green-light:  #e8f5e9;
+      --radius:       12px;
+      --shadow:       0 2px 16px rgba(32,178,170,0.10);
+      --blue:         #4A90E2;
+      --yellow:       #F5A623;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    header {
+      background: var(--teal);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(32,178,170,0.25);
+    }
+    header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    header a {
+      font-size: 0.82rem;
+      opacity: 0.8;
+      font-weight: 300;
+      color: #fff;
+      text-decoration: none;
+    }
+    header a:hover { opacity: 1; text-decoration: underline; }
+
+    .wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 36px 20px 0;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .metric-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 16px;
+      text-align: center;
+    }
+    .metric-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--teal);
+      line-height: 1;
+    }
+    .metric-label {
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      margin-top: 4px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filter-bar span {
+      font-size: 0.85rem;
+      color: var(--text-soft);
+      margin-right: 4px;
+    }
+    .filter-btn {
+      padding: 7px 18px;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      background: var(--bg-card);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { border-color: var(--teal); color: var(--teal); }
+    .filter-btn.active {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #2e7d32;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      z-index: 9999;
+      display: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .toast.show { display: block; }
+
+    /* Orders list */
+    .orders-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .order-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 22px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .order-card.dispatched { border-left: 4px solid var(--green); opacity: 0.8; }
+    .order-card.pending    { border-left: 4px solid var(--yellow); }
+
+    .order-main { flex: 1; min-width: 0; }
+
+    .order-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .order-ref {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--teal);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-pending    { background: #fff3e0; color: #e65100; border: 1px solid #F5A623; }
+    .badge-dispatched { background: var(--green-light); color: #2e7d32; border: 1px solid #81c784; }
+
+    .order-date {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      margin-left: auto;
+    }
+
+    .order-meta {
+      font-size: 0.88rem;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .order-meta strong { color: var(--text); }
+
+    .order-items {
+      font-size: 0.83rem;
+      color: var(--text-soft);
+      line-height: 1.7;
+      margin-bottom: 6px;
+    }
+
+    .order-total {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .order-action {
+      display: flex;
+      align-items: center;
+      padding-top: 4px;
+    }
+
+    .btn-dispatch {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 8px;
+      background: var(--blue);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn-dispatch:hover   { background: #3a7bd5; }
+    .btn-dispatch:active  { transform: scale(0.97); }
+    .btn-dispatch:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .empty-state-icon { font-size: 3rem; margin-bottom: 14px; }
+    .empty-state h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      color: var(--teal);
+      margin-bottom: 8px;
+    }
+    .empty-state p { font-size: 0.9rem; color: var(--text-soft); }
+
+    @media (max-width: 640px) {
+      header { padding: 14px 16px; }
+      .wrapper { padding: 20px 12px 0; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .order-card { flex-direction: column; }
+      .order-action { padding-top: 0; }
+      .order-date { margin-left: 0; }
+    }
+
+    /* Manual order modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 10000;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 40px 16px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 520px;
+      padding: 26px 28px 22px;
+    }
+    .modal-box h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+    .modal-box .modal-sub { font-size: 0.82rem; color: var(--text-soft); margin-bottom: 18px; }
+    .modal-field { margin-bottom: 12px; }
+    .modal-field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .modal-field input, .modal-field textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+    .modal-field textarea { resize: vertical; min-height: 44px; }
+    .modal-row { display: flex; gap: 10px; }
+    .modal-row .modal-field { flex: 1; }
+    .modal-items { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 12px; }
+    .modal-item-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .modal-item-row input[type="text"] { flex: 3; }
+    .modal-item-row input[type="number"] { flex: 1; }
+    .modal-item-row button { flex: 0 0 auto; background: none; border: none; color: #c62828; cursor: pointer; font-size: 1rem; }
+    .modal-add-item {
+      background: none; border: 1.5px dashed var(--border); border-radius: 8px;
+      padding: 6px 10px; font-size: 0.8rem; color: var(--teal); cursor: pointer; width: 100%;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .modal-btn-cancel {
+      padding: 9px 16px; border: 1.5px solid var(--border); border-radius: 8px;
+      background: none; color: var(--text); font-family: inherit; font-size: 0.85rem; cursor: pointer;
+    }
+    .modal-btn-save {
+      padding: 9px 18px; border: none; border-radius: 8px;
+      background: var(--teal); color: #fff; font-family: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    }
+    .modal-btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<header>
+  <h1>📦 Orders</h1>
+  <a href="/staff/staff-index.html">← Staff Home</a>
+</header>
+
+<div class="wrapper">
+
+  <div class="stats-bar" id="stats-bar">
+    <div class="metric-card"><div class="metric-value" id="stat-total">—</div><div class="metric-label">Total Orders</div></div>
+    <div class="metric-card"><div class="metric-value" id="stat-pending" style="color:var(--yellow)">—</div><div class="metric-label">Pending</div></div>
+    <div class="metric-card"><div class="metric-value" id="stat-dispatched" style="color:var(--green)">—</div><div class="metric-label">Dispatched</div></div>
+    <div class="metric-card"><div class="metric-value" id="stat-revenue">—</div><div class="metric-label">Total Revenue</div></div>
+  </div>
+
+  <div class="filter-bar">
+    <span>Filter:</span>
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
+    <button class="filter-btn" data-filter="pending" onclick="setFilter('pending')">Pending</button>
+    <button class="filter-btn" data-filter="dispatched" onclick="setFilter('dispatched')">Dispatched</button>
+    <input type="search" id="orderSearch" placeholder="Search ref, name, email, item…" oninput="applySearch()"
+      style="margin-left:auto;padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;min-width:220px;">
+    <button class="filter-btn" onclick="exportCsv()" title="Export pending orders for Royal Mail Click &amp; Drop import">⬇ C&amp;D CSV</button>
+    <button class="filter-btn" onclick="openManualOrderModal()" title="Add an order taken outside the store (cash, bank transfer, etc.)">➕ Add Manual Order</button>
+  </div>
+
+  <div class="orders-list" id="orders-list">
+    <div class="empty-state">
+      <div class="empty-state-icon">⏳</div>
+      <h3>Loading orders…</h3>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="manualOrderModal">
+  <div class="modal-box">
+    <h2>➕ Add Manual Order</h2>
+    <div class="modal-sub">For orders taken outside the store checkout (cash, bank transfer, in person).</div>
+
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>Customer / buyer name *</label>
+        <input type="text" id="mo-customer-name" placeholder="e.g. Graham &amp; Pat Bell">
+      </div>
+      <div class="modal-field">
+        <label>Email (optional)</label>
+        <input type="email" id="mo-email" placeholder="leave blank if none">
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label>Shipping address line 1 *</label>
+      <input type="text" id="mo-line1" placeholder="House number and street">
+    </div>
+    <div class="modal-field">
+      <label>Shipping address line 2</label>
+      <input type="text" id="mo-line2" placeholder="Optional">
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>City / town *</label>
+        <input type="text" id="mo-city">
+      </div>
+      <div class="modal-field">
+        <label>Postcode *</label>
+        <input type="text" id="mo-postcode">
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label>Items</label>
+      <div class="modal-items" id="mo-items">
+        <div class="modal-item-row">
+          <input type="text" placeholder="Item name" class="mo-item-name">
+          <input type="number" placeholder="Qty" min="1" value="1" class="mo-item-qty">
+          <input type="number" placeholder="£ each" min="0" step="0.01" class="mo-item-price">
+          <button type="button" onclick="removeManualItemRow(this)" title="Remove">✕</button>
+        </div>
+      </div>
+      <button type="button" class="modal-add-item" onclick="addManualItemRow()">+ Add another item</button>
+    </div>
+
+    <div class="modal-field">
+      <label>Shipping notes (for the packer/courier — e.g. "leave with neighbour", "signed for")</label>
+      <textarea id="mo-shipping-notes"></textarea>
+    </div>
+
+    <div class="modal-field">
+      <label>Custom order notes (design/theme details, shown in the purple box)</label>
+      <textarea id="mo-custom-notes"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-cancel" onclick="closeManualOrderModal()">Cancel</button>
+      <button type="button" class="modal-btn-save" id="mo-save-btn" onclick="submitManualOrder()">Create Order</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'https://craftsbyjon.co.uk/n8n-proxy/orders-api';
+  const PRODUCTS_API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api';
+  let currentFilter = 'all';
+  let allOrders = [];
+  let priceIdToProductId = {};
+
+  async function loadProductMap() {
+    try {
+      const res = await fetch(PRODUCTS_API + '/products');
+      const { result } = await res.json();
+      priceIdToProductId = {};
+      (result || []).forEach(p => {
+        if (p.stripe_price_id) priceIdToProductId[p.stripe_price_id] = p['Product ID'];
+      });
+    } catch (e) {
+      console.error('Product map error', e);
+    }
+  }
+
+  function formatDate(dt) {
+    if (!dt) return '';
+    const d = new Date(dt.replace(' ', 'T') + (dt.includes('Z') ? '' : 'Z'));
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  async function loadStats() {
+    try {
+      const res = await fetch(API + '/orders/stats');
+      const { result } = await res.json();
+      document.getElementById('stat-total').textContent = result.total;
+      document.getElementById('stat-pending').textContent = result.pending;
+      document.getElementById('stat-dispatched').textContent = result.dispatched;
+      document.getElementById('stat-revenue').textContent = result.revenue_formatted;
+    } catch (e) {
+      console.error('Stats error', e);
+    }
+  }
+
+  async function loadOrders() {
+    const list = document.getElementById('orders-list');
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><h3>Loading…</h3></div>';
+    try {
+      const url = currentFilter === 'all' ? API + '/orders' : API + '/orders?status=' + currentFilter;
+      const res = await fetch(url);
+      const { result } = await res.json();
+      allOrders = result;
+      applySearch();
+    } catch (e) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><h3>Failed to load orders</h3><p>' + e.message + '</p></div>';
+    }
+  }
+
+  function renderOrders(orders) {
+    const list = document.getElementById('orders-list');
+    if (!orders || orders.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><h3>No orders yet</h3><p>Orders placed through the store will appear here.</p></div>';
+      return;
+    }
+    list.innerHTML = orders.map(o => {
+      const itemsSummary = o.items.length
+        ? o.items.map(i => i.name + ' ×' + i.quantity).join(', ')
+        : 'No items';
+      const isPending = o.status === 'pending';
+      return `
+        <div class="order-card ${o.status}" id="order-${o.id}">
+          <div class="order-main">
+            <div class="order-top">
+              <span class="order-ref">${o.order_ref}</span>
+              <span class="badge badge-${o.status}">${isPending ? 'Pending' : 'Dispatched'}</span>
+              <span class="order-date">${formatDate(o.created_at)}</span>
+            </div>
+            <div class="order-meta">
+              <strong>${o.shipping_name || o.customer_name || '—'}</strong>
+              &nbsp;&middot;&nbsp;${o.customer_email || '—'}
+            </div>
+            <div style="font-size:0.82rem;color:#999;margin:2px 0 4px;">${[o.shipping_line1, o.shipping_line2, o.shipping_city, o.shipping_postal_code].filter(Boolean).join(', ') || 'No shipping address'}</div>
+            <div class="order-items">${itemsSummary}</div>
+            ${o.is_gift ? `<div style="background:#FCE4EC;border:1.5px solid #E91E63;border-radius:4px;padding:8px 12px;margin-top:8px;">
+              <strong style="font-size:0.9rem;color:#AD1457;">&#127873; GIFT ORDER</strong><br>
+              <span style="font-size:0.88rem;color:#333;">${o.gift_message ? o.gift_message : '(no message left)'}</span>
+            </div>` : ''}
+            ${o.personalisation_notes ? `<div style="background:#FFF3CD;border:1.5px solid #FFC107;border-radius:4px;padding:8px 12px;margin-top:8px;">
+              <strong style="font-size:0.9rem;color:#856404;">&#9999; PERSONALISATION NEEDED</strong><br>
+              <span style="font-size:0.88rem;color:#333;">${o.personalisation_notes}</span>
+            </div>` : ''}
+            ${o.mug_name ? `<div style="background:#FFF3CD;border:1.5px solid #FFC107;border-radius:4px;padding:8px 12px;margin-top:8px;">
+              <strong style="font-size:0.9rem;color:#856404;">☕ MUG PERSONALISATION</strong><br>
+              <span style="font-size:0.88rem;color:#333;display:block;margin-top:4px"><strong>Name:</strong> ${o.mug_name}</span>
+              ${o.mug_message ? `<span style="font-size:0.88rem;color:#333;display:block"><strong>Message:</strong> ${o.mug_message}</span>` : ''}
+              ${o.mug_text_colour ? `<span style="font-size:0.88rem;color:#333;display:flex;align-items:center;gap:6px;margin-top:2px"><strong>Colour:</strong><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${o.mug_text_colour};border:1px solid #ccc;flex-shrink:0"></span>${o.mug_text_colour}</span>` : ''}
+            </div>` : ''}
+            ${o.custom_order_notes ? `<div style="background:#EDE7F6;border:1.5px solid #7E57C2;border-radius:4px;padding:8px 12px;margin-top:8px;">
+              <strong style="font-size:0.9rem;color:#4527A0;">&#127912; CUSTOM ORDER DETAILS</strong><br>
+              <span style="font-size:0.88rem;color:#333;white-space:pre-wrap;">${o.custom_order_notes}</span>
+            </div>` : ''}
+            ${o.pod_fulfilment_status === 'pending_approval' ? `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
+              <strong style="font-size:0.9rem;color:#1A5FA8;">&#128424; POD FULFILMENT &mdash; READY TO APPROVE</strong><br>
+              <span style="font-size:0.85rem;color:#333;">This order has a Gelato draft ready (not yet submitted &mdash; no charge yet). Approving will submit it for production and billing.</span>
+              <div style="margin-top:8px;display:flex;gap:8px;">
+                <button class="filter-btn" style="background:#4A90E2;color:#fff;border-color:#4A90E2" onclick="approveFulfilment(${o.id}, '${o.order_ref}')">&#9989; Approve &amp; submit to Gelato</button>
+                <button class="filter-btn" onclick="cancelFulfilment(${o.id}, '${o.order_ref}')">&#10005; Cancel draft</button>
+              </div>
+            </div>` : ''}
+            ${o.pod_fulfilment_status === 'needs_manual_file' ? `<div style="background:#FFEBEE;border:1.5px solid #E57373;border-radius:4px;padding:8px 12px;margin-top:8px;">
+              <strong style="font-size:0.9rem;color:#C62828;">&#9888; POD FULFILMENT &mdash; NEEDS MANUAL ORDER</strong><br>
+              <span style="font-size:0.85rem;color:#333;">No print-ready file on file for this item, so no Gelato draft was created automatically. Place this order manually in the Gelato dashboard.</span><br>
+              <span style="font-size:0.78rem;color:#999;">${o.gelato_fulfilment_note || ''}</span>
+            </div>` : ''}
+            ${o.pod_fulfilment_status === 'error' ? `<div style="background:#FFEBEE;border:1.5px solid #E57373;border-radius:4px;padding:8px 12px;margin-top:8px;">
+              <strong style="font-size:0.9rem;color:#C62828;">&#9888; POD FULFILMENT &mdash; DRAFT CREATION FAILED</strong><br>
+              <span style="font-size:0.85rem;color:#333;">${o.gelato_fulfilment_note || 'Unknown error'}</span>
+            </div>` : ''}
+            ${o.pod_fulfilment_status === 'submitted' ? `<div style="background:#E8F5E9;border:1.5px solid #4CAF50;border-radius:4px;padding:6px 12px;margin-top:8px;font-size:0.8rem;color:#2e7d32;">
+              &#9989; Submitted to Gelato for production (order ${o.gelato_order_id})
+            </div>` : ''}
+            ${o.shipping_notes ? `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
+              <strong style="font-size:0.9rem;color:#1A5FA8;">&#128230; SHIPPING NOTES</strong><br>
+              <span style="font-size:0.88rem;color:#333;white-space:pre-wrap;">${o.shipping_notes}</span>
+            </div>` : ''}
+            <div class="order-total">${o.amount_total_formatted}</div>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="filter-btn" onclick="printSlip(${o.id})">🖨 Packing slip</button>
+              <button class="filter-btn" onclick="editCustomNotes(${o.id})">🎨 ${o.custom_order_notes ? 'Edit' : 'Add'} custom notes</button>
+              <button class="filter-btn" onclick="editShippingNotes(${o.id})">📦 ${o.shipping_notes ? 'Edit' : 'Add'} shipping notes</button>
+              ${o.stripe_payment_intent ? `<a class="filter-btn" style="text-decoration:none" href="https://dashboard.stripe.com/payments/${o.stripe_payment_intent}" target="_blank">💳 Stripe</a>` : ''}
+            </div>
+          </div>
+          ${isPending ? `
+          <div class="order-action">
+            <button class="btn-dispatch" id="btn-${o.id}" onclick="dispatch(${o.id}, '${o.order_ref}')">
+              Mark Dispatched
+            </button>
+          </div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  function openManualOrderModal() {
+    document.getElementById('manualOrderModal').classList.add('show');
+  }
+
+  function closeManualOrderModal() {
+    document.getElementById('manualOrderModal').classList.remove('show');
+    document.getElementById('mo-customer-name').value = '';
+    document.getElementById('mo-email').value = '';
+    document.getElementById('mo-line1').value = '';
+    document.getElementById('mo-line2').value = '';
+    document.getElementById('mo-city').value = '';
+    document.getElementById('mo-postcode').value = '';
+    document.getElementById('mo-shipping-notes').value = '';
+    document.getElementById('mo-custom-notes').value = '';
+    document.getElementById('mo-items').innerHTML = `
+        <div class="modal-item-row">
+          <input type="text" placeholder="Item name" class="mo-item-name">
+          <input type="number" placeholder="Qty" min="1" value="1" class="mo-item-qty">
+          <input type="number" placeholder="£ each" min="0" step="0.01" class="mo-item-price">
+          <button type="button" onclick="removeManualItemRow(this)" title="Remove">✕</button>
+        </div>`;
+  }
+
+  function addManualItemRow() {
+    const div = document.createElement('div');
+    div.className = 'modal-item-row';
+    div.innerHTML = `
+          <input type="text" placeholder="Item name" class="mo-item-name">
+          <input type="number" placeholder="Qty" min="1" value="1" class="mo-item-qty">
+          <input type="number" placeholder="£ each" min="0" step="0.01" class="mo-item-price">
+          <button type="button" onclick="removeManualItemRow(this)" title="Remove">✕</button>`;
+    document.getElementById('mo-items').appendChild(div);
+  }
+
+  function removeManualItemRow(btn) {
+    const rows = document.querySelectorAll('#mo-items .modal-item-row');
+    if (rows.length <= 1) return; // keep at least one row
+    btn.closest('.modal-item-row').remove();
+  }
+
+  async function submitManualOrder() {
+    const customer_name = document.getElementById('mo-customer-name').value.trim();
+    const customer_email = document.getElementById('mo-email').value.trim();
+    const shipping_line1 = document.getElementById('mo-line1').value.trim();
+    const shipping_line2 = document.getElementById('mo-line2').value.trim();
+    const shipping_city = document.getElementById('mo-city').value.trim();
+    const shipping_postal_code = document.getElementById('mo-postcode').value.trim();
+    const shipping_notes = document.getElementById('mo-shipping-notes').value.trim();
+    const custom_order_notes = document.getElementById('mo-custom-notes').value.trim();
+
+    if (!customer_name || !shipping_line1 || !shipping_city || !shipping_postal_code) {
+      alert('Please fill in customer name and full shipping address.');
+      return;
+    }
+
+    const items = [];
+    let amount_total = 0;
+    document.querySelectorAll('#mo-items .modal-item-row').forEach(row => {
+      const name = row.querySelector('.mo-item-name').value.trim();
+      const qty = parseInt(row.querySelector('.mo-item-qty').value, 10) || 0;
+      const price = parseFloat(row.querySelector('.mo-item-price').value) || 0;
+      if (name && qty > 0) {
+        const amountPence = Math.round(price * 100);
+        items.push({
+          name,
+          quantity: qty,
+          amount: amountPence,
+          amount_formatted: '£' + price.toFixed(2)
+        });
+        amount_total += amountPence * qty;
+      }
+    });
+
+    if (items.length === 0) {
+      alert('Add at least one item with a name and quantity.');
+      return;
+    }
+
+    const btn = document.getElementById('mo-save-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      const res = await fetch(API + '/orders/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_name, customer_email: customer_email || null,
+          shipping_line1, shipping_line2: shipping_line2 || null,
+          shipping_city, shipping_postal_code,
+          items, amount_total,
+          shipping_notes: shipping_notes || null,
+          custom_order_notes: custom_order_notes || null
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || res.status);
+      }
+      const { result } = await res.json();
+      showToast('✓ Manual order ' + result.order_ref + ' created');
+      closeManualOrderModal();
+      await Promise.all([loadStats(), loadOrders()]);
+    } catch (e) {
+      alert('Error creating order: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Order';
+    }
+  }
+
+  async function editCustomNotes(id) {
+    const o = allOrders.find(x => x.id === id);
+    if (!o) return alert('Order not found in current view');
+    const current = o.custom_order_notes || '';
+    const input = window.prompt(
+      'Custom order details for ' + o.order_ref + ' (design/theme, names, anything the packer needs to know).\n\nLeave blank and OK to clear.',
+      current
+    );
+    if (input === null) return; // cancelled
+    try {
+      const res = await fetch(API + '/orders/' + id + '/notes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ custom_order_notes: input.trim() || null })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || res.status);
+      }
+      showToast('✓ Custom order notes saved for ' + o.order_ref);
+      await Promise.all([loadStats(), loadOrders()]);
+    } catch (e) {
+      alert('Error saving notes: ' + e.message);
+    }
+  }
+
+  async function editShippingNotes(id) {
+    const o = allOrders.find(x => x.id === id);
+    if (!o) return alert('Order not found in current view');
+    const current = o.shipping_notes || '';
+    const input = window.prompt(
+      'Shipping notes for ' + o.order_ref + ' (for the packer/courier, e.g. "leave with neighbour", "signed for").\n\nLeave blank and OK to clear.',
+      current
+    );
+    if (input === null) return; // cancelled
+    try {
+      const res = await fetch(API + '/orders/' + id + '/shipping-notes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shipping_notes: input.trim() || null })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || res.status);
+      }
+      showToast('✓ Shipping notes saved for ' + o.order_ref);
+      await Promise.all([loadStats(), loadOrders()]);
+    } catch (e) {
+      alert('Error saving notes: ' + e.message);
+    }
+  }
+
+  async function approveFulfilment(id, ref) {
+    const confirmed = window.confirm(
+      'Approve fulfilment for ' + ref + '?\n\nThis submits the order to Gelato for production and billing — it cannot be undone once printing starts.'
+    );
+    if (!confirmed) return;
+    try {
+      const res = await fetch(API + '/orders/' + id + '/approve-fulfilment', { method: 'PATCH' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || res.status);
+      }
+      showToast('✅ ' + ref + ' submitted to Gelato');
+      await Promise.all([loadStats(), loadOrders()]);
+    } catch (e) {
+      alert('Error approving fulfilment: ' + e.message);
+    }
+  }
+
+  async function cancelFulfilment(id, ref) {
+    const confirmed = window.confirm('Cancel the Gelato draft for ' + ref + '? This deletes the draft — no charge either way.');
+    if (!confirmed) return;
+    try {
+      const res = await fetch(API + '/orders/' + id + '/cancel-fulfilment', { method: 'PATCH' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || res.status);
+      }
+      showToast('✓ Draft cancelled for ' + ref);
+      await Promise.all([loadStats(), loadOrders()]);
+    } catch (e) {
+      alert('Error cancelling draft: ' + e.message);
+    }
+  }
+
+  async function dispatch(id, ref) {
+    const confirmed = window.confirm('Mark ' + ref + ' as dispatched?\nThis will send the customer their dispatch email.');
+    if (!confirmed) return;
+    const btn = document.getElementById('btn-' + id);
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      const res = await fetch(API + '/orders/' + id + '/dispatch', { method: 'PATCH' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || res.status);
+      }
+      showToast('✓ ' + ref + ' marked as dispatched');
+      await Promise.all([loadStats(), loadOrders()]);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Mark Dispatched';
+      alert('Error: ' + e.message);
+    }
+  }
+
+  function applySearch() {
+    const q = (document.getElementById('orderSearch').value || '').trim().toLowerCase();
+    if (!q) return renderOrders(allOrders);
+    renderOrders(allOrders.filter(o => {
+      const hay = [o.order_ref, o.customer_name, o.shipping_name, o.customer_email,
+        o.shipping_postal_code, o.mug_name, o.mug_message, o.personalisation_notes, o.gift_message,
+        (o.items || []).map(i => i.name).join(' ')].filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(q);
+    }));
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  const REVIEW_URL = 'https://bit.ly/cbjReview';
+
+  function printSlip(id) {
+    const o = allOrders.find(x => x.id === id);
+    if (!o) return alert('Order not found in current view');
+
+    const itemRows = (o.items || []).map(i => {
+      const pid = (i.stripe_price_id && priceIdToProductId[i.stripe_price_id]) || '—';
+      return '<tr><td style="padding:7px 10px;border-bottom:1px solid #e0f0ef">' + esc(i.name) +
+        '<br><span style="font-size:0.72rem;color:#999">' + esc(pid) + '</span>' +
+        '</td><td style="padding:7px 10px;border-bottom:1px solid #e0f0ef;text-align:center;font-weight:600">' + i.quantity + '</td></tr>';
+    }).join('');
+
+    let pers = '';
+    if (o.is_gift) pers += '<div style="background:#fce4ec;border-left:4px solid #E91E63;padding:10px 14px;border-radius:4px;margin-top:14px"><strong>&#127873; This is a gift' + (o.gift_message ? ':</strong><br><span style="font-size:0.92rem">' + esc(o.gift_message) + '</span>' : ' (no message left)</strong>') + '</div>';
+    if (o.personalisation_notes) pers += '<div style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 14px;border-radius:4px;margin-top:14px"><strong>✏ Personalisation needed:</strong><br><span style="font-size:0.92rem">' + esc(o.personalisation_notes) + '</span></div>';
+    if (o.mug_name) pers += '<div style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 14px;border-radius:4px;margin-top:14px"><strong>☕ Mug details:</strong><br><span style="font-size:0.92rem">Name: ' + esc(o.mug_name) +
+      (o.mug_message ? '<br>Message: ' + esc(o.mug_message) : '') +
+      (o.mug_text_colour ? '<br>Text colour: ' + esc(o.mug_text_colour) : '') + '</span></div>';
+    if (o.custom_order_notes) pers += '<div style="background:#EDE7F6;border-left:4px solid #7E57C2;padding:10px 14px;border-radius:4px;margin-top:14px"><strong>&#127912; Custom order details:</strong><br><span style="font-size:0.92rem;white-space:pre-wrap">' + esc(o.custom_order_notes) + '</span></div>';
+    if (o.shipping_notes) pers += '<div style="background:#E3F2FD;border-left:4px solid #4A90E2;padding:10px 14px;border-radius:4px;margin-top:14px"><strong>&#128230; Shipping notes:</strong><br><span style="font-size:0.92rem;white-space:pre-wrap">' + esc(o.shipping_notes) + '</span></div>';
+
+    const addr = [o.shipping_name, o.shipping_line1, o.shipping_line2, o.shipping_city, o.shipping_postal_code]
+      .filter(Boolean).map(esc).join('<br>');
+
+    var css = [
+      '* { box-sizing: border-box; margin: 0; padding: 0; }',
+      'body { font-family: Arial, sans-serif; color: #222; background: #fff; padding: 28px 32px; font-size: 13px; }',
+      '@media print { body { padding: 16px 20px; } .no-print { display: none !important; } }',
+      '.header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #20B2AA; padding-bottom: 12px; margin-bottom: 16px; }',
+      '.brand { font-size: 1.4rem; font-weight: 700; color: #20B2AA; }',
+      '.brand-sub { font-size: 0.78rem; color: #888; margin-top: 2px; }',
+      '.order-ref { font-size: 1.1rem; font-weight: 700; color: #4A4A4A; text-align: right; }',
+      '.order-date { font-size: 0.78rem; color: #888; text-align: right; margin-top: 2px; }',
+      '.two-col { display: flex; gap: 24px; margin-bottom: 16px; }',
+      '.col { flex: 1; }',
+      '.section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #20B2AA; font-weight: 700; margin-bottom: 6px; }',
+      '.addr-block { line-height: 1.7; font-size: 0.95rem; }',
+      'table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }',
+      'th { text-align: left; padding: 7px 10px; border-bottom: 2px solid #20B2AA; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #20B2AA; }',
+      'th:last-child { text-align: center; }',
+      'hr.divider { border: none; border-top: 1px solid #e0f0ef; margin: 16px 0; }',
+      '.review-box { display: flex; align-items: center; gap: 20px; border: 2px solid #20B2AA; border-radius: 8px; padding: 14px 18px; margin-top: 18px; background: #f0fbfc; }',
+      '.review-text h3 { font-size: 0.95rem; color: #20B2AA; margin-bottom: 4px; }',
+      '.review-text p { font-size: 0.82rem; color: #555; line-height: 1.5; }',
+      '.review-url { font-size: 0.75rem; color: #888; margin-top: 4px; word-break: break-all; }',
+      '.thankyou { margin-top: 18px; font-size: 0.88rem; color: #444; line-height: 1.6; }',
+      '.footer { margin-top: 24px; font-size: 0.72rem; color: #bbb; border-top: 1px solid #eee; padding-top: 10px; }',
+      '#qr-canvas { flex-shrink: 0; }'
+    ].join('\n');
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+      + '<title>Packing slip ' + esc(o.order_ref) + '</title>'
+      + '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>'
+      + '<style>' + css + '</style>'
+      + '</head><body>'
+      + '<div class="header"><div>'
+      + '<div class="brand">Crafts by Jon</div>'
+      + '<div class="brand-sub">craftsbyjon.co.uk &nbsp;&middot;&nbsp; Deal, Kent</div>'
+      + '</div><div>'
+      + '<div class="order-ref">Packing Slip &nbsp;&middot;&nbsp; ' + esc(o.order_ref) + '</div>'
+      + '<div class="order-date">Order date: ' + esc(formatDate(o.created_at)) + '</div>'
+      + '</div></div>'
+      + '<div class="two-col"><div class="col">'
+      + '<div class="section-label">Deliver to</div>'
+      + '<div class="addr-block">' + addr + '</div>'
+      + '</div><div class="col">'
+      + '<div class="section-label">Order summary</div>'
+      + '<div style="font-size:1rem;font-weight:700;margin-top:4px">' + (o.is_gift ? '&#127873; Gift order &mdash; price hidden' : esc(o.amount_total_formatted || '')) + '</div>'
+      + '</div></div>'
+      + '<div class="section-label">Items</div>'
+      + '<table><tr><th>Item</th><th style="text-align:center">Qty</th></tr>' + itemRows + '</table>'
+      + pers
+      + '<hr class="divider">'
+      + '<div class="thankyou"><strong>Thank you so much for your order!</strong> &#x1F499;<br>'
+      + 'Every item is handmade by me, Jon, right here in Deal, Kent. I hope you love it '
+      + 'and if you do, it would mean the world if you left a quick review.</div>'
+      + '<div class="review-box"><div id="qr-canvas"></div><div class="review-text">'
+      + '<h3>&#11088; Enjoying your order? Leave us a review!</h3>'
+      + '<p>It only takes a minute and helps other people find Crafts by Jon.<br>'
+      + 'Scan the QR code or visit the link below:</p>'
+      + '<div class="review-url">' + REVIEW_URL + '</div>'
+      + '</div></div>'
+      + '<div class="footer">Crafts by Jon &nbsp;&middot;&nbsp; Jon Miles &nbsp;&middot;&nbsp; 15a Ranelagh Road, Deal, Kent, CT14 7BG &nbsp;&middot;&nbsp; jon@craftsbyjon.co.uk</div>'
+      + '<script>'
+      + 'new QRCode(document.getElementById("qr-canvas"),{'
+      + 'text:"' + REVIEW_URL + '",width:90,height:90,colorDark:"#20B2AA",colorLight:"#f0fbfc"});'
+      + 'window.onload=function(){window.print();};'
+      + '<\/script>'
+      + '</body></html>';
+
+    const w = window.open('', '_blank', 'width=760,height=980');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  function exportCsv() {
+    const pending = allOrders.filter(o => o.status === 'pending');
+    if (!pending.length) return alert('No pending orders in the current view to export.');
+    const cols = ['Order reference','Full name','Address line 1','Address line 2','City','Postcode','Country','Email','Items','Weight (g)'];
+    const csvEsc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const rows = pending.map(o => [
+      o.order_ref,
+      o.shipping_name || o.customer_name || '',
+      o.shipping_line1 || '', o.shipping_line2 || '', o.shipping_city || '',
+      o.shipping_postal_code || '', o.shipping_country || 'GB',
+      o.customer_email || '',
+      (o.items || []).map(i => i.name + ' x' + i.quantity).join('; '),
+      ''
+    ].map(csvEsc).join(','));
+    const csv = cols.map(csvEsc).join(',') + '\n' + rows.join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'cbj-pending-orders-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    showToast('✓ Exported ' + pending.length + ' pending order(s)');
+  }
+
+  function setFilter(f) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === f);
+    });
+    loadOrders();
+  }
+
+  loadStats();
+  loadOrders();
+  loadProductMap();
+</script>
+
+<script src="/staff/nav.js"></script>
+</body>
+</html>

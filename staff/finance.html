@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log Transaction — Crafts by Jon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #E0F7FA;
+      --bg-card:      #ffffff;
+      --bg-muted:     #f0fbfc;
+      --text:         #4A4A4A;
+      --text-soft:    #888;
+      --accent:       #FF7F50;
+      --accent-hover: #e86e40;
+      --teal:         #20B2AA;
+      --teal-light:   #d0f0ee;
+      --teal-hover:   #1a9992;
+      --border:       #c8ebed;
+      --green:        #4CAF50;
+      --green-light:  #e8f5e9;
+      --radius:       12px;
+      --shadow:       0 2px 16px rgba(32,178,170,0.10);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+    header {
+      background: var(--teal);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(32,178,170,0.25);
+    }
+    header h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 700; letter-spacing: 0.02em; }
+    header a  { color: #fff; font-size: 0.82rem; opacity: 0.8; font-weight: 300; text-decoration: none; }
+    header a:hover { opacity: 1; }
+    .wrapper {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 36px 20px 0;
+    }
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--teal);
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .page-sub {
+      text-align: center;
+      color: var(--text-soft);
+      font-size: 0.9rem;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 28px 24px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 18px;
+    }
+    .form-group:last-of-type { margin-bottom: 0; }
+    label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    input, select, textarea {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--bg-muted);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 13px;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--teal);
+      background: #fff;
+    }
+    textarea { resize: vertical; min-height: 70px; }
+    .divider {
+      border: none;
+      border-top: 1.5px solid var(--border);
+      margin: 22px 0;
+    }
+    .btn {
+      width: 100%;
+      padding: 13px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--accent);
+      color: #fff;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 22px;
+    }
+    .btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .btn.loading .btn-spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status-msg {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      display: none;
+    }
+    .status-msg.ok    { display: block; background: var(--green-light); color: #2e7d32; }
+    .status-msg.error { display: block; background: #fde8e8; color: #a33; }
+    .note {
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      margin-top: 14px;
+      text-align: center;
+    }
+    @media (max-width: 520px) {
+      header { padding: 14px 16px; }
+      .wrapper { padding: 20px 12px 0; }
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .card { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✂️ Crafts by Jon — Staff</h1>
+  <a href="/staff/staff-index.html">← Dashboard</a>
+</header>
+
+<div class="wrapper">
+
+  <div class="page-title">Log Transaction</div>
+  <div class="page-sub">Manually record an expense or income item. Penny will ask you to classify it.</div>
+
+  <div class="card">
+    <form id="finance-form" onsubmit="submitTransaction(event)">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="date">Date</label>
+          <input type="date" id="date" name="date" required />
+        </div>
+        <div class="form-group">
+          <label for="type">Type</label>
+          <select id="type" name="type" required>
+            <option value="EXPENSE">Expense</option>
+            <option value="INCOME">Income</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="merchant">Merchant</label>
+          <input type="text" id="merchant" name="merchant" placeholder="e.g. Amazon, Porkbun" required />
+        </div>
+        <div class="form-group">
+          <label for="amount">Amount (£)</label>
+          <input type="number" id="amount" name="amount" placeholder="0.00" step="0.01" min="0" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <input type="text" id="description" name="description" placeholder="What was purchased / received" required />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="category_hint">Category Hint</label>
+          <select id="category_hint" name="category_hint">
+            <option value="PERSONAL">Personal</option>
+            <option value="CRAFT">Craft / Business</option>
+            <option value="HOME">Home</option>
+            <option value="UNSURE">Unsure</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="notes">Notes (optional)</label>
+          <input type="text" id="notes" name="notes" placeholder="Any extra context" />
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <button type="submit" class="btn" id="submit-btn">
+        <span class="btn-spinner"></span>
+        <span class="btn-label">Log Transaction</span>
+      </button>
+
+      <div class="status-msg" id="status-msg"></div>
+
+      <p class="note">Penny will message you on Telegram with a classification link.</p>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+  // Default date to today
+  document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+
+  const INTAKE_URL = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/penny-intake';
+
+  async function submitTransaction(e) {
+    e.preventDefault();
+    const btn    = document.getElementById('submit-btn');
+    const status = document.getElementById('status-msg');
+    const form   = document.getElementById('finance-form');
+
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.querySelector('.btn-label').textContent = 'Logging…';
+    status.className = 'status-msg';
+
+    const payload = {
+      source:        'Manual',
+      date:          document.getElementById('date').value,
+      merchant:      document.getElementById('merchant').value.trim(),
+      amount:        parseFloat(document.getElementById('amount').value) || null,
+      type:          document.getElementById('type').value,
+      description:   document.getElementById('description').value.trim(),
+      notes:         document.getElementById('notes').value.trim(),
+      category_hint: document.getElementById('category_hint').value
+    };
+
+    try {
+      const res = await fetch(INTAKE_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      status.textContent = '✓ Logged. Penny will message you shortly.';
+      status.className   = 'status-msg ok';
+      btn.querySelector('.btn-label').textContent = '✓ Logged';
+
+      setTimeout(() => {
+        form.reset();
+        document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+        btn.querySelector('.btn-label').textContent = 'Log Transaction';
+        btn.disabled = false;
+        btn.classList.remove('loading');
+        status.className = 'status-msg';
+      }, 2500);
+
+    } catch (err) {
+      status.textContent = `Failed: ${err.message}`;
+      status.className   = 'status-msg error';
+      btn.querySelector('.btn-label').textContent = 'Log Transaction';
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+</script>
+
+<script src="/staff/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goodwin Timetable Upload</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f5f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 32px;
+    max-width: 420px;
+    width: 100%;
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0 0 8px;
+  }
+  p.sub {
+    color: #666;
+    font-size: 14px;
+    margin: 0 0 24px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed #bbb;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled {
+    background: #a0bce8;
+    cursor: not-allowed;
+  }
+  #status {
+    margin-top: 16px;
+    font-size: 14px;
+    padding: 12px;
+    border-radius: 8px;
+    display: none;
+  }
+  #status.ok { display: block; background: #e6f4ea; color: #1e7e34; }
+  #status.err { display: block; background: #fce8e6; color: #c5221f; }
+  #status.pending { display: block; background: #fef7e0; color: #b06000; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Goodwin Timetable Upload</h1>
+    <p class="sub">Upload the timetable PDF for Jacob or Joseph. Events for the rest of the term are added to their calendar automatically.</p>
+    <form id="uploadForm">
+      <label for="file">Timetable PDF</label>
+      <input type="file" id="file" name="file" accept="application/pdf" required>
+      <button type="submit" id="submitBtn">Upload &amp; Sync Calendar</button>
+    </form>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const status = document.getElementById('status');
+    const btn = document.getElementById('submitBtn');
+    const UPLOAD_URL = 'https://craftsbyjon.co.uk/n8n-proxy/webhook/goodwin-timetable-upload';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById('file');
+      if (!fileInput.files.length) return;
+
+      btn.disabled = true;
+      status.className = 'pending';
+      status.textContent = 'Uploading and syncing — this can take a couple of minutes for a full term, please don’t close this page.';
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        const res = await fetch(UPLOAD_URL, { method: 'POST', body: formData });
+        if (res.ok) {
+          status.className = 'ok';
+          status.textContent = 'Uploaded. The calendar sync is running in the background.';
+        } else {
+          status.className = 'err';
+          status.textContent = 'Upload failed (server error). Please try again or check with Jon.';
+        }
+      } catch (err) {
+        status.className = 'err';
+        status.textContent = 'Upload failed: ' + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reel Studio - Crafts by Jon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#E0F7FA; --bg-card:#ffffff; --bg-muted:#f0fbfc;
+      --text:#4A4A4A; --text-soft:#888; --accent:#FF7F50;
+      --teal:#20B2AA; --teal-light:#d0f0ee; --teal-hover:#1a9992;
+      --border:#c8ebed; --radius:10px; --shadow:0 2px 16px rgba(32,178,170,0.10);
+      --reel:#7C3AED; --reel-hover:#6D28D9; --reel-light:#ede9fe; --reel-border:#c4b5fd;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    header{background:var(--teal);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px}
+    header h1{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700}
+    header a{color:#fff;font-size:0.82rem;opacity:0.8;font-weight:300;text-decoration:none;margin-left:auto}
+    header a:hover{opacity:1}
+    .product-bar{background:var(--teal-light);border-bottom:2px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px}
+    .pid{font-size:0.78rem;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:0.06em}
+    .pname{font-size:0.95rem;font-weight:500}
+    .container{max-width:860px;margin:0 auto;padding:24px 16px 60px}
+    .stage{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);border:1.5px solid var(--border);margin-bottom:20px;overflow:hidden;transition:opacity 0.3s}
+    .stage.locked{opacity:0.45;pointer-events:none}
+    .stage-header{background:var(--bg-muted);border-bottom:1.5px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:10px}
+    .stage-num{width:24px;height:24px;border-radius:50%;background:var(--teal);color:#fff;font-size:0.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .stage.locked .stage-num{background:var(--text-soft)}
+    .stage-title{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--teal)}
+    .stage.locked .stage-title{color:var(--text-soft)}
+    .stage-body{padding:18px}
+    label.fl{display:block;font-size:0.75rem;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;margin-top:14px}
+    label.fl:first-child{margin-top:0}
+    select,input[type="text"],textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.88rem;background:var(--bg-muted);color:var(--text);transition:border-color 0.15s}
+    select:focus,input[type="text"]:focus,textarea:focus{outline:none;border-color:var(--teal);background:#fff}
+    textarea{resize:vertical;line-height:1.5}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:540px){.row2{grid-template-columns:1fr}}
+    .style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+    @media(max-width:600px){.style-grid{grid-template-columns:repeat(2,1fr)}}
+    .style-card{border:2px solid var(--border);border-radius:9px;padding:12px 10px;cursor:pointer;transition:border-color 0.15s,background 0.15s;text-align:center;background:var(--bg-muted)}
+    .style-card:hover{border-color:var(--reel);background:var(--reel-light)}
+    .style-card.selected{border-color:var(--reel);background:var(--reel-light);box-shadow:0 0 0 3px rgba(124,58,237,0.12)}
+    .si{font-size:1.6rem;display:block;margin-bottom:5px}
+    .sn{font-size:0.78rem;font-weight:600;color:var(--text);display:block}
+    .sd{font-size:0.7rem;color:var(--text-soft);display:block;margin-top:3px;line-height:1.3}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;transition:background 0.15s,transform 0.1s}
+    .btn:active{transform:scale(0.97)}
+    .btn-teal{background:var(--teal);color:#fff}
+    .btn-teal:hover{background:var(--teal-hover)}
+    .btn-teal:disabled{background:#aaa;cursor:not-allowed}
+    .btn-reel{background:var(--reel);color:#fff;width:100%;justify-content:center;padding:13px 20px;font-size:1rem;border-radius:10px}
+    .btn-reel:hover{background:var(--reel-hover)}
+    .btn-reel:disabled{background:#aaa;cursor:not-allowed}
+    .bspinner{width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:none}
+    .loading .bspinner{display:block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .drop-zones{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+    .drop-zone{border:2px dashed var(--border);border-radius:9px;padding:18px;text-align:center;cursor:pointer;transition:border-color 0.15s,background 0.15s;background:var(--bg-muted);position:relative}
+    .drop-zone:hover,.drop-zone.drag-over{border-color:var(--teal);background:var(--teal-light)}
+    .drop-zone.uploaded{border-color:#4CAF50;border-style:solid;background:#f0fff4}
+    .drop-zone input[type="file"]{display:none}
+    .dz-icon{font-size:1.5rem;display:block;margin-bottom:4px}
+    .dz-label{font-size:0.82rem;font-weight:600;color:var(--text);display:block}
+    .dz-hint{font-size:0.72rem;color:var(--text-soft);display:block;margin-top:3px}
+    .dz-done{font-size:0.78rem;color:#4CAF50;font-weight:600;margin-top:6px;display:none}
+    .drop-zone.uploaded .dz-done{display:block}
+    .drop-zone.uploaded .dz-hint{display:none}
+    .sbox{margin-top:14px;padding:12px 14px;border-radius:8px;font-size:0.85rem;display:none}
+    .sbox.show{display:block}
+    .sbox.info{background:var(--reel-light);border:1px solid var(--reel-border);color:var(--reel)}
+    .sbox.success{background:#f0fff4;border:1px solid #86efac;color:#166534}
+    .sbox.error{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b}
+    .dl-link{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:10px 18px;background:#166534;color:#fff;border-radius:8px;font-size:0.88rem;font-weight:600;text-decoration:none}
+    .dl-link:hover{background:#14532d}
+    #overlay{display:none;position:fixed;inset:0;background:rgba(224,247,250,0.88);z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+    #overlay.show{display:flex}
+    .big-spin{width:48px;height:48px;border:4px solid var(--teal-light);border-top-color:var(--teal);border-radius:50%;animation:spin 0.8s linear infinite}
+    #overlay p{font-size:1rem;font-weight:500;color:var(--teal)}
+    .divider{height:1px;background:var(--border);margin:16px 0}
+  </style>
+</head>
+<body>
+<div id="overlay"><div class="big-spin"></div><p id="overlay-msg">Working...</p></div>
+<header>
+  <h1>Reel Studio</h1>
+  <a href="/staff/listings.html">Back to Listings</a>
+</header>
+<div class="product-bar">
+  <span class="pid" id="bar-id">-</span>
+  <span class="pname" id="bar-name">Loading...</span>
+</div>
+<div class="container">
+  <div class="stage" id="stage-1">
+    <div class="stage-header"><div class="stage-num">1</div><div class="stage-title">Choose Style and Occasion</div></div>
+    <div class="stage-body">
+      <label class="fl">Reel Style</label>
+      <div class="style-grid">
+        <div class="style-card selected" data-style="stills" onclick="selectStyle(this)"><span class="si">🖼️</span><span class="sn">Classic Stills</span><span class="sd">3 images, Ken Burns zoom, voiceover</span></div>
+        <div class="style-card" data-style="handler" onclick="selectStyle(this)"><span class="si">🤲</span><span class="sn">The Handler</span><span class="sd">Raw footage, hands only, real feel</span></div>
+        <div class="style-card" data-style="reveal" onclick="selectStyle(this)"><span class="si">✨</span><span class="sn">The Reveal</span><span class="sd">Tight crop pulls back to full product</span></div>
+        <div class="style-card" data-style="story" onclick="selectStyle(this)"><span class="si">💬</span><span class="sn">The Story</span><span class="sd">Personal voiceover, maker narrative</span></div>
+        <div class="style-card" data-style="sweep" onclick="selectStyle(this)"><span class="si">🌊</span><span class="sn">Collection Sweep</span><span class="sd">Quick cuts across multiple products</span></div>
+        <div class="style-card" data-style="occasion" onclick="selectStyle(this)"><span class="si">🎁</span><span class="sn">Occasion Hook</span><span class="sd">Gift moment leads, product follows</span></div>
+      </div>
+      <label class="fl" style="margin-top:18px">Occasion (optional)</label>
+      <select id="occasion-select">
+        <option value="">- None -</option>
+        <option>Father's Day</option><option>Mother's Day</option><option>Birthday</option>
+        <option>Christmas</option><option>Valentine's Day</option><option>Easter</option>
+        <option>Teacher gift</option><option>End of school year</option>
+        <option>Wedding or anniversary</option><option>New baby</option>
+        <option>Retirement</option><option>Thank you gift</option><option>Pride Month</option>
+      </select>
+      <div style="margin-top:16px">
+        <button class="btn btn-teal" id="btn-gen" onclick="generateContent()">
+          <span class="bspinner"></span><span class="blabel">Generate Content</span>
+        </button>
+      </div>
+      <div class="sbox" id="s1-status"></div>
+    </div>
+  </div>
+
+  <div class="stage locked" id="stage-2">
+    <div class="stage-header"><div class="stage-num">2</div><div class="stage-title">Review and Edit Copy</div></div>
+    <div class="stage-body">
+      <div class="row2">
+        <div><label class="fl">Overlay Line 1</label><input type="text" id="c-line1" placeholder="e.g. Deal Castle Bookmark" /></div>
+        <div><label class="fl">Overlay Line 2</label><input type="text" id="c-line2" placeholder="e.g. Acrylic Bookmark" /></div>
+      </div>
+      <div class="row2">
+        <div><label class="fl">Overlay Line 3</label><input type="text" id="c-line3" placeholder="e.g. Handmade in Deal, Kent" /></div>
+        <div><label class="fl">Overlay Line 4</label><input type="text" id="c-line4" placeholder="e.g. From 3.50" /></div>
+      </div>
+      <label class="fl">Voiceover Script</label>
+      <textarea id="c-vo" rows="4" placeholder="What ElevenLabs will say..."></textarea>
+      <label class="fl">Music Prompt</label>
+      <input type="text" id="c-music" placeholder="e.g. Gentle acoustic guitar, warm, instrumental, no vocals" />
+      <div class="divider"></div>
+      <label class="fl">Social Caption</label>
+      <textarea id="c-caption" rows="3" placeholder="Facebook / Instagram post caption..."></textarea>
+      <label class="fl">Hashtags</label>
+      <input type="text" id="c-hashtags" placeholder="#CraftsByJon #DealKent ..." />
+      <div style="margin-top:16px">
+        <button class="btn btn-teal" onclick="confirmCopy()"><span class="blabel">Save Copy and Continue</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage locked" id="stage-3">
+    <div class="stage-header"><div class="stage-num">3</div><div class="stage-title">Upload Files</div></div>
+    <div class="stage-body">
+      <div id="style-intro" style="background:var(--reel-light);border:1px solid var(--reel-border);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:0.83rem;color:var(--reel);line-height:1.5;display:none"></div>
+      <div id="firefly-prompts" style="display:none;margin-bottom:14px">
+        <div style="font-size:0.75rem;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Firefly Image Prompts — copy these into Adobe Firefly or use your own photography</div>
+        <div id="firefly-bench" style="display:none;background:var(--bg-muted);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:0.8rem;line-height:1.5;color:var(--text)">
+          <strong style="font-size:0.72rem;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:4px">Bench / Workshop Scene</strong>
+          <span id="firefly-bench-text"></span>
+          <button onclick="copyText('firefly-bench-text',this)" style="margin-top:6px;display:block;background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-size:0.72rem;cursor:pointer;color:var(--text-soft)">Copy</button>
+        </div>
+        <div id="firefly-flatlay" style="display:none;background:var(--bg-muted);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:0.8rem;line-height:1.5;color:var(--text)">
+          <strong style="font-size:0.72rem;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:4px">Flatlay / Coastal Scene</strong>
+          <span id="firefly-flatlay-text"></span>
+          <button onclick="copyText('firefly-flatlay-text',this)" style="margin-top:6px;display:block;background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-size:0.72rem;cursor:pointer;color:var(--text-soft)">Copy</button>
+        </div>
+      </div>
+      <div class="drop-zones" id="drop-zones"></div>
+      <div class="sbox" id="s3-status"></div>
+      <div style="margin-top:16px">
+        <button class="btn btn-teal" id="btn-files" onclick="confirmFiles()" disabled><span class="blabel">All Files Ready - Continue</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage locked" id="stage-4">
+    <div class="stage-header"><div class="stage-num">4</div><div class="stage-title">Render Reel</div></div>
+    <div class="stage-body">
+      <p style="font-size:0.88rem;color:var(--text-soft);margin-bottom:16px">Everything is ready. FFmpeg will assemble your reel - takes 30-60 seconds.</p>
+      <button class="btn-reel btn" id="btn-render" onclick="renderReel()">
+        <span class="bspinner"></span><span class="blabel">Render Reel</span>
+      </button>
+      <div class="sbox" id="s4-status"></div>
+    </div>
+  </div>
+</div>
+<script>
+const API='https://craftsbyjon.co.uk/n8n-proxy/products-api';
+const N8N='https://craftsbyjon.co.uk/n8n-proxy/webhook';
+const params=new URLSearchParams(location.search);
+const productId=params.get('productId')||'';
+let selectedStyle='stills';
+let jobData={};
+let uploaded={};
+
+const STYLES={
+  stills:{
+    intro:`Three images assembled with Ken Burns zoom effect. Use the Firefly prompts from Stage 2 to generate lifestyle shots, or photograph the product yourself. Product Hero should be a clean lightbox shot.`,
+    slots:[
+      {key:`lifestyle-bench`,label:`Lifestyle Shot 1 — Bench Scene`,hint:`Generate using the Firefly Bench Prompt from Stage 2, or photograph the product on your workbench with natural light. Portrait orientation, 9:16. JPG or PNG.`,icon:`🖼️`,accept:`image/*`,fname:`lifestyle-bench.png`},
+      {key:`product`,label:`Product Hero`,hint:`Clean product shot against a plain or white background — lightbox is ideal. No clutter. The product fills most of the frame. JPG or PNG.`,icon:`⭐`,accept:`image/*`,fname:`product.jpg`},
+      {key:`lifestyle-map`,label:`Lifestyle Shot 2 — Flatlay or Context`,hint:`Generate using the Firefly Flatlay Prompt from Stage 2, or photograph the product on a flat surface with props (pebbles, kraft paper, fabric). Portrait orientation, 9:16. JPG or PNG.`,icon:`🗺️`,accept:`image/*`,fname:`lifestyle-map.png`},
+    ]},
+  handler:{
+    intro:`Raw handheld footage of the product being picked up and handled. Film on your phone — S25 works perfectly. No tripod needed, slight movement is fine. Keep clips to 5-10 seconds each. Landscape or portrait both work.`,
+    slots:[
+      {key:`clip-1`,label:`Hands Clip 1 — Pick Up`,hint:`Film yourself picking up the product from a surface, turning it over, or holding it up to the light. 5-10 seconds. MP4 preferred, but a still image works too if you have no footage yet.`,icon:`🤲`,accept:`video/*,image/*`,fname:`clip-hands-1.mp4`},
+      {key:`clip-2`,label:`Hands Clip 2 — In Use`,hint:`Film the product being used — keyring clipped onto keys, bookmark going into a book, product being placed on a surface. 5-10 seconds. MP4 preferred.`,icon:`🤲`,accept:`video/*,image/*`,fname:`clip-hands-2.mp4`},
+      {key:`product`,label:`Product Still — End Frame`,hint:`Clean product shot for the final frame of the reel. Plain background, well lit. Lightbox ideal. JPG or PNG.`,icon:`⭐`,accept:`image/*`,fname:`product.jpg`},
+    ]},
+  reveal:{
+    intro:`Starts tight on a detail, pulls back to reveal the full product. Works best with a distinctive design element — a specific colour gradient, a character, an intricate pattern. Both slots can be stills or short video clips.`,
+    slots:[
+      {key:`tight`,label:`Tight Crop — Detail Shot`,hint:`Extreme close-up of the most interesting part of the design. Fill the frame with it. Could be a colour gradient, a character face, a pattern. JPG, PNG, or a slow zoom clip. Portrait orientation.`,icon:`🔍`,accept:`image/*,video/*`,fname:`product-tight.jpg`},
+      {key:`product`,label:`Full Product Shot`,hint:`The complete product, clean and well lit. This is the payoff after the tight crop. Plain or simple background. JPG or PNG.`,icon:`⭐`,accept:`image/*`,fname:`product.jpg`},
+      {key:`context`,label:`Context Shot`,hint:`Product in a real setting — on keys, in a bag, in a book. Shows scale and real-world use. JPG, PNG, or short clip.`,icon:`🖼️`,accept:`image/*,video/*`,fname:`lifestyle-map.png`},
+    ]},
+  story:{
+    intro:`Personal maker narrative. Jon talking about why and how he made this. Works best with a mix of process and product shots. Raw and real beats polished here.`,
+    slots:[
+      {key:`making`,label:`Making Shot — Process`,hint:`Photo or clip of the Cricut cutting, the workbench, acrylic sheets, or your hands peeling backing. Does not need to be the exact product — any making process shot works. JPG, PNG, or MP4.`,icon:`🛠️`,accept:`image/*,video/*`,fname:`making-shot.jpg`},
+      {key:`product`,label:`Product Hero — Finished Product`,hint:`Clean finished product shot. The contrast between making and made is the story. Plain background, well lit. JPG or PNG.`,icon:`⭐`,accept:`image/*`,fname:`product.jpg`},
+      {key:`life`,label:`Lifestyle Shot — Product in Context`,hint:`Product being used or placed in a real setting. Shows the end result in someone\'s life. JPG, PNG, or short clip.`,icon:`🖼️`,accept:`image/*,video/*`,fname:`lifestyle-map.png`},
+    ]},
+  sweep:{
+    intro:`Quick cuts across multiple products from the same collection. Each product gets 1-2 seconds of screen time. Use clean product shots from your existing lightbox photography.`,
+    slots:[
+      {key:`p1`,label:`Product 1`,hint:`First product in the collection. Clean lightbox shot, plain background. Portrait orientation preferred. JPG or PNG.`,icon:`1️⃣`,accept:`image/*`,fname:`product-1.jpg`},
+      {key:`p2`,label:`Product 2`,hint:`Second product. Same style as Product 1 — consistent lighting and background across all shots will look more professional. JPG or PNG.`,icon:`2️⃣`,accept:`image/*`,fname:`product-2.jpg`},
+      {key:`p3`,label:`Product 3`,hint:`Third product. JPG or PNG.`,icon:`3️⃣`,accept:`image/*`,fname:`product-3.jpg`},
+      {key:`p4`,label:`Product 4 (optional)`,hint:`Fourth product or a flatlay of the whole collection together. JPG or PNG.`,icon:`4️⃣`,accept:`image/*`,fname:`product-4.jpg`,optional:true},
+    ]},
+  occasion:{
+    intro:`The gift occasion is the emotional hook — product is the answer. Lead shot should feel like a gift moment, not a product photo.`,
+    slots:[
+      {key:`occasion`,label:`Occasion Scene — The Gift Moment`,hint:`Photo or clip that sells the occasion — product wrapped in tissue paper, sitting beside a card, being handed over, or laid out as a gift. Does not need to be perfect. Real is better. JPG, PNG, or MP4.`,icon:`🎁`,accept:`image/*,video/*`,fname:`occasion-shot.jpg`},
+      {key:`product`,label:`Product Hero`,hint:`Clean product shot. Plain background, well lit. This follows the occasion scene. JPG or PNG.`,icon:`⭐`,accept:`image/*`,fname:`product.jpg`},
+      {key:`life`,label:`Context Shot`,hint:`Product in a lifestyle setting relevant to the occasion — on a desk for Teacher gift, on keys for everyday carry, in a book for a reader. JPG, PNG, or short clip.`,icon:`🖼️`,accept:`image/*,video/*`,fname:`lifestyle-map.png`},
+    ]},
+};
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  if(!productId){document.getElementById('bar-name').textContent='No product - go back to Listings';return;}
+  document.getElementById('bar-id').textContent=productId;
+  try{
+    const r=await fetch(`${API}/products/${productId}`);
+    const d=await r.json();
+    window._productType=(d.result?.product_type||d.result?.Type||'').toLowerCase();
+    document.getElementById('bar-name').textContent=d.result?.Title||d.result?.title||productId;
+    if(window._productType==='mug'){
+      document.getElementById('bar-name').insertAdjacentHTML('afterend','<span style="margin-left:8px;font-size:0.75rem;background:#7c3aed;color:#fff;padding:2px 8px;border-radius:12px">Gelato</span>');
+    }
+  }catch(e){document.getElementById('bar-name').textContent=productId;}
+  renderDropZones();
+});
+
+function selectStyle(el){
+  document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedStyle=el.dataset.style;
+  uploaded={};
+  renderDropZones();
+  checkFiles();
+}
+
+async function generateContent(){
+  const btn=document.getElementById('btn-gen');
+  const st=document.getElementById('s1-status');
+  btn.disabled=true;btn.classList.add('loading');
+  btn.querySelector('.blabel').textContent='Generating...';
+  setStatus(st,'','');
+  showOverlay('Asking the LLM to write your reel...');
+  try{
+    const reelEndpoint=window._productType==='mug'?'reel-generate-gelato':'reel-generate';
+    const r=await fetch(`${N8N}/${reelEndpoint}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({productId,occasion:document.getElementById('occasion-select').value,style:selectedStyle})
+    });
+    if(!r.ok)throw new Error('Webhook returned '+r.status);
+    const raw=await r.json();
+    jobData=raw.content||raw;
+    document.getElementById('c-line1').value=jobData.overlayLine1||'';
+    document.getElementById('c-line2').value=jobData.overlayLine2||'';
+    document.getElementById('c-line3').value=jobData.overlayLine3||'';
+    document.getElementById('c-line4').value=jobData.overlayLine4||'';
+    document.getElementById('c-vo').value=jobData.voiceoverScript||'';
+    document.getElementById('c-music').value=jobData.musicPrompt||'';
+    document.getElementById('c-caption').value=jobData.caption||'';
+    document.getElementById('c-hashtags').value=jobData.hashtags||'';
+    unlock('stage-2');
+    setStatus(st,'success','Content generated - review and edit, then save to continue.');
+    document.getElementById('stage-2').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    setStatus(st,'error','Failed: '+e.message);
+  }finally{
+    btn.disabled=false;btn.classList.remove('loading');
+    btn.querySelector('.blabel').textContent='Regenerate Content';
+    hideOverlay();
+  }
+}
+
+function confirmCopy(){
+  jobData={...jobData,
+    overlayLine1:document.getElementById('c-line1').value,
+    overlayLine2:document.getElementById('c-line2').value,
+    overlayLine3:document.getElementById('c-line3').value,
+    overlayLine4:document.getElementById('c-line4').value,
+    voiceoverScript:document.getElementById('c-vo').value,
+    musicPrompt:document.getElementById('c-music').value,
+    caption:document.getElementById('c-caption').value,
+    hashtags:document.getElementById('c-hashtags').value,
+    style:selectedStyle,productId,
+  };
+  unlock('stage-3');
+  renderDropZones();
+  // Show style intro
+  const intro = document.getElementById('style-intro');
+  const styleIntroText = STYLES[selectedStyle]?.intro || '';
+  if(styleIntroText){ intro.textContent = '📋 ' + styleIntroText; intro.style.display='block'; }
+  // Show Firefly prompts for stills-based styles
+  const benchPrompt = jobData.fireflyPromptBench || '';
+  const flatlayPrompt = jobData.fireflyPromptFlatlay || '';
+  if(benchPrompt || flatlayPrompt){
+    document.getElementById('firefly-prompts').style.display='block';
+    if(benchPrompt){ document.getElementById('firefly-bench-text').textContent=benchPrompt; document.getElementById('firefly-bench').style.display='block'; }
+    if(flatlayPrompt){ document.getElementById('firefly-flatlay-text').textContent=flatlayPrompt; document.getElementById('firefly-flatlay').style.display='block'; }
+  }
+  document.getElementById('stage-3').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function copyText(id, btn){
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(()=>{ btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',2000); });
+}
+
+// Stop the browser opening dropped files when they miss a drop zone
+['dragover','drop'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();},false));
+
+function filesFromDrop(e){
+  // Returns real files, or null if the drag came from a webpage (URL/HTML, no File objects)
+  const files=Array.from(e.dataTransfer.files||[]);
+  return files.length?files:null;
+}
+
+function renderDropZones(){
+  const slots=STYLES[selectedStyle]?.slots||[];
+  const wrap=document.getElementById('drop-zones');
+  wrap.innerHTML='';
+  slots.forEach(s=>{
+    // Hidden file input outside the drop zone
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept=s.accept;
+    input.style.display='none';
+    document.body.appendChild(input);
+    input.addEventListener('change',e=>{if(e.target.files[0])doUpload(e.target.files[0],s,div);});
+
+    const div=document.createElement('div');
+    div.className='drop-zone'+(uploaded[s.key]?' uploaded':'');
+    div.dataset.key=s.key;
+    div.innerHTML=`<span class="dz-icon">${s.icon}</span><span class="dz-label">${s.label}${s.optional?' (optional)':''}</span><span class="dz-hint">${s.hint} — click or drag to upload</span><span class="dz-done">${uploaded[s.key]?'✅ Done: '+s.fname:''}</span>`;
+
+    // Click opens file picker
+    div.addEventListener('click',()=>input.click());
+
+    // Drag and drop (counter avoids flicker when dragging over inner labels)
+    let dragDepth=0;
+    div.addEventListener('dragenter',e=>{e.preventDefault();e.stopPropagation();dragDepth++;div.classList.add('drag-over');});
+    div.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();});
+    div.addEventListener('dragleave',e=>{e.stopPropagation();dragDepth=Math.max(0,dragDepth-1);if(dragDepth===0)div.classList.remove('drag-over');});
+    div.addEventListener('drop',e=>{
+      e.preventDefault();e.stopPropagation();
+      dragDepth=0;div.classList.remove('drag-over');
+      const files=filesFromDrop(e);
+      if(!files){setStatus(document.getElementById('s3-status'),'error','That looks like a drag from a webpage — save the image to your computer first (right-click → Save Image As), then drag the saved file in.');return;}
+      doUpload(files[0],s,div);
+    });
+
+    wrap.appendChild(div);
+  });
+  if(selectedStyle==='stills')renderExtrasZone(wrap);
+  checkFiles();
+}
+
+// ===== Extra Shots — any number of lifestyle/hero images, woven into the reel =====
+let extras=[];
+
+async function refreshExtras(){
+  try{
+    const r=await fetch(`${API}/reel-extras?productId=${encodeURIComponent(productId)}`);
+    const d=await r.json();
+    extras=d.extras||[];
+  }catch(e){extras=[];}
+}
+
+function renderExtrasZone(wrap){
+  const input=document.createElement('input');
+  input.type='file';input.accept='image/*';input.multiple=true;input.style.display='none';
+  document.body.appendChild(input);
+
+  const div=document.createElement('div');
+  div.className='drop-zone'+(extras.length?' uploaded':'');
+  div.id='extras-zone';
+  const renderInner=()=>{
+    div.className='drop-zone'+(extras.length?' uploaded':'');
+    div.innerHTML=`<span class="dz-icon">📸</span><span class="dz-label">Extra Shots (optional — add as many as you like)</span>`
+      +`<span class="dz-hint">Lifestyle shots, alternate hero shots, detail shots — anything. Each gets a 3-second slot in the middle of the reel. Click or drag multiple files.</span>`
+      +`<span class="dz-done" style="display:${extras.length?'block':'none'}">${extras.length} extra shot${extras.length===1?'':'s'}: ${extras.join(', ')} `
+      +`<a href="#" id="extras-clear" style="color:#c0392b;font-weight:600;margin-left:6px">Clear all</a></span>`;
+    const clr=div.querySelector('#extras-clear');
+    if(clr)clr.addEventListener('click',async e=>{
+      e.preventDefault();e.stopPropagation();
+      await fetch(`${API}/reel-extras-clear`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({productId})});
+      extras=[];renderInner();
+      setStatus(document.getElementById('s3-status'),'info','Extra shots cleared.');
+    });
+  };
+  renderInner();
+  refreshExtras().then(renderInner);
+
+  input.addEventListener('change',e=>{const f=Array.from(e.target.files||[]);if(f.length)uploadExtras(f,renderInner);input.value='';});
+  div.addEventListener('click',e=>{if(e.target.id!=='extras-clear')input.click();});
+
+  let dd=0;
+  div.addEventListener('dragenter',e=>{e.preventDefault();e.stopPropagation();dd++;div.classList.add('drag-over');});
+  div.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();});
+  div.addEventListener('dragleave',e=>{e.stopPropagation();dd=Math.max(0,dd-1);if(dd===0)div.classList.remove('drag-over');});
+  div.addEventListener('drop',e=>{
+    e.preventDefault();e.stopPropagation();dd=0;div.classList.remove('drag-over');
+    const files=filesFromDrop(e);
+    if(!files){setStatus(document.getElementById('s3-status'),'error','That looks like a drag from a webpage — save the image to your computer first, then drag the saved file in.');return;}
+    uploadExtras(files.filter(f=>f.type.startsWith('image/')),renderInner);
+  });
+
+  wrap.appendChild(div);
+}
+
+async function uploadExtras(files,rerender){
+  const st=document.getElementById('s3-status');
+  let next=extras.reduce((m,f)=>{const n=parseInt((f.match(/extra-(\d+)/)||[])[1]||0);return Math.max(m,n);},0)+1;
+  for(const file of files){
+    const ext=(file.name.match(/\.(jpe?g|png)$/i)||['.jpg'])[0].toLowerCase().replace('jpeg','jpg');
+    const fname=`extra-${next}${ext.startsWith('.')?ext:'.'+ext}`;
+    setStatus(st,'info',`Uploading ${file.name} as ${fname}...`);
+    try{
+      const fd=new FormData();
+      fd.append('productId',`${productId}-reel-extra-${next}`);
+      fd.append('image',file,fname);
+      const r=await fetch(`${API}/upload-image`,{method:'POST',body:fd});
+      const d=await r.json();
+      if(!d.success)throw new Error(d.error||'Upload failed');
+      await fetch(`${API}/reel-file-move`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({uploadedFilename:d.filename,targetFilename:fname,productId})
+      });
+      extras.push(fname);next++;
+      rerender();
+    }catch(e){setStatus(st,'error','Upload failed for '+file.name+': '+e.message);return;}
+  }
+  setStatus(st,'success',`${files.length} extra shot${files.length===1?'':'s'} added.`);
+}
+
+async function doUpload(file,slot,zone){
+  const st=document.getElementById('s3-status');
+  setStatus(st,'info','Uploading '+file.name+'...');
+  const fd=new FormData();
+  fd.append('productId',`${productId}-reel-${slot.key}`);
+  fd.append('image',file,slot.fname);
+  try{
+    const r=await fetch(`${API}/upload-image`,{method:'POST',body:fd});
+    const d=await r.json();
+    if(!d.success)throw new Error(d.error||'Upload failed');
+    await fetch(`${API}/reel-file-move`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({uploadedFilename:d.filename,targetFilename:slot.fname,productId})
+    });
+    uploaded[slot.key]=slot.fname;
+    zone.classList.add('uploaded');
+    zone.querySelector('.dz-done').textContent='Done: '+slot.fname;
+    setStatus(st,'success',slot.fname+' ready.');
+    checkFiles();
+  }catch(e){
+    setStatus(st,'error','Upload failed: '+e.message);
+  }
+}
+
+function checkFiles(){
+  const slots=(STYLES[selectedStyle]?.slots||[]).filter(s=>!s.optional);
+  document.getElementById('btn-files').disabled=!slots.every(s=>uploaded[s.key]);
+}
+
+async function confirmFiles(){
+  try{
+    await fetch(`${API}/reel-save-job`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({productId,job:jobData})
+    });
+  }catch(e){}
+  unlock('stage-4');
+  document.getElementById('stage-4').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function renderReel(){
+  const btn=document.getElementById('btn-render');
+  const st=document.getElementById('s4-status');
+  btn.disabled=true;btn.classList.add('loading');
+  btn.querySelector('.blabel').textContent='Rendering...';
+  setStatus(st,'info','Render started. FFmpeg is running in the background — you will get a Telegram when it is ready. You can leave this page.');
+  hideOverlay();
+  try{
+    const r=await fetch(`${API}/render-reel`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({productId})
+    });
+    const d=await r.json();
+    if(!d.ok)throw new Error(d.error||'Render failed to start');
+    // Poll for completion every 5 seconds
+    let attempts=0;
+    const poll=setInterval(async()=>{
+      attempts++;
+      try{
+        const sr=await fetch(`${API}/render-reel/status?productId=${productId}`);
+        const sd=await sr.json();
+        if(sd.status==='complete'){
+          clearInterval(poll);
+          setStatus(st,'success','Reel ready!<br/><br/><a class="dl-link" href="'+sd.url+'" download>Download Reel</a>');
+          btn.querySelector('.blabel').textContent='Render Again';
+          btn.disabled=false;btn.classList.remove('loading');
+          const today=new Date().toISOString().split('T')[0];
+          await fetch(`${API}/products/${productId}`,{
+            method:'PATCH',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({reel_generated_at:today})
+          });
+        } else if(attempts>=36){
+          // 3 minutes timeout
+          clearInterval(poll);
+          setStatus(st,'error','Render is taking longer than expected. Check your Telegram for the result.');
+          btn.disabled=false;btn.classList.remove('loading');
+          btn.querySelector('.blabel').textContent='Try Again';
+        } else {
+          setStatus(st,'info','Rendering... ('+Math.round(attempts*5)+'s elapsed). You will get a Telegram when done.');
+        }
+      }catch(e){ /* poll error — keep trying */ }
+    },5000);
+  }catch(e){
+    setStatus(st,'error','Failed to start render: '+e.message);
+    btn.disabled=false;btn.classList.remove('loading');
+    btn.querySelector('.blabel').textContent='Try Again';
+    hideOverlay();
+  }
+}
+
+function unlock(id){document.getElementById(id).classList.remove('locked');}
+function setStatus(el,type,html){el.className='sbox'+(type?' show '+type:'');el.innerHTML=html;}
+function showOverlay(msg){document.getElementById('overlay-msg').textContent=msg;document.getElementById('overlay').classList.add('show');}
+function hideOverlay(){document.getElementById('overlay').classList.remove('show');}
+</script>
+<script src="/staff/nav.js"></script>
+</body>
+</html>

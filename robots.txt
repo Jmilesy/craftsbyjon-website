@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /staff/
+Disallow: /store-test/
+Disallow: /src/
+Disallow: /shop/
+Allow: /
+
+Sitemap: https://craftsbyjon.co.uk/sitemap.xml

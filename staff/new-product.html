@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add New Product — Crafts by Jon Staff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #E0F7FA; --bg-card: #ffffff; --bg-muted: #f0fbfc;
+      --text: #4A4A4A; --text-soft: #888;
+      --accent: #FF7F50; --accent-hover: #e86e40;
+      --teal: #20B2AA; --teal-light: #d0f0ee; --teal-hover: #1a9992;
+      --border: #c8ebed; --success: #4CAF50; --error: #c0392b;
+      --radius: 10px; --shadow: 0 2px 16px rgba(32,178,170,0.10);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 80px; }
+    header { background: var(--teal); color: #fff; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(32,178,170,0.25); }
+    header h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 700; }
+    header nav { display: flex; gap: 20px; }
+    header nav a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: color 0.15s; }
+    header nav a:hover { color: #fff; }
+    .wrapper { max-width: 700px; margin: 0 auto; padding: 36px 20px 0; }
+    .page-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 700; color: var(--teal); margin-bottom: 6px; }
+    .page-subtitle { font-size: 0.88rem; color: var(--text-soft); margin-bottom: 28px; }
+    .card { background: var(--bg-card); border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; }
+    .card-section { padding: 22px 26px; border-bottom: 1px solid var(--border); }
+    .card-section:last-child { border-bottom: none; }
+    .section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--teal); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--teal-light); }
+    .field { margin-bottom: 18px; }
+    .field:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-soft); margin-bottom: 6px; }
+    label .required { color: var(--accent); margin-left: 2px; }
+    label .hint { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.78rem; color: #aaa; margin-left: 6px; }
+    input[type="text"], input[type="url"], textarea, select {
+      width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 7px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text);
+      background: var(--bg-muted); transition: border-color 0.15s, box-shadow 0.15s; appearance: none;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(32,178,170,0.12); }
+    input.error, textarea.error, select.error { border-color: var(--error); }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.55; }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2320B2AA' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 13px center; padding-right: 34px;
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .id-row { display: flex; gap: 10px; align-items: flex-end; }
+    .id-row input { flex: 1; }
+    .id-hint { font-size: 0.78rem; color: var(--teal); margin-top: 5px; min-height: 1.2em; }
+    .checkbox-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--teal); cursor: pointer; }
+    .checkbox-row label { text-transform: none; font-size: 0.9rem; font-weight: 500; color: var(--text); margin: 0; letter-spacing: 0; cursor: pointer; }
+    .image-row { display: flex; gap: 10px; align-items: flex-start; }
+    .image-row input { flex: 1; }
+    .image-thumb-wrap { width: 56px; height: 56px; flex-shrink: 0; border-radius: 7px; border: 1.5px solid var(--border); background: var(--bg-muted); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .image-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .image-thumb-wrap span { font-size: 0.65rem; color: #bbb; text-align: center; line-height: 1.3; padding: 4px; }
+    .submit-area { padding: 22px 26px; background: var(--bg-muted); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .btn-submit { padding: 12px 36px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .btn-submit:hover { background: var(--accent-hover); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-reset { padding: 12px 22px; background: #fff; color: var(--text-soft); border: 1.5px solid var(--border); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; }
+    .toast { display: none; padding: 10px 16px; border-radius: 8px; font-size: 0.88rem; font-weight: 500; flex: 1; min-width: 200px; }
+    .toast.ok { display: block; background: #e8f8e8; color: #2a7a2a; border: 1px solid #b2ddb2; }
+    .toast.error { display: block; background: #fdecea; color: var(--error); border: 1px solid #f5c0bb; }
+    @media (max-width: 560px) { .two-col { grid-template-columns: 1fr; } .submit-area { flex-direction: column; align-items: stretch; } }
+    /* ── Mug panel inner classes (matches listings.html) ─ */
+    .mug-img-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .mug-img-field:last-of-type { margin-bottom: 0; }
+    .mug-img-label { font-size: 0.78rem; font-weight: 600; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; }
+    .mug-img-row { display: flex; gap: 8px; align-items: flex-start; }
+    .mug-img-input { flex: 1; }
+    .mug-section-label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--teal); margin-bottom: 6px; }
+    .checklist { padding: 20px 26px; border-top: 1px solid var(--border); background: var(--bg-muted); display: flex; flex-direction: column; gap: 10px; }
+    .checklist-item { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; padding: 8px 12px; border-radius: 8px; }
+    .checklist-pending { background: #fff8e1; color: #8a6d00; }
+    .checklist-pending .checklist-icon::before { content: '⏳'; }
+    .checklist-ok { background: #e8f5e9; color: #2e7d32; }
+    .checklist-ok .checklist-icon::before { content: '✓'; font-weight: bold; }
+    .checklist-error { background: #fdecea; color: #c62828; }
+    .checklist-error .checklist-icon::before { content: '⚠'; }
+    .checklist-info { background: var(--teal-light); color: var(--teal-hover); }
+    .checklist-info .checklist-icon::before { content: '→'; }
+    /* ── Image drop zones ── */
+    .img-drop-zone {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fafafa;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+    .img-drop-zone.drag-over {
+      border-color: #4A90E2;
+      background: #e8f0fb;
+    }
+    .drop-hint {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✂️ Crafts by Jon — Staff</h1>
+  <nav>
+    <a href="/staff/staff-index.html">Dashboard</a>
+    <a href="/staff/listings.html">Listings</a>
+  </nav>
+</header>
+
+<div class="wrapper">
+  <div class="page-title">Add New Product</div>
+  <div class="page-subtitle">Adds directly to the products database. Required fields marked <span style="color:var(--accent)">*</span></div>
+
+  <div class="card">
+
+    <!-- Identity -->
+    <div class="card-section">
+      <div class="section-title">Product Identity</div>
+      <div class="two-col">
+        <div class="field">
+          <label>Product Type <span class="required">*</span></label>
+          <select id="f-type" onchange="onTypeChange()">
+            <option value="">— choose —</option>
+            <option value="Bookmark">Bookmark</option>
+            <option value="Keyring">Keyring</option>
+            <option value="Sticker Sheet">Sticker Sheet</option>
+            <option value="Mug">Mug</option>
+            <option value="Tote Bag">Tote Bag</option>
+            <option value="T-Shirt">T-Shirt</option>
+            <option value="Mouse Mat">Mouse Mat</option>
+            <option value="Coaster Set">Coaster Set</option>
+            <option value="Fridge Magnet">Fridge Magnet</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Product ID <span class="required">*</span></label>
+          <div class="id-row">
+            <input type="text" id="f-id" placeholder="Auto-generated" oninput="updatePreview()" />
+          </div>
+          <div class="id-hint" id="id-hint"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Title <span class="required">*</span></label>
+        <input type="text" id="f-title" placeholder="e.g. Bee Kind Bookmark" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Short Description</label>
+        <textarea id="f-short-desc" rows="2" placeholder="One sentence summary for the listing" oninput="updatePreview()"></textarea>
+      </div>
+      <div class="field">
+        <label>Search Tags <span class="hint">— comma separated</span></label>
+        <input type="text" id="f-tags" placeholder="bee, bookmark, nature, spring" oninput="updatePreview()" />
+      </div>
+    </div>
+
+    <!-- Production -->
+    <div class="card-section">
+      <div class="section-title">Production Details</div>
+      <div class="two-col">
+        <div class="field">
+          <label>Material <span class="required">*</span></label>
+          <select id="f-material" onchange="updatePersonalisationMethod(); updatePreview()">
+            <option value="Acrylic">Acrylic</option>
+            <option value="Sticker Sheet">Sticker Sheet</option>
+            <option value="Cotton">Cotton</option>
+            <option value="Cotton Canvas">Cotton Canvas</option>
+            <option value="Ceramic">Ceramic</option>
+            <option value="Neoprene">Neoprene</option>
+            <option value="Cork">Cork</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Application Method <span class="required">*</span></label>
+          <select id="f-method" onchange="updatePreview()">
+            <option value="UV DTF">UV DTF</option>
+            <option value="Cut Vinyl">Cut Vinyl</option>
+            <option value="Print on Demand (Gelato)">Print on Demand (Gelato)</option>
+            <option value="Print on Demand (Papello)">Print on Demand (Papello)</option>
+          </select>
+        </div>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="f-personalisation" onchange="updatePersonalisationMethod(); updatePreview()" />
+        <label for="f-personalisation">Personalisation available</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="f-original-design" checked onchange="updatePreview()" />
+        <label for="f-original-design">Original design by Jon</label>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>Collection <span class="hint">optional</span></label>
+        <select id="f-collection">
+          <option value="">— No collection —</option>
+        </select>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>Price (£)</label>
+        <input type="number" id="f-price" step="0.01" min="0.50" value="3.50" />
+      </div>
+    </div>
+
+    <!-- Variants -->
+    <div class="card-section" id="variants-section" style="display:none">
+      <div class="section-title">Variants</div>
+      <div id="variants-checkboxes" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center"></div>
+    </div>
+
+    <!-- Variant Images -->
+    <div class="card-section" id="variant-images-section" style="display:none">
+      <div class="section-title">Variant Images</div>
+      <div id="variant-images-inputs"></div>
+    </div>
+
+    <!-- Mug Details -->
+    <div class="card-section" id="mug-section" style="display:none">
+      <div class="section-title">☕ Mug Details</div>
+
+      <div class="mug-img-field">
+        <div class="mug-img-label">Front Image</div>
+        <div class="img-drop-zone" id="mug-drop-front">
+          <div class="drop-hint">Drop image here or click to browse</div>
+          <div class="mug-img-row">
+            <input type="text" class="mug-img-input" id="f-mug-front"
+              placeholder="e.g. teacher-mug-front.jpg"
+              oninput="updateMugThumb('front')" />
+            <div class="image-thumb-wrap">
+              <img id="mug-thumb-front" alt="" style="display:none" />
+              <span id="mug-ph-front">No img</span>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="mug-file-front" accept="image/*" style="display:none" />
+      </div>
+
+      <div class="mug-img-field">
+        <div class="mug-img-label">Scene 1 Image</div>
+        <div class="img-drop-zone" id="mug-drop-scene1">
+          <div class="drop-hint">Drop image here or click to browse</div>
+          <div class="mug-img-row">
+            <input type="text" class="mug-img-input" id="f-mug-scene1"
+              placeholder="e.g. teacher-mug-scene1.jpg"
+              oninput="updateMugThumb('scene1')" />
+            <div class="image-thumb-wrap">
+              <img id="mug-thumb-scene1" alt="" style="display:none" />
+              <span id="mug-ph-scene1">No img</span>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="mug-file-scene1" accept="image/*" style="display:none" />
+      </div>
+
+      <div class="mug-img-field">
+        <div class="mug-img-label">Scene 2 Image</div>
+        <div class="img-drop-zone" id="mug-drop-scene2">
+          <div class="drop-hint">Drop image here or click to browse</div>
+          <div class="mug-img-row">
+            <input type="text" class="mug-img-input" id="f-mug-scene2"
+              placeholder="e.g. teacher-mug-scene2.jpg"
+              oninput="updateMugThumb('scene2')" />
+            <div class="image-thumb-wrap">
+              <img id="mug-thumb-scene2" alt="" style="display:none" />
+              <span id="mug-ph-scene2">No img</span>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="mug-file-scene2" accept="image/*" style="display:none" />
+      </div>
+
+      <div class="mug-img-field">
+        <div class="mug-img-label">Wrap / Design Image</div>
+        <div class="img-drop-zone" id="mug-drop-wrap">
+          <div class="drop-hint">Drop image here or click to browse</div>
+          <div class="mug-img-row">
+            <input type="text" class="mug-img-input" id="f-mug-wrap"
+              placeholder="e.g. teacher-mug-wrap.jpg"
+              oninput="updateMugThumb('wrap')" />
+            <div class="image-thumb-wrap">
+              <img id="mug-thumb-wrap" alt="" style="display:none" />
+              <span id="mug-ph-wrap">No img</span>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="mug-file-wrap" accept="image/*" style="display:none" />
+      </div>
+
+      <div style="margin-top:4px">
+        <span class="mug-section-label">Message Options</span>
+        <div style="font-size:0.78rem;color:var(--text-soft);margin-bottom:6px">Comma-separated — last option should be "Custom"</div>
+        <input type="text" id="f-mug-messages"
+          value="Best Teacher Ever,You Made a Difference,Thank You for Everything,Teaching is a Work of Heart,Thanks for Everything,Custom" />
+      </div>
+    </div>
+
+    <!-- Image & URL -->
+    <div class="card-section">
+      <div class="section-title">Image & Shop Link</div>
+      <div class="field">
+        <label>Image Filename <span class="hint">— e.g. bee-kind-bookmark.jpg</span></label>
+        <div class="img-drop-zone" id="hero-drop-zone">
+          <div class="drop-hint">Drop image here or click to browse</div>
+          <div class="image-row">
+            <input type="text" id="f-image" placeholder="e.g. bee-kind-bookmark.jpg" oninput="updateImagePreview(); updatePreview()" />
+            <div class="image-thumb-wrap" id="thumb-wrap">
+              <img id="thumb-img" alt="Preview" />
+              <span id="thumb-placeholder">No image</span>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="hero-file-input" accept="image/*" style="display:none" />
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <button class="btn-submit" id="btn-submit" onclick="submitForm()">Add Product</button>
+      <button class="btn-reset" onclick="resetForm()">Clear form</button>
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <div id="checklist" style="display:none" class="checklist">
+      <div id="check-save" class="checklist-item checklist-pending">
+        <span class="checklist-icon"></span>
+        <span class="checklist-label">Saving product…</span>
+      </div>
+      <div id="check-stripe" class="checklist-item checklist-pending">
+        <span class="checklist-icon"></span>
+        <span class="checklist-label">Stripe link — waiting…</span>
+      </div>
+      <div id="check-desc" class="checklist-item checklist-pending">
+        <span class="checklist-icon"></span>
+        <span class="checklist-label">Descriptions — waiting…</span>
+      </div>
+      <div id="check-social" class="checklist-item checklist-pending">
+        <span class="checklist-icon"></span>
+        <span class="checklist-label">Social posts — waiting…</span>
+      </div>
+      <div id="check-ready" class="checklist-item" style="display:none">
+        <span class="checklist-icon">→</span>
+        <span class="checklist-label"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const PRODUCTS_API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api/products';
+  const UPLOAD_API   = 'https://craftsbyjon.co.uk/n8n-proxy/products-api/upload-image';
+
+  async function uploadImage(file, targetInput, previewImg, productId) {
+    const fd = new FormData();
+    fd.append('productId', productId || document.getElementById('f-id').value.trim() || 'new');
+    fd.append('image', file);
+    try {
+      const res = await fetch(UPLOAD_API, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!data.success) { alert('Upload failed: ' + (data.error || 'Unknown error')); return; }
+      targetInput.value = data.url;
+      if (previewImg) {
+        previewImg.src = data.url;
+        previewImg.style.display = 'block';
+        const ph = previewImg.nextElementSibling;
+        if (ph) ph.style.display = 'none';
+      }
+    } catch (err) {
+      alert('Upload error: ' + err.message);
+    }
+  }
+  const COLLECTIONS_API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api/collections';
+  const TYPE_PREFIXES = { 'Bookmark': 'bookmark', 'Keyring': 'keyring', 'Sticker Sheet': 'sticker', 'Mug': 'mug', 'Tote Bag': 'tote', 'T-Shirt': 'shirt', 'Mouse Mat': 'mousemat', 'Coaster Set': 'coaster', 'Fridge Magnet': 'magnet' };
+  const VARIANT_OPTIONS = { 'Bookmark': ['Clear','Black'], 'Keyring': ['Clear','Black'], 'Sticker Sheet': ['Matt','Gloss','Silver','Gold'], 'T-Shirt': ['S','M','L','XL','2XL'] };
+
+  function updateVariantsUI() {
+    const type = document.getElementById('f-type').value;
+    const section = document.getElementById('variants-section');
+    const container = document.getElementById('variants-checkboxes');
+    const options = VARIANT_OPTIONS[type];
+    if (!options) { section.style.display = 'none'; container.innerHTML = ''; return; }
+    section.style.display = 'block';
+    container.innerHTML = options.map(opt => `
+      <div class="checkbox-row" style="padding:4px 0">
+        <input type="checkbox" id="vc-${opt}" class="variants-cb" value="${opt}" onchange="updateVariantImagesUI()" />
+        <label for="vc-${opt}">${opt}</label>
+      </div>`).join('') + `
+      <div class="checkbox-row" style="padding:4px 0">
+        <input type="checkbox" id="vc-other"
+          onchange="document.getElementById('vc-other-text').style.display=this.checked?'inline-block':'none'; updateVariantImagesUI()" />
+        <label for="vc-other">Other</label>
+      </div>
+      <input type="text" id="vc-other-text"
+        style="display:none;padding:6px 10px;border:1.5px solid var(--teal);border-radius:6px;font-size:0.88rem;font-family:inherit;width:180px"
+        placeholder="e.g. Red, Glitter"
+        oninput="updateVariantImagesUI()" />`;
+    updateVariantImagesUI();
+  }
+
+  function collectVariants() {
+    const checked = Array.from(document.querySelectorAll('.variants-cb:checked'))
+      .map(cb => cb.value).filter(v => v !== '');
+    const otherCb = document.getElementById('vc-other');
+    const otherText = document.getElementById('vc-other-text');
+    if (otherCb && otherCb.checked && otherText) {
+      otherText.value.split(',').map(s => s.trim()).filter(Boolean).forEach(v => checked.push(v));
+    }
+    return checked.join(', ');
+  }
+
+  function updateVariantImagesUI() {
+    const checked = Array.from(document.querySelectorAll('.variants-cb:checked'))
+      .map(cb => cb.value).filter(v => v !== '');
+    const otherCb = document.getElementById('vc-other');
+    const otherText = document.getElementById('vc-other-text');
+    const allVariants = [...checked];
+    if (otherCb && otherCb.checked && otherText) {
+      otherText.value.split(',').map(s => s.trim()).filter(Boolean).forEach(v => allVariants.push(v));
+    }
+    const section = document.getElementById('variant-images-section');
+    const container = document.getElementById('variant-images-inputs');
+    if (!allVariants.length) { section.style.display = 'none'; container.innerHTML = ''; return; }
+    // Preserve any values already typed
+    const existing = {};
+    document.querySelectorAll('.vi-new-url-input').forEach(i => { existing[i.dataset.variant] = i.value; });
+    section.style.display = 'block';
+    container.innerHTML = allVariants.map(variant => {
+      const key = variant.toLowerCase();
+      const val = existing[key] || '';
+      return `
+        <div class="field" style="margin-bottom:12px">
+          <label>${variant} image URL</label>
+          <div class="img-drop-zone vi-drop-zone" data-variant="${key}">
+            <div class="drop-hint">Drop image here or click to browse</div>
+            <div class="image-row">
+              <input type="text" data-variant="${key}" class="vi-new-url-input"
+                placeholder="https://images.craftsbyjon.co.uk/products/…"
+                value="${val}" oninput="updateViNewThumb(this)" />
+              <div class="image-thumb-wrap">
+                <img id="vi-new-thumb-${key}" alt="" src="${val}"${val ? '' : ' style="display:none"'} />
+                <span id="vi-new-ph-${key}"${val ? ' style="display:none"' : ''}>No img</span>
+              </div>
+            </div>
+          </div>
+          <input type="file" class="vi-file-input" data-variant="${key}" accept="image/*" style="display:none" />
+        </div>`;
+    }).join('');
+    document.querySelectorAll('.vi-drop-zone').forEach(zone => {
+      const key = zone.dataset.variant;
+      const fileInput = container.querySelector('.vi-file-input[data-variant="' + key + '"]');
+      const textInput = zone.querySelector('.vi-new-url-input');
+      const thumbImg = document.getElementById('vi-new-thumb-' + key);
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+      const getPid = () => document.getElementById('f-id')?.value.trim() || 'new';
+      zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('drag-over');
+        const f = e.dataTransfer.files[0];
+        if (f) uploadImage(f, textInput, thumbImg, getPid());
+      });
+      zone.addEventListener('click', e => {
+        if (e.target === textInput) return;
+        if (fileInput) fileInput.click();
+      });
+      if (fileInput) {
+        fileInput.addEventListener('change', () => {
+          const f = fileInput.files[0];
+          if (f) uploadImage(f, textInput, thumbImg, getPid());
+        });
+      }
+    });
+  }
+
+  function updateViNewThumb(input) {
+    const key = input.dataset.variant;
+    const img = document.getElementById('vi-new-thumb-' + key);
+    const ph  = document.getElementById('vi-new-ph-' + key);
+    const url = input.value.trim();
+    if (img && ph) {
+      if (url) { img.src = url; img.style.display = 'block'; ph.style.display = 'none'; }
+      else { img.style.display = 'none'; ph.style.display = 'block'; }
+    }
+  }
+
+  function collectVariantImages() {
+    const obj = {};
+    document.querySelectorAll('.vi-new-url-input').forEach(input => {
+      const val = input.value.trim();
+      if (val) obj[input.dataset.variant] = val;
+    });
+    return Object.keys(obj).length ? JSON.stringify(obj) : '';
+  }
+
+  async function onTypeChange() {
+    const type = document.getElementById('f-type').value;
+    if (!type) return;
+    const prefix = TYPE_PREFIXES[type];
+    const hint = document.getElementById('id-hint');
+    hint.textContent = 'Looking up next ID…';
+    try {
+      const res = await fetch(PRODUCTS_API);
+      const data = await res.json();
+      const products = data.result || [];
+      const nums = products
+        .map(p => p['Product ID'] || '')
+        .filter(id => id.toLowerCase().startsWith(prefix + '-'))
+        .map(id => parseInt(id.split('-')[1]) || 0)
+        .filter(n => !isNaN(n));
+      const next = nums.length ? Math.max(...nums) + 1 : 1;
+      const newId = `${prefix}-${String(next).padStart(3, '0')}`;
+      document.getElementById('f-id').value = newId;
+      hint.textContent = `Suggested: ${newId}`;
+    } catch (e) {
+      hint.textContent = 'Could not auto-generate — enter manually';
+    }
+    updateVariantsUI();
+    const mugSection = document.getElementById('mug-section');
+    if (mugSection) mugSection.style.display = type === 'Mug' ? 'block' : 'none';
+    const TYPE_DEFAULT_PRICE = { 'Mug': '11.99', 'T-Shirt': '19.99', 'Mouse Mat': '14.99', 'Tote Bag': '16.99' };
+    document.getElementById('f-price').value = TYPE_DEFAULT_PRICE[type] || '3.50';
+    updatePreview();
+  }
+
+  function updatePersonalisationMethod() {
+    const personalised = document.getElementById('f-personalisation').checked;
+    const method = document.getElementById('f-method');
+    if (personalised) {
+      method.value = 'UV DTF + Cut Vinyl';
+      if (![...method.options].find(o => o.value === 'UV DTF + Cut Vinyl')) {
+        const opt = document.createElement('option');
+        opt.value = 'UV DTF + Cut Vinyl';
+        opt.textContent = 'UV DTF + Cut Vinyl';
+        method.appendChild(opt);
+      }
+    }
+  }
+
+  function updateImagePreview() {
+    const raw = document.getElementById('f-image').value.trim();
+    const url = raw ? (raw.startsWith('http') ? raw : 'https://images.craftsbyjon.co.uk/products/' + raw) : '';
+    const img = document.getElementById('thumb-img');
+    const ph  = document.getElementById('thumb-placeholder');
+    if (url) {
+      img.src = url; img.style.display = 'block'; ph.style.display = 'none';
+      img.onerror = () => { img.style.display='none'; ph.style.display='block'; ph.textContent='Not found'; };
+    } else {
+      img.style.display = 'none'; ph.style.display = 'block'; ph.textContent = 'No image';
+    }
+  }
+
+  function buildPayload() {
+    const filename = document.getElementById('f-image').value.trim();
+    const imageUrl = filename
+      ? (filename.startsWith('http') ? filename : 'https://images.craftsbyjon.co.uk/products/' + filename)
+      : '';
+    const type = document.getElementById('f-type').value;
+    const isMug = type === 'Mug';
+    const payload = {
+      'Product ID':                  document.getElementById('f-id').value.trim(),
+      'Type':                        type,
+      'product_type':                type,
+      'Title':                       document.getElementById('f-title').value.trim(),
+      'Short Description':           document.getElementById('f-short-desc').value.trim(),
+      'Search Tags':                 document.getElementById('f-tags').value.trim(),
+      'Image URL':                   imageUrl,
+      'material':                    document.getElementById('f-material').value,
+      'application_method':          document.getElementById('f-method').value,
+      'personalisation_available':   document.getElementById('f-personalisation').checked ? 'Yes' : 'No',
+      'original_design':             document.getElementById('f-original-design').checked ? 'Yes' : 'No',
+      'Ready to Go':                 'no',
+      'variants':                    collectVariants(),
+      'variant_images':              collectVariantImages(),
+      'Collection':                  document.getElementById('f-collection').value,
+      'price':                       parseFloat(document.getElementById('f-price').value) || 3.50
+    };
+    if (isMug) {
+      const mugFilename = id => {
+        const val = document.getElementById(id).value.trim();
+        return val ? val.split('/').pop() : '';
+      };
+      const messages = document.getElementById('f-mug-messages').value
+        .split(',').map(s => s.trim()).filter(Boolean);
+      payload['mug_image_front']  = mugFilename('f-mug-front');
+      payload['mug_image_scene1'] = mugFilename('f-mug-scene1');
+      payload['mug_image_scene2'] = mugFilename('f-mug-scene2');
+      payload['mug_image_wrap']   = mugFilename('f-mug-wrap');
+      payload['mug_messages']     = JSON.stringify(messages);
+    }
+    return payload;
+  }
+
+  function updateMugThumb(key) {
+    const input = document.getElementById('f-mug-' + key);
+    const img   = document.getElementById('mug-thumb-' + key);
+    const ph    = document.getElementById('mug-ph-' + key);
+    if (!input || !img || !ph) return;
+    const raw = input.value.trim();
+    const url = raw
+      ? (raw.startsWith('http') ? raw : 'https://images.craftsbyjon.co.uk/products/' + raw.split('/').pop())
+      : '';
+    if (url) { img.src = url; img.style.display = 'block'; ph.style.display = 'none'; }
+    else      { img.style.display = 'none'; ph.style.display = 'block'; }
+  }
+
+  function updatePreview() {}
+
+  function validate(payload) {
+    let ok = true;
+    [['f-type', payload['Type']], ['f-id', payload['Product ID']], ['f-title', payload['Title']]].forEach(([id, val]) => {
+      document.getElementById(id).classList.toggle('error', !val);
+      if (!val) ok = false;
+    });
+    return ok;
+  }
+
+  async function submitForm() {
+    const payload = buildPayload();
+    if (!validate(payload)) { showToast('Please fill in required fields.', false); return; }
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true; btn.textContent = 'Adding…';
+    hideToast();
+
+    const checklist = document.getElementById('checklist');
+    checklist.style.display = 'block';
+    setCheck('check-save',   'pending', 'Saving product…');
+    setCheck('check-stripe', 'pending', 'Stripe link — waiting…');
+    setCheck('check-desc',   'pending', 'Descriptions — waiting…');
+    setCheck('check-social', 'pending', 'Social posts — waiting…');
+    document.getElementById('check-ready').style.display = 'none';
+
+    const productId = payload['Product ID'];
+
+    // Step 1: Save product
+    try {
+      const res = await fetch(PRODUCTS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      setCheck('check-save', 'ok', 'Product saved ✓');
+    } catch (err) {
+      setCheck('check-save', 'error', `Save failed: ${err.message}`);
+      btn.disabled = false; btn.textContent = 'Add Product';
+      return;
+    }
+
+    // Step 2: Create Stripe link
+    setCheck('check-stripe', 'pending', 'Creating Stripe link…');
+    try {
+      const res = await fetch(
+        `${PRODUCTS_API}/${productId}/create-stripe-link`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' } }
+      );
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      setCheck('check-stripe', 'ok', 'Stripe link created ✓');
+    } catch (err) {
+      setCheck('check-stripe', 'error', `Stripe link failed: ${err.message}`);
+    }
+
+    // Step 3: Generate descriptions (wait for response)
+    setCheck('check-desc', 'pending', 'Generating descriptions…');
+    try {
+      const res = await fetch(
+        'https://craftsbyjon.co.uk/n8n-proxy/webhook/generate-product-descriptions',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trigger: 'new-product', id: productId })
+        }
+      );
+      if (!res.ok) throw new Error(`Webhook returned ${res.status}`);
+      setCheck('check-desc', 'ok', 'Descriptions generated ✓');
+    } catch (err) {
+      setCheck('check-desc', 'error', `Descriptions failed — retry in Listings: ${err.message}`);
+    }
+
+    // Step 4: Generate social posts (sequential — requires descriptions to exist)
+    setCheck('check-social', 'pending', 'Generating social posts…');
+    try {
+      const res = await fetch(
+        'https://craftsbyjon.co.uk/n8n-proxy/webhook/generate-social-posts',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId })
+        }
+      );
+      if (!res.ok) throw new Error(`Webhook returned ${res.status}`);
+      setCheck('check-social', 'ok', 'Social posts generated ✓');
+    } catch (err) {
+      setCheck('check-social', 'error', `Social posts failed — retry in Listings: ${err.message}`);
+    }
+
+    const readyEl = document.getElementById('check-ready');
+    if (readyEl) {
+      readyEl.style.display = 'flex';
+      readyEl.querySelector('.checklist-label').textContent = '→ Set Ready to Go in Listings when ready';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Add Another Product';
+    resetForm();
+  }
+
+  function setCheck(id, state, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'checklist-item checklist-' + state;
+    el.querySelector('.checklist-label').textContent = text;
+  }
+
+  function resetForm() {
+    ['f-id','f-title','f-short-desc','f-tags','f-image'].forEach(id => {
+      document.getElementById(id).value = '';
+      document.getElementById(id).classList.remove('error');
+    });
+    document.getElementById('f-type').value = '';
+    document.getElementById('f-type').classList.remove('error');
+    document.getElementById('f-material').value = 'Acrylic';
+    document.getElementById('f-method').value = 'UV DTF';
+    document.getElementById('f-personalisation').checked = false;
+    document.getElementById('f-original-design').checked = true;
+    document.getElementById('f-collection').value = '';
+    document.getElementById('f-price').value = '3.50';
+    document.getElementById('id-hint').textContent = '';
+    document.getElementById('thumb-img').style.display = 'none';
+    document.getElementById('thumb-placeholder').textContent = 'No image';
+    updateVariantsUI();
+    // Reset mug section
+    ['front','scene1','scene2','wrap'].forEach(key => {
+      const inp = document.getElementById('f-mug-' + key);
+      const img = document.getElementById('mug-thumb-' + key);
+      const ph  = document.getElementById('mug-ph-' + key);
+      if (inp) inp.value = '';
+      if (img) { img.src = ''; img.style.display = 'none'; }
+      if (ph)  ph.style.display = 'block';
+    });
+    const fMsg = document.getElementById('f-mug-messages');
+    if (fMsg) fMsg.value = 'Best Teacher Ever,You Made a Difference,Thank You for Everything,Teaching is a Work of Heart,Thanks for Everything,Custom';
+    const mugSection = document.getElementById('mug-section');
+    if (mugSection) mugSection.style.display = 'none';
+  }
+
+  function showToast(msg, ok) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast ' + (ok ? 'ok' : 'error'); }
+  function hideToast() { document.getElementById('toast').className = 'toast'; }
+
+  async function loadCollections() {
+    try {
+      const res = await fetch(COLLECTIONS_API);
+      const { result } = await res.json();
+      const sel = document.getElementById('f-collection');
+      (result || []).filter(c => c.status === 'live').forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+    } catch {}
+  }
+
+  function setupDropZone(zoneEl, fileInputEl, textInputEl, thumbImgEl, afterUpload) {
+    if (!zoneEl) return;
+    const getPid = () => document.getElementById('f-id')?.value.trim() || 'new';
+    zoneEl.addEventListener('dragover', e => { e.preventDefault(); zoneEl.classList.add('drag-over'); });
+    zoneEl.addEventListener('dragleave', () => zoneEl.classList.remove('drag-over'));
+    zoneEl.addEventListener('drop', e => {
+      e.preventDefault(); zoneEl.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f) uploadImage(f, textInputEl, thumbImgEl, getPid()).then(() => { if (afterUpload) afterUpload(); });
+    });
+    zoneEl.addEventListener('click', e => {
+      if (e.target === textInputEl) return;
+      if (fileInputEl) fileInputEl.click();
+    });
+    if (fileInputEl) {
+      fileInputEl.addEventListener('change', () => {
+        const f = fileInputEl.files[0];
+        if (f) uploadImage(f, textInputEl, thumbImgEl, getPid()).then(() => { if (afterUpload) afterUpload(); });
+      });
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    loadCollections();
+    setupDropZone(
+      document.getElementById('hero-drop-zone'),
+      document.getElementById('hero-file-input'),
+      document.getElementById('f-image'),
+      document.getElementById('thumb-img'),
+      () => { updateImagePreview(); updatePreview(); }
+    );
+    ['front', 'scene1', 'scene2', 'wrap'].forEach(key => {
+      setupDropZone(
+        document.getElementById('mug-drop-' + key),
+        document.getElementById('mug-file-' + key),
+        document.getElementById('f-mug-' + key),
+        document.getElementById('mug-thumb-' + key),
+        () => updateMugThumb(key)
+      );
+    });
+  });
+</script>
+<script src="/staff/nav.js"></script>
+</body>
+</html>

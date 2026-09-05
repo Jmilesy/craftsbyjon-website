@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collections — Crafts by Jon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+  <style>
+    :root {
+      --bg:           #E0F7FA;
+      --bg-card:      #ffffff;
+      --bg-muted:     #f0fbfc;
+      --text:         #4A4A4A;
+      --text-soft:    #888;
+      --accent:       #FF7F50;
+      --accent-hover: #e86e40;
+      --teal:         #20B2AA;
+      --teal-light:   #d0f0ee;
+      --teal-hover:   #1a9992;
+      --border:       #c8ebed;
+      --green:        #4CAF50;
+      --green-light:  #e8f5e9;
+      --radius:       12px;
+      --shadow:       0 2px 16px rgba(32,178,170,0.10);
+      --social:       #7C3AED;
+      --social-light: #ede9fe;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    header {
+      background: var(--teal);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(32,178,170,0.25);
+    }
+    header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    header a {
+      color: #fff;
+      font-size: 0.85rem;
+      opacity: 0.85;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    header a:hover { opacity: 1; }
+
+    .wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 36px 20px 0;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 6px;
+    }
+    .page-sub {
+      font-size: 0.88rem;
+      color: var(--text-soft);
+      margin-bottom: 32px;
+    }
+
+    /* ── Add form ── */
+    .add-form {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 28px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .add-form input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      color: var(--text);
+      background: var(--bg-muted);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .add-form input:focus { border-color: var(--teal); background: #fff; }
+    .add-form input::placeholder { color: var(--text-soft); }
+
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-teal  { background: var(--teal); color: #fff; }
+    .btn-teal:hover  { background: var(--teal-hover); }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-accent:hover { background: var(--accent-hover); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-soft);
+      border: 1.5px solid var(--border);
+      padding: 7px 14px;
+      font-size: 0.82rem;
+    }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-light); }
+    .btn-danger {
+      background: transparent;
+      color: #c0392b;
+      border: 1.5px solid #f5c6c6;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+    }
+    .btn-danger:hover { background: #fde8e8; border-color: #c0392b; }
+
+    /* ── Collection list ── */
+    #collections-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .col-row {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: border-color 0.15s;
+    }
+    .col-row.archived { opacity: 0.6; }
+    .col-row:hover { border-color: var(--teal-hover); }
+
+    .drag-handle {
+      cursor: grab;
+      color: var(--text-soft);
+      font-size: 1.1rem;
+      padding: 0 2px;
+      user-select: none;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .drag-handle:active { cursor: grabbing; }
+    .sortable-ghost { opacity: 0.35; background: var(--teal-light); }
+    .sortable-chosen { box-shadow: 0 4px 20px rgba(32,178,170,0.22); }
+
+    .col-name {
+      flex: 1;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .col-name-input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1.5px solid var(--teal);
+      border-radius: 6px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .badge-live      { background: var(--green-light); color: #2e7d32; }
+    .badge-available { background: #fff3e0; color: #e65100; }
+    .badge-archived  { background: #f3f3f3; color: #888; }
+
+    .status-select {
+      padding: 5px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      background: var(--bg-muted);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .status-select:focus { outline: none; border-color: var(--teal); }
+
+    .col-actions { display: flex; gap: 8px; align-items: center; }
+
+    .msg {
+      font-size: 0.8rem;
+      padding: 8px 14px;
+      border-radius: 6px;
+      margin-top: 14px;
+      display: none;
+    }
+    .msg.show { display: block; }
+    .msg.ok    { background: var(--green-light); color: #2e7d32; }
+    .msg.error { background: #fde8e8; color: #a33; }
+
+    .empty {
+      text-align: center;
+      color: var(--text-soft);
+      font-size: 0.9rem;
+      padding: 32px 0;
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 14px 16px; }
+      .wrapper { padding: 20px 12px 0; }
+      .add-form { flex-direction: column; align-items: stretch; }
+      .col-row { flex-wrap: wrap; gap: 10px; }
+    }
+
+    /* ── Banner section ── */
+    .banner-section {
+      width: 100%;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+    }
+    .banner-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .banner-preview {
+      width: 100%;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .banner-drop {
+      border: 2px dashed var(--teal);
+      border-radius: 8px;
+      padding: 14px 12px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      background: var(--bg-muted);
+      transition: background 0.15s, border-color 0.15s;
+      position: relative;
+    }
+    .banner-drop:hover, .banner-drop.dragover {
+      background: var(--teal-light);
+      border-color: var(--teal-hover);
+      color: var(--teal);
+    }
+    .banner-drop input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .banner-drop .drop-icon { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+    .banner-uploading { font-size: 0.8rem; color: var(--teal); margin-top: 6px; display: none; }
+    .banner-clear {
+      font-size: 0.75rem;
+      color: #c0392b;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      margin-top: 4px;
+      text-decoration: underline;
+    }
+    .banner-clear:hover { color: #922b21; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🗂 Collections</h1>
+  <a href="/staff/">← Dashboard</a>
+</header>
+
+<div class="wrapper">
+  <div class="page-title">Product Collections</div>
+  <div class="page-sub">Group products into collections. Assign products in the Listings page.</div>
+
+  <div class="add-form">
+    <input type="text" id="new-name" placeholder="New collection name…" maxlength="100" />
+    <button class="btn btn-teal" onclick="addCollection()">Add Collection</button>
+  </div>
+  <div class="msg" id="add-msg"></div>
+
+  <div id="collections-list"><div class="empty">Loading…</div></div>
+</div>
+
+<script>
+const API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api';
+
+let sortableInstance = null;
+
+async function load() {
+  const res = await fetch(`${API}/collections`);
+  const { result, error } = await res.json();
+  const el = document.getElementById('collections-list');
+  if (error || !result) { el.innerHTML = `<div class="empty">Failed to load collections.</div>`; return; }
+  if (result.length === 0) { el.innerHTML = `<div class="empty">No collections yet.</div>`; return; }
+  el.innerHTML = result.map(c => rowHTML(c)).join('');
+  initSortable(el);
+}
+
+function initSortable(el) {
+  if (sortableInstance) sortableInstance.destroy();
+  sortableInstance = Sortable.create(el, {
+    handle: '.drag-handle',
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    onEnd: async function() {
+      const rows = el.querySelectorAll('.col-row');
+      const order = Array.from(rows).map(r => parseInt(r.dataset.id));
+      await fetch(`${API}/collections/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order })
+      });
+    }
+  });
+}
+
+function rowHTML(c) {
+  const statusMap = { live: ['badge-live', 'Live'], available: ['badge-available', 'Available'], archived: ['badge-archived', 'Archived'] };
+  const [badgeClass, badgeLabel] = statusMap[c.status] || ['badge-archived', c.status];
+  const bannerHtml = c.banner_image
+    ? `<img class="banner-preview" src="${escHtml(c.banner_image)}" alt="Banner">`
+    : '';
+  const clearBtn = c.banner_image
+    ? `<button class="banner-clear" onclick="clearBanner(${c.id})">✕ Remove banner</button>`
+    : '';
+  return `
+    <div class="col-row${c.status === 'archived' ? ' archived' : ''}" id="row-${c.id}" data-id="${c.id}" data-name="${escHtml(c.name)}" data-status="${c.status}">
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <span class="col-name" id="name-${c.id}">${escHtml(c.name)}</span>
+      <span class="badge ${badgeClass}">${badgeLabel}</span>
+      <select class="status-select" onchange="setStatus(${c.id}, this.value)">
+        <option value="live"${c.status === 'live' ? ' selected' : ''}>Live</option>
+        <option value="available"${c.status === 'available' ? ' selected' : ''}>Available</option>
+        <option value="archived"${c.status === 'archived' ? ' selected' : ''}>Archived</option>
+      </select>
+      <div class="col-actions">
+        <button class="btn btn-ghost" onclick="startRename(${c.id})">Rename</button>
+        <button class="btn btn-danger" onclick="confirmDelete(${c.id})">Delete</button>
+      </div>
+      <div class="banner-section">
+        <div class="banner-label">🖼 Collection Banner</div>
+        ${bannerHtml}
+        ${clearBtn}
+        <div class="banner-drop" id="drop-${c.id}"
+          ondragover="event.preventDefault(); this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="handleBannerDrop(event, ${c.id})">
+          <input type="file" accept="image/jpeg,image/png,image/webp" onchange="handleBannerFile(this, ${c.id})">
+          <span class="drop-icon">🖼</span>
+          ${c.banner_image ? 'Drop new image to replace' : 'Drop banner image here or click to browse'}
+        </div>
+        <div class="banner-uploading" id="uploading-${c.id}">⏳ Uploading…</div>
+      </div>
+    </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function startRename(id) {
+  const row = document.getElementById(`row-${id}`);
+  const currentName = row.dataset.name;
+  const nameEl = document.getElementById(`name-${id}`);
+  nameEl.outerHTML = `<input class="col-name-input" id="name-input-${id}" value="${escHtml(currentName)}" maxlength="100"
+    onkeydown="if(event.key==='Enter')saveRename(${id}); if(event.key==='Escape')load();" />`;
+  document.getElementById(`name-input-${id}`).focus();
+
+  const actions = row.querySelector('.col-actions');
+  actions.innerHTML = `
+    <button class="btn btn-teal" onclick="saveRename(${id})">Save</button>
+    <button class="btn btn-ghost" onclick="load()">Cancel</button>`;
+}
+
+async function saveRename(id) {
+  const input = document.getElementById(`name-input-${id}`);
+  const name = input.value.trim();
+  if (!name) return;
+  const res = await fetch(`${API}/collections/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  const data = await res.json();
+  if (data.error) { showMsg('add-msg', data.error, 'error'); return; }
+  load();
+}
+
+async function setStatus(id, newStatus) {
+  const res = await fetch(`${API}/collections/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  });
+  const data = await res.json();
+  if (data.error) { showMsg('add-msg', data.error, 'error'); load(); return; }
+  load();
+}
+
+async function confirmDelete(id) {
+  const row = document.getElementById(`row-${id}`);
+  const name = row.dataset.name;
+  if (!confirm(`Delete collection "${name}"? Products in this collection will be unlinked.`)) return;
+  const res = await fetch(`${API}/collections/${id}`, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.error) { showMsg('add-msg', data.error, 'error'); return; }
+  load();
+}
+
+async function addCollection() {
+  const input = document.getElementById('new-name');
+  const name = input.value.trim();
+  if (!name) return;
+  const res = await fetch(`${API}/collections`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  const data = await res.json();
+  if (data.error) { showMsg('add-msg', data.error, 'error'); return; }
+  input.value = '';
+  showMsg('add-msg', `Collection "${name}" added.`, 'ok');
+  load();
+}
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `msg show ${type}`;
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+document.getElementById('new-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addCollection();
+});
+
+async function handleBannerDrop(event, id) {
+  event.preventDefault();
+  document.getElementById(`drop-${id}`).classList.remove('dragover');
+  const file = event.dataTransfer.files[0];
+  if (file) await uploadBanner(file, id);
+}
+
+async function handleBannerFile(input, id) {
+  const file = input.files[0];
+  if (file) await uploadBanner(file, id);
+}
+
+async function uploadBanner(file, id) {
+  const uploading = document.getElementById(`uploading-${id}`);
+  uploading.style.display = 'block';
+  const fd = new FormData();
+  fd.append('image', file);
+  try {
+    const res = await fetch(`${API}/upload-collection-banner`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!data.success) { showMsg('add-msg', 'Upload failed: ' + data.error, 'error'); return; }
+    // Save URL to collection
+    const patch = await fetch(`${API}/collections/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ banner_image: data.url })
+    });
+    const patchData = await patch.json();
+    if (patchData.error) { showMsg('add-msg', 'Save failed: ' + patchData.error, 'error'); return; }
+    showMsg('add-msg', 'Banner saved.', 'ok');
+    load();
+  } catch (e) {
+    showMsg('add-msg', 'Upload error: ' + e.message, 'error');
+  } finally {
+    uploading.style.display = 'none';
+  }
+}
+
+async function clearBanner(id) {
+  if (!confirm('Remove banner image for this collection?')) return;
+  const res = await fetch(`${API}/collections/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ banner_image: null })
+  });
+  const data = await res.json();
+  if (data.error) { showMsg('add-msg', data.error, 'error'); return; }
+  showMsg('add-msg', 'Banner removed.', 'ok');
+  load();
+}
+
+load();
+</script>
+<script src="/staff/nav.js"></script>
+</body>
+</html>

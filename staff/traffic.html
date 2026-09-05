@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Traffic — Crafts by Jon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #E0F7FA; --bg-card: #ffffff; --text: #4A4A4A; --text-soft: #888;
+      --accent: #FF7F50; --teal: #20B2AA; --teal-light: #d0f0ee; --teal-hover: #1a9992;
+      --border: #c8ebed; --green: #4CAF50; --radius: 12px;
+      --shadow: 0 2px 16px rgba(32,178,170,0.10); --social: #7C3AED;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 60px; }
+    header { background: var(--teal); color: #fff; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(32,178,170,0.25); }
+    header h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 700; }
+    .wrapper { max-width: 980px; margin: 0 auto; padding: 30px 20px 0; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 24px; }
+    .range-btn { background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 14px; font-family: inherit; font-size: 0.85rem; font-weight: 600; color: var(--text); cursor: pointer; }
+    .range-btn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+    .toggle-label { font-size: 0.82rem; color: var(--text-soft); display: flex; align-items: center; gap: 6px; margin-left: auto; cursor: pointer; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .metric { background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; text-align: center; }
+    .metric-value { font-size: 1.9rem; font-weight: 700; color: var(--teal); }
+    .metric-label { font-size: 0.78rem; color: var(--text-soft); margin-top: 2px; }
+    .card { background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; margin-bottom: 24px; }
+    .card h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--teal-hover); margin-bottom: 14px; }
+    .bar-row { display: grid; grid-template-columns: 220px 1fr 52px; gap: 10px; align-items: center; margin-bottom: 7px; font-size: 0.84rem; }
+    .bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { background: var(--teal-light); border-radius: 6px; height: 18px; overflow: hidden; }
+    .bar-fill { background: var(--teal); height: 100%; border-radius: 6px; min-width: 2px; transition: width 0.4s; }
+    .bar-fill.orange { background: var(--accent); }
+    .bar-count { text-align: right; font-weight: 600; }
+    .day-row { display: flex; align-items: flex-end; gap: 3px; height: 130px; padding-top: 8px; }
+    .day-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px; min-width: 0; }
+    .day-bar { width: 100%; background: var(--teal); border-radius: 4px 4px 0 0; min-height: 2px; position: relative; }
+    .day-bar .order-dot { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; }
+    .day-label { font-size: 0.6rem; color: var(--text-soft); transform: rotate(-45deg); white-space: nowrap; margin-top: 8px; }
+    .empty { text-align: center; color: var(--text-soft); padding: 30px 0; }
+    .note { font-size: 0.74rem; color: var(--text-soft); margin-top: 10px; }
+    @media (max-width: 640px) { .bar-row { grid-template-columns: 120px 1fr 44px; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📈 Traffic</h1>
+  <span style="font-size:0.82rem;opacity:0.8;">Tracked link clicks · Crafts by Jon</span>
+</header>
+
+<div class="wrapper">
+
+  <div class="controls">
+    <span style="font-size:0.85rem;">Range:</span>
+    <button class="range-btn" data-days="7" onclick="setRange(7)">7 days</button>
+    <button class="range-btn active" data-days="30" onclick="setRange(30)">30 days</button>
+    <button class="range-btn" data-days="0" onclick="setRange(0)">All time</button>
+    <label class="toggle-label"><input type="checkbox" id="dedupe" checked onchange="renderAll()"> Collapse rapid duplicates (bot/prefetch noise)</label>
+  </div>
+
+  <div class="summary">
+    <div class="metric"><div class="metric-value" id="m-clicks">—</div><div class="metric-label">Clicks</div></div>
+    <div class="metric"><div class="metric-value" id="m-sources">—</div><div class="metric-label">Sources</div></div>
+    <div class="metric"><div class="metric-value" id="m-products">—</div><div class="metric-label">Products / targets</div></div>
+    <div class="metric"><div class="metric-value" id="m-orders">—</div><div class="metric-label">Orders in range</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Clicks by day <span style="font-size:0.75rem;color:var(--text-soft);font-family:'DM Sans';font-weight:400">· 🛒 = order placed that day</span></h2>
+    <div id="byDay" class="day-row"></div>
+    <div id="byDayLabels" style="display:flex;gap:3px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Clicks by source</h2>
+    <div id="bySource"></div>
+  </div>
+
+  <div class="card">
+    <h2>Clicks by product / target</h2>
+    <div id="byTarget"></div>
+    <div class="note">Plain link slugs without a product target show under source only.</div>
+  </div>
+
+</div>
+
+<script>
+  let rawClicks = [];
+  let orders = [];
+  let rangeDays = 30;
+
+  function setRange(d) {
+    rangeDays = d;
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', +b.dataset.days === d));
+    renderAll();
+  }
+
+  function inRange(ts) {
+    if (!rangeDays) return true;
+    return new Date(ts).getTime() >= Date.now() - rangeDays * 86400000;
+  }
+
+  function getClicks() {
+    let c = rawClicks.filter(k => inRange(k.ts));
+    if (document.getElementById('dedupe').checked) {
+      // collapse identical source+target clicks within the same 60s window
+      const seen = {};
+      c = c.filter(k => {
+        const key = k.source + '|' + (k.target || '');
+        const t = new Date(k.ts).getTime();
+        if (seen[key] && t - seen[key] < 60000) { seen[key] = t; return false; }
+        seen[key] = t;
+        return true;
+      });
+    }
+    return c;
+  }
+
+  function bars(containerId, counts, colorClass) {
+    const el = document.getElementById(containerId);
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 25);
+    if (!entries.length) { el.innerHTML = '<div class="empty">No clicks in this range</div>'; return; }
+    const max = entries[0][1];
+    el.innerHTML = entries.map(([k, v]) =>
+      '<div class="bar-row"><div class="bar-label" title="' + k + '">' + k + '</div>' +
+      '<div class="bar-track"><div class="bar-fill ' + (colorClass || '') + '" style="width:' + (v / max * 100) + '%"></div></div>' +
+      '<div class="bar-count">' + v + '</div></div>'
+    ).join('');
+  }
+
+  function renderAll() {
+    const clicks = getClicks();
+    const bySource = {}, byTarget = {}, byDay = {};
+    clicks.forEach(k => {
+      bySource[k.source] = (bySource[k.source] || 0) + 1;
+      if (k.target) byTarget[k.target] = (byTarget[k.target] || 0) + 1;
+      const d = k.ts.slice(0, 10);
+      byDay[d] = (byDay[d] || 0) + 1;
+    });
+
+    const ordersInRange = orders.filter(o => inRange(o.created_at.replace(' ', 'T') + 'Z'));
+    const orderDays = {};
+    ordersInRange.forEach(o => { const d = o.created_at.slice(0, 10); orderDays[d] = (orderDays[d] || 0) + 1; });
+
+    document.getElementById('m-clicks').textContent = clicks.length;
+    document.getElementById('m-sources').textContent = Object.keys(bySource).length;
+    document.getElementById('m-products').textContent = Object.keys(byTarget).length;
+    document.getElementById('m-orders').textContent = ordersInRange.length;
+
+    bars('bySource', bySource);
+    bars('byTarget', byTarget, 'orange');
+
+    // day chart — continuous day axis from first to last
+    const dayEl = document.getElementById('byDay');
+    const labEl = document.getElementById('byDayLabels');
+    const days = Object.keys(byDay).sort();
+    if (!days.length) { dayEl.innerHTML = '<div class="empty" style="width:100%">No clicks in this range</div>'; labEl.innerHTML = ''; return; }
+    const start = new Date(days[0]), end = new Date(days[days.length - 1]);
+    const allDays = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) allDays.push(d.toISOString().slice(0, 10));
+    const max = Math.max(...Object.values(byDay));
+    dayEl.innerHTML = allDays.map(d =>
+      '<div class="day-col" title="' + d + ': ' + (byDay[d] || 0) + ' clicks' + (orderDays[d] ? ', ' + orderDays[d] + ' order(s)' : '') + '">' +
+      '<div class="day-bar" style="height:' + ((byDay[d] || 0) / max * 100) + '%">' +
+      (orderDays[d] ? '<span class="order-dot">🛒</span>' : '') + '</div></div>'
+    ).join('');
+    labEl.innerHTML = allDays.map(d =>
+      '<div style="flex:1;min-width:0;"><div class="day-label">' + d.slice(5) + '</div></div>'
+    ).join('');
+  }
+
+  (async function init() {
+    try {
+      const r = await fetch('/staff/clicks.json');
+      rawClicks = (await r.json()).clicks || [];
+    } catch (e) { console.error('clicks load failed', e); }
+    try {
+      const r = await fetch('https://craftsbyjon.co.uk/n8n-proxy/orders-api/orders');
+      orders = (await r.json()).result || [];
+    } catch (e) { console.error('orders load failed', e); }
+    renderAll();
+  })();
+</script>
+<script src="/staff/nav.js"></script>
+</body>
+</html>
