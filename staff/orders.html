@@ -570,6 +570,7 @@
             <div class="order-total">${o.amount_total_formatted}</div>
             <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
               <button class="filter-btn" onclick="printSlip(${o.id})">🖨 Packing slip</button>
+              <button class="filter-btn" onclick="autoPrintSlip(${o.id})">🖨️➡️ Auto-print</button>
               <button class="filter-btn" onclick="editCustomNotes(${o.id})">🎨 ${o.custom_order_notes ? 'Edit' : 'Add'} custom notes</button>
               <button class="filter-btn" onclick="editShippingNotes(${o.id})">📦 ${o.shipping_notes ? 'Edit' : 'Add'} shipping notes</button>
               ${o.stripe_payment_intent ? `<a class="filter-btn" style="text-decoration:none" href="https://dashboard.stripe.com/payments/${o.stripe_payment_intent}" target="_blank">💳 Stripe</a>` : ''}
@@ -819,6 +820,20 @@
   }
 
   const REVIEW_URL = 'https://bit.ly/cbjReview';
+
+  async function autoPrintSlip(id) {
+    const o = allOrders.find(x => x.id === id);
+    if (!o) return alert('Order not found in current view');
+    if (!confirm('Send the dispatch note for ' + o.order_ref + ' straight to the printer queue?\n\nThis prints (or holds, if paper-safe mode is off) automatically \u2014 it does not open a preview.')) return;
+    try {
+      const res = await fetch(API + '/orders/' + id + '/auto-print', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unknown error');
+      alert('Queued for printing: ' + data.result.order_ref);
+    } catch (err) {
+      alert('Could not queue print job: ' + err.message);
+    }
+  }
 
   function printSlip(id) {
     const o = allOrders.find(x => x.id === id);
