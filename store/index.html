@@ -4,18 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shop Handmade Bookmarks, Keyrings &amp; Mugs - Crafts by Jon, Deal, Kent</title>
-  <meta name="description" content="Shop handmade acrylic bookmarks and keyrings from £3.50, plus personalised mugs. Made by hand in Deal, Kent. 3 for £10 bundle on bookmarks and keyrings.">
+  <meta name="description" content="Shop handmade gifts from £3.50: acrylic bookmarks and keyrings, plus personalised mugs. Made by hand in Deal, Kent. 3 for £10 bundle.">
   <link rel="canonical" href="https://craftsbyjon.co.uk/store/">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Crafts by Jon">
   <meta property="og:title" content="Shop Handmade Bookmarks, Keyrings &amp; Mugs - Crafts by Jon">
-  <meta property="og:description" content="Handmade acrylic bookmarks and keyrings from £3.50, personalised mugs, made in Deal, Kent. 3 for £10 bundle.">
+  <meta property="og:description" content="Handmade gifts from £3.50: acrylic bookmarks and keyrings, personalised mugs, made in Deal, Kent. 3 for £10 bundle.">
   <meta property="og:url" content="https://craftsbyjon.co.uk/store/">
   <meta property="og:image" content="https://images.craftsbyjon.co.uk/products/bookmark-001.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Shop Handmade Bookmarks, Keyrings &amp; Mugs - Crafts by Jon">
-  <meta name="twitter:description" content="Handmade acrylic bookmarks and keyrings from £3.50, personalised mugs, made in Deal, Kent.">
+  <meta name="twitter:description" content="Handmade gifts from £3.50: acrylic bookmarks and keyrings, personalised mugs, made in Deal, Kent.">
   <meta name="twitter:image" content="https://images.craftsbyjon.co.uk/products/bookmark-001.jpg">
   <!-- Analytics: loaded only after cookie consent (GA4 + Microsoft Clarity) -->
   <script>
@@ -828,6 +828,13 @@
       text-align: center;
       margin-top: 10px;
     }
+    .modal-testimonial {
+      font-size: 0.78rem;
+      color: #888;
+      font-style: italic;
+      text-align: center;
+      margin-top: 8px;
+    }
 
     /* ── Bundle banner ────────────────────────────────── */
     .bundle-banner {
@@ -1070,6 +1077,7 @@
       .modal-variants-label { order: 4; }
       .modal-variants     { order: 4; }
       .modal-actions      { order: 5; margin-top: 10px; padding-top: 0; }
+      .modal-testimonial  { order: 5; }
       .modal-shipping     { order: 6; }
       .modal-hr           { order: 7; display: none; }
       .modal-short-desc   { order: 8; margin-top: 12px; }
@@ -2580,6 +2588,12 @@
         + (inCart ? '&#10003; In Cart' : 'Add to Cart') + '</button>';
     }
     html += '</div>';
+    var modalQuotes = [
+      '"Great quality, excellent service, and amazing value for money." - Sally, real customer',
+      '"Parcel arrived safe and sound today, the bookmarks are beautiful." - Graham, real customer',
+      '"The bookmarks are even better in person! They look fabulous." - Mirjam, real customer'
+    ];
+    html += '<div class="modal-testimonial">' + modalQuotes[Math.floor(Math.random() * modalQuotes.length)] + '</div>';
     if ((p.application_method || '').indexOf('Print on Demand') === 0) {
       html += '<div class="modal-shipping">Printed to order &middot; Ships within 7&ndash;10 working days &middot; Free UK shipping on orders £10+</div>';
     } else {
