@@ -86,6 +86,18 @@
         transaction_id: sessionId,
         currency: 'GBP'
       });
+
+      // Pinterest Tag (base code + checkout event). Matches the existing GA
+      // purchase event above: same session_id as the order identifier, no
+      // value/line_items since that data isn't available on this page yet
+      // (same limitation the GA event already has).
+      !function(e){if(!window.pintrk){window.pintrk=function(){window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var n=window.pintrk;n.queue=[],n.version="3.0";var t=document.createElement("script");t.async=!0,t.src=e;var r=document.getElementsByTagName("script")[0];r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");
+      pintrk('load', '2613856981486');
+      pintrk('page');
+      pintrk('track', 'checkout', {
+        currency: 'GBP',
+        order_id: sessionId
+      });
     })();
   </script>
   <div class="card">
