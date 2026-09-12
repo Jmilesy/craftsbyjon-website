@@ -1691,12 +1691,14 @@
     }
   }
 
-  function trackEvent(eventName, productId, detail) {
+  function trackEvent(eventName, productId, detail, checkoutSessionId) {
     try {
+      var body = { event: eventName, source: getSource(), product_id: productId || '', path: detail || '' };
+      if (checkoutSessionId) body.checkout_session_id = checkoutSessionId;
       fetch(API + '/event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: eventName, source: getSource(), product_id: productId || '', path: detail || '' }),
+        body: JSON.stringify(body),
         keepalive: true
       }).catch(function() {});
       if (typeof gtag === 'function') {
@@ -3163,7 +3165,6 @@
   }
 
   async function checkout() {
-    trackEvent('checkout_started', '');
     var btn = document.getElementById('checkoutBtn');
     btn.disabled = true;
     btn.textContent = 'Redirecting…';
@@ -3210,8 +3211,15 @@
       });
       var data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Checkout failed');
+      // Fired here (not at the top of this function) so the beacon can carry the exact
+      // Stripe checkout session id for an exact diagnostics join — keepalive:true still
+      // guarantees delivery through the redirect immediately below.
+      trackEvent('checkout_started', '', '', data.id);
       window.location.href = data.url;
     } catch (e) {
+      // Session creation failed before an id ever existed — logged exactly as it always
+      // was (no session id), preserving today's behaviour for a failed checkout attempt.
+      trackEvent('checkout_started', '');
       alert('Checkout error: ' + e.message);
       btn.disabled = false;
       btn.textContent = 'Checkout →';
