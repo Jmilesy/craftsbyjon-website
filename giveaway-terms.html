@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giveaway Terms &amp; Conditions — Crafts by Jon</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-299D45HZTC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-299D45HZTC');
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue:   #4A90E2;
+      --yellow: #F5A623;
+      --coral:  #FF6B6B;
+      --dark:   #1a1a2e;
+      --white:  #ffffff;
+      --border: 3px solid #1a1a2e;
+      --shadow: 5px 5px 0 #1a1a2e;
+      --font-head: 'Nunito', sans-serif;
+      --font-body: 'Open Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      color: var(--dark);
+      background: var(--white);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    a { text-decoration: none; color: inherit; }
+    img { display: block; max-width: 100%; }
+
+    header {
+      background: var(--white);
+      border-bottom: var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .nav-logo {
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: 1.5rem;
+      color: var(--dark);
+      letter-spacing: -0.5px;
+    }
+    .nav-logo span { color: var(--blue); }
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+    .nav-links a {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--dark);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--blue); }
+    .btn {
+      display: inline-block;
+      font-family: var(--font-head);
+      font-weight: 800;
+      padding: 10px 22px;
+      border: var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: var(--shadow);
+      line-height: 1;
+    }
+    .btn:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 #1a1a2e; }
+    .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #1a1a2e; }
+    .btn-yellow { background: var(--yellow); color: var(--dark); }
+
+    .page-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    .page-label {
+      display: inline-block;
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: 0.75rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      background: var(--yellow);
+      color: var(--dark);
+      border: var(--border);
+      padding: 5px 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+
+    .page-title {
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: clamp(2rem, 5vw, 3rem);
+      color: var(--dark);
+      margin-bottom: 8px;
+      line-height: 1.1;
+    }
+
+    .page-meta {
+      color: #888;
+      font-size: 0.88rem;
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .legal-section {
+      margin-bottom: 36px;
+    }
+
+    .legal-section h2 {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--dark);
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--yellow);
+      display: inline-block;
+    }
+
+    .legal-section p {
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.75;
+      margin-bottom: 10px;
+    }
+
+    .legal-section ul {
+      padding-left: 1.4em;
+      margin-bottom: 10px;
+    }
+
+    .legal-section li {
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.75;
+      margin-bottom: 4px;
+    }
+
+    .legal-section a {
+      color: var(--blue);
+      text-decoration: underline;
+    }
+    .legal-section a:hover { color: var(--coral); }
+
+    .current-giveaway {
+      background: #FFF8EC;
+      border: var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+    }
+    .current-giveaway h2 {
+      border-bottom: none;
+      margin-bottom: 12px;
+    }
+
+    footer {
+      background: var(--dark);
+      border-top: var(--border);
+      padding: 40px 24px;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: var(--font-head);
+      font-weight: 900;
+      font-size: 1.3rem;
+      color: var(--white);
+    }
+    .footer-logo span { color: var(--yellow); }
+    .footer-tagline {
+      font-style: italic;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.9rem;
+    }
+    .footer-address {
+      color: rgba(255,255,255,0.45);
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    .footer-address a { color: rgba(255,255,255,0.55); text-decoration: underline; }
+    .footer-address a:hover { color: var(--yellow); }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .footer-links a {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--yellow); }
+    .footer-copy {
+      color: rgba(255,255,255,0.35);
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .page-wrap { padding: 40px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav>
+      <a href="/" class="nav-logo">Crafts <span>by Jon</span></a>
+      <ul class="nav-links">
+        <li><a href="/#products">What I Make</a></li>
+        <li><a href="/#about">About</a></li>
+        <li><a href="/#contact">Contact</a></li>
+        <li>
+          <a href="https://craftsbyjon.co.uk/shop" target="_blank" class="btn btn-yellow">
+            Shop Now →
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="page-wrap">
+
+    <div class="page-label">✦ Legal</div>
+    <h1 class="page-title">Giveaway Terms &amp; Conditions</h1>
+    <p class="page-meta">Last updated: 14 September 2026</p>
+
+    <div class="current-giveaway">
+      <h2>Current Giveaway</h2>
+      <p><strong>Prize:</strong> One bookmark or keyring (winner's choice of item), made in the new double-sided style, with the design chosen at random.</p>
+      <p><strong>Entry period:</strong> 14 September 2026 to 21 September 2026.</p>
+      <p><strong>How to enter:</strong> Like the Crafts by Jon Facebook page and follow it.</p>
+      <p><strong>Winner selection:</strong> Chosen at random via a recorded draw, announced on the Crafts by Jon Facebook and Instagram pages shortly after entries close.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>1. Who Runs This</h2>
+      <p>This giveaway is run by Crafts by Jon, a sole trader business owned and operated by Jon Miles.</p>
+      <p>
+        <strong>Address:</strong> 15a Ranelagh Road, Deal, Kent, CT14 7BG<br>
+        <strong>Email:</strong> <a href="mailto:jon@craftsbyjon.co.uk">jon@craftsbyjon.co.uk</a>
+      </p>
+    </div>
+
+    <div class="legal-section">
+      <h2>2. Eligibility</h2>
+      <p>Open to UK residents aged 18 and over. One entry per person. No purchase necessary to enter or win.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>3. How to Enter</h2>
+      <p>Entry requirements are stated on the giveaway post for each individual giveaway (see "Current Giveaway" above). Typically this means liking and following the Crafts by Jon Facebook page. Sharing, reposting, or tagging others is never required to enter.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>4. Winner Selection &amp; Prize</h2>
+      <p>Winners are chosen at random using a random-selection tool, recorded on video for transparency. The winner is announced publicly on the Crafts by Jon Facebook and/or Instagram pages, and contacted directly via Facebook or Instagram message to arrange delivery.</p>
+      <p>The prize is as described on the giveaway post. There is no cash alternative. Prizes cannot be exchanged, transferred, or redeemed for a different item once won.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>5. Not Sponsored by Meta</h2>
+      <p>This promotion is run by Crafts by Jon and is not sponsored, endorsed, administered by, or associated with Meta (Facebook/Instagram) in any way. Information you provide as part of entering is provided to Crafts by Jon, not to Meta.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>6. Privacy</h2>
+      <p>Any personal information collected to run a giveaway (such as your name, via Facebook or Instagram) is used solely to identify entrants, contact the winner, and arrange delivery of the prize. See our <a href="/privacy.html">Privacy Policy</a> for full details.</p>
+    </div>
+
+    <div class="legal-section">
+      <h2>7. Governing Law</h2>
+      <p>These terms are governed by the laws of England and Wales.</p>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">Crafts <span>by Jon</span></div>
+      <div class="footer-tagline">Handmade with chaos. Sent with joy.</div>
+      <div class="footer-address">Jon Miles · 15a Ranelagh Road, Deal, Kent, CT14 7BG · <a href="mailto:jon@craftsbyjon.co.uk">jon@craftsbyjon.co.uk</a></div>
+      <div class="footer-links">
+        <a href="/terms.html">Terms &amp; Conditions</a>
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/giveaway-terms.html">Giveaway Terms</a>
+        <a href="https://craftsbyjon.co.uk/shop" target="_blank">Shop</a>
+        <a href="mailto:jon@craftsbyjon.co.uk">Contact</a>
+      </div>
+      <div class="footer-copy">© 2026 Crafts by Jon. All rights reserved.</div>
+    </div>
+  </footer>
+
+</body>
+</html>
