@@ -4,3 +4,6 @@
 node_modules/
 __pycache__/
 *.backup-*
+
+# Auto-generated hourly Arbor homework pages (hash-named, noindex)
+hw-*.html
