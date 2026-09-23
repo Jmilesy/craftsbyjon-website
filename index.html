@@ -672,10 +672,28 @@
   ============================================= -->
   <section class="testimonial-section">
     <div class="testimonial-card">
-      <p class="testimonial-quote">"I couldn't be happier with my acrylic bookmarks! From start to finish, the whole process was brilliant. Communication was fantastic, Jon was really responsive, answered my questions quickly, and came up with a design in no time. The pricing was incredibly reasonable, especially considering the quality of the finished product. My bookmarks arrived well packaged, so everything was in perfect condition, and the postage was quick and hassle-free. It's clear Jon really cares about both products and customers. Great quality, excellent service, and amazing value for money."</p>
-      <div class="testimonial-attribution">Sally</div>
-      <div class="testimonial-source">via Facebook recommendation</div>
+      <p class="testimonial-quote" id="homeTestimonialQuote">"I couldn't be happier with my acrylic bookmarks! From start to finish, the whole process was brilliant. Communication was fantastic, Jon was really responsive, answered my questions quickly, and came up with a design in no time. The pricing was incredibly reasonable, especially considering the quality of the finished product. My bookmarks arrived well packaged, so everything was in perfect condition, and the postage was quick and hassle-free. It's clear Jon really cares about both products and customers. Great quality, excellent service, and amazing value for money."</p>
+      <div class="testimonial-attribution" id="homeTestimonialName">Sally</div>
+      <div class="testimonial-source" id="homeTestimonialSource">via Facebook recommendation</div>
     </div>
+    <script>
+      (function() {
+        var q = document.getElementById("homeTestimonialQuote");
+        var n = document.getElementById("homeTestimonialName");
+        var s = document.getElementById("homeTestimonialSource");
+        if (!q || !n || !s) return;
+        var quotes = [
+          { quote: q.textContent, name: "Sally", source: "via Facebook recommendation" },
+          { quote: "\"Parcel arrived safe and sound today, the bookmarks are beautiful. Thanks for all your hard work.\"", name: "Graham", source: "real customer" },
+          { quote: "\"The bookmarks are even better in person! They look fabulous, and all the extra touches too, so impressed.\"", name: "Mirjam", source: "real customer" },
+          { quote: "\"Received a keyring (Deal Pier design) as a gift from my sister. Am thrilled with it! Very high quality and lovely image.\"", name: "Tina-Merie", source: "via Facebook recommendation" }
+        ];
+        var pick = quotes[Math.floor(Math.random() * quotes.length)];
+        q.textContent = pick.quote;
+        n.textContent = pick.name;
+        s.textContent = pick.source;
+      })();
+    </script>
   </section>
 
   <!-- =============================================
