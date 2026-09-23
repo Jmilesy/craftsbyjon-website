@@ -1556,7 +1556,8 @@
         var quotes = [
           '"Great quality, excellent service, and amazing value for money." - Sally, real customer',
           '"Parcel arrived safe and sound today, the bookmarks are beautiful." - Graham, real customer',
-          '"The bookmarks are even better in person! They look fabulous." - Mirjam, real customer'
+          '"The bookmarks are even better in person! They look fabulous." - Mirjam, real customer',
+          '"Am thrilled with it! Very high quality and lovely image." - Tina-Merie, real customer'
         ];
         var el = document.getElementById('headerTestimonial');
         if (el) el.textContent = quotes[Math.floor(Math.random() * quotes.length)];
@@ -1649,6 +1650,11 @@
         <p style="font-size:0.92rem;line-height:1.55;color:#333;font-style:italic;">"The bookmarks are even better in person! They look fabulous, and all the extra touches too, so impressed."</p>
         <div style="font-weight:800;font-size:0.85rem;margin-top:8px;color:#1a1a2e;">Mirjam</div>
         <div style="font-size:0.78rem;color:#888;">real customer</div>
+      </div>
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid #eee;text-align:left;">
+        <p style="font-size:0.92rem;line-height:1.55;color:#333;font-style:italic;">"Received a keyring (Deal Pier design) as a gift from my sister. Am thrilled with it! Very high quality and lovely image."</p>
+        <div style="font-weight:800;font-size:0.85rem;margin-top:8px;color:#1a1a2e;">Tina-Merie</div>
+        <div style="font-size:0.78rem;color:#888;">via Facebook recommendation</div>
       </div>
     </div>
   </div>
@@ -2598,7 +2604,8 @@
     var modalQuotes = [
       '"Great quality, excellent service, and amazing value for money." - Sally, real customer',
       '"Parcel arrived safe and sound today, the bookmarks are beautiful." - Graham, real customer',
-      '"The bookmarks are even better in person! They look fabulous." - Mirjam, real customer'
+      '"The bookmarks are even better in person! They look fabulous." - Mirjam, real customer',
+      '"Am thrilled with it! Very high quality and lovely image." - Tina-Merie, real customer'
     ];
     html += '<div class="modal-testimonial">' + modalQuotes[Math.floor(Math.random() * modalQuotes.length)] + '</div>';
     if ((p.application_method || '').indexOf('Print on Demand') === 0) {
