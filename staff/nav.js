@@ -7,6 +7,7 @@
     ['Collections', '/staff/collections.html', '🗂'],
     ['Orders',      '/staff/orders.html',      '📦'],
     ['Priorities',  '/staff/priorities.html',  '✅'],
+    ['Social approval', '/staff/social-plan.html', '📝'],
     ['Reel Studio', '/staff/reel-studio.html', '🎬'],
     ['Traffic',     '/staff/traffic.html',     '📈'],
     ['Stock',       '/staff/stock.html',       '📦'],
