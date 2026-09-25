@@ -2955,6 +2955,18 @@
     mugMessage = mugMessage || null;
     mugTextColour = mugTextColour || null;
     persText = persText || null;
+    // Single-variant POD auto-attach (25 Sep 2026, Retro Deal mugs): these products have
+    // no colour/size choice - the product IS the design - so they never go through the
+    // modal/podMeta picker path. GET /products attaches gelato_variant_id/gelato_product_uid
+    // directly onto the product object for this case (see products-api's
+    // attachSingleVariantGelatoIds). If nothing already built a podMeta (the modal picker
+    // path for t-shirts/prints), and the product carries one of these, attach it here so
+    // even a plain grid "Add to Cart" click carries the Gelato variant through to checkout.
+    // image_url and price_pence are deliberately left unset - the existing mug-image and
+    // flat-price logic below already handles those correctly for this product type.
+    if (!podMeta && p.gelato_variant_id) {
+      podMeta = { colour: null, size: null, gelato_variant_id: p.gelato_variant_id, gelato_product_uid: p.gelato_product_uid };
+    }
     var basePrice = parseFloat(p.price || 3.50);
     // A variant with its own retail_price_pence (e.g. a print priced by size) overrides
     // the flat product price entirely - it's not a surcharge on top, it IS the price.
