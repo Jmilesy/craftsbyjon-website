@@ -13,6 +13,7 @@
     ['Stock',       '/staff/stock.html',       '📦'],
     ['Finance',     '/staff/finance.html',     '💷'],
     ['POD Intake',  '/staff/pod-intake.html',  '🖨️'],
+    ['Gelato Intake', '/staff/gelato-intake.html', '🎨'],
     ['Promo Codes', '/staff/promo-codes.html', '🏷']
   ];
 
