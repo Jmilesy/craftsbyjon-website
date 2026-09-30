@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Print Images — Crafts by Jon Staff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --bg: #E0F7FA; --bg-card: #ffffff; --bg-muted: #f0fbfc;
+      --text: #4A4A4A; --text-soft: #888;
+      --accent: #FF7F50; --accent-hover: #e86e40;
+      --teal: #20B2AA; --teal-light: #d0f0ee; --teal-hover: #1a9992;
+      --border: #c8ebed; --success: #2e7d32; --error: #c0392b; --warn: #8a6d00;
+      --radius: 10px; --shadow: 0 2px 16px rgba(32,178,170,0.10);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 80px; }
+    header { background: var(--teal); color: #fff; padding: 18px 32px; box-shadow: 0 2px 10px rgba(32,178,170,0.25); }
+    header h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 700; }
+    .wrapper { max-width: 1020px; margin: 0 auto; padding: 36px 20px 0; }
+    .page-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 700; color: var(--teal); margin-bottom: 6px; }
+    .page-subtitle { font-size: 0.88rem; color: var(--text-soft); margin-bottom: 28px; line-height: 1.5; }
+    .card { background: var(--bg-card); border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; }
+    .card-section { padding: 22px 26px; }
+    .section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; color: var(--teal); margin-bottom: 4px; }
+    .section-hint { font-size: 0.82rem; color: var(--text-soft); margin: 10px 0 16px; line-height: 1.55; }
+    .btn { padding: 10px 22px; border-radius: var(--radius); font-family: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; white-space: nowrap; }
+    .btn-go { background: var(--accent); color: #fff; }
+    .btn-go:hover { background: var(--accent-hover); }
+    .btn-plain { background: var(--bg-muted); color: var(--text); border: 1px solid var(--border); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .drop-zone { border: 2px dashed #ccc; border-radius: 10px; padding: 34px 16px; text-align: center; background: var(--bg-muted); cursor: pointer; transition: border-color .2s, background .2s; }
+    .drop-zone.drag-over, body.drag-over .drop-zone { border-color: var(--teal); background: var(--teal-light); }
+    .drop-zone strong { color: var(--teal-hover); }
+    .drop-zone input { display: none; }
+    .note { border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; line-height: 1.5; margin-top: 12px; }
+    .note.info { background: var(--teal-light); color: var(--teal-hover); }
+    .note.warn { background: #fff8e1; color: var(--warn); }
+    .note.bad { background: #fdecea; color: var(--error); }
+    table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
+    th, td { border-bottom: 1px solid var(--border); padding: 8px 8px; text-align: left; vertical-align: top; }
+    th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-soft); white-space: nowrap; }
+    .grid-wrap { overflow-x: auto; }
+    .chip { display: inline-block; border-radius: 20px; padding: 2px 10px; font-size: 0.74rem; font-weight: 600; margin: 1px 4px 1px 0; }
+    .chip.green { background: #e8f8e8; color: #2a7a2a; } .chip.amber { background: #fff8e1; color: var(--warn); }
+    .chip.grey { background: #eee; color: #777; } .chip.red { background: #fdecea; color: var(--error); }
+    .zip-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-top: 12px; background: var(--bg-muted); font-size: 0.85rem; }
+    .zip-card .name { font-weight: 600; word-break: break-all; }
+    .zip-card .sub { color: var(--text-soft); font-size: 0.78rem; margin-top: 2px; }
+    .zip-card label { margin-right: 18px; font-weight: 600; }
+    .bar { height: 6px; background: var(--teal-light); border-radius: 3px; margin-top: 12px; overflow: hidden; }
+    .bar > i { display: block; height: 100%; width: 0; background: var(--teal); }
+    .check { font-size: 0.84rem; display: flex; gap: 8px; align-items: center; }
+    .status-line { font-size: 0.84rem; min-height: 1.3em; margin-top: 10px; line-height: 1.5; }
+    details summary { cursor: pointer; color: var(--teal-hover); font-size: 0.78rem; }
+    details div { font-size: 0.76rem; color: var(--text-soft); margin-top: 4px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+<header><h1>✂️ Crafts by Jon — Staff</h1></header>
+<script src="/staff/nav.js"></script>
+
+<div class="wrapper">
+  <div class="page-title">Print Images</div>
+  <div class="page-subtitle">
+    Attaches the Gelato mockup pictures (plain shot, living room, bedroom) to the print products, one set per <strong>Frame, Size and Text</strong> combination,
+    so the store can show the right picture as a customer changes size or frame.
+    You can drop several Gelato mockup zips at once. Nothing on this page sends anything to Gelato or changes a price or a listing.
+  </div>
+
+  <div class="card"><div class="card-section">
+    <div class="section-title">1. Drop the mockup zips</div>
+    <div class="section-hint">
+      Drop the zips anywhere on this page (or click the box). The page reads them on your computer first and shows what it found before anything uploads.
+      Big zips take a little while to read.
+    </div>
+    <div class="drop-zone" id="drop" onclick="document.getElementById('picker').click()">
+      <div style="font-size:1.8rem;margin-bottom:6px;">🗂️</div>
+      <div><strong>Click to choose</strong> or drag the Gelato mockup .zip files here</div>
+      <input type="file" id="picker" accept=".zip" multiple />
+    </div>
+    <div class="status-line" id="read-status"></div>
+    <div id="zips"></div>
+  </div></div>
+
+  <div class="card"><div class="card-section">
+    <div class="section-title">2. Check what was found</div>
+    <div class="section-hint">
+      One row per print. "Found" is how many Frame, Size and Text combinations the dropped zips cover out of that product's full set.
+      Pictures are shrunk to 1600 px on your computer before they upload.
+    </div>
+    <div class="grid-wrap"><table id="plan"><thead><tr><th>Product</th><th>Found</th><th>Already stored</th><th>To upload</th><th>Notes</th></tr></thead><tbody></tbody></table></div>
+    <div id="plan-notes"></div>
+    <div class="row" style="margin-top:16px;">
+      <button class="btn btn-go" id="btn-upload" disabled>Upload pictures</button>
+      <button class="btn btn-plain" id="btn-cancel" style="display:none;">Stop after this one</button>
+      <label class="check"><input type="checkbox" id="skip-existing" checked /> Skip combinations that already have pictures</label>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="status-line" id="upload-status"></div>
+  </div></div>
+</div>
+
+<script>
+(function () {
+  var API = '/n8n-proxy/products-api';
+  var UPLOAD_API = API + '/upload-image';
+  var MAX_PX = 1600, JPEG_Q = 0.86, PARALLEL = 4;
+
+  // Exact filenames Gelato uses in these mockup exports. Anything else is reported, never guessed.
+  var SHOT_MAP = {
+    'Simple.jpeg': 'flat',
+    'Living-Room-Modern-White-2.jpeg': 'lifestyle_living_room',
+    'Living-Room-Modern-Green-0.jpeg': 'lifestyle_living_room',
+    'Bedroom-Modern-White-2.jpeg': 'lifestyle_bedroom',
+    'Bedroom-Modern-Grey-5.jpeg': 'lifestyle_bedroom_2'
+  };
+  var DESIGN_ALIAS = { 'castle': 'deal-castle' };   // framed set A calls it "Castle"
+
+  var zips = [];            // { id, name, innerId, folders:{ folderName:{shots:{key:entry}, unknown:[]} }, textMode, textChoice }
+  var products = {};        // productId -> { variants:[], existing:{key:{shot:url}} }
+  var printIds = [];
+  var plan = {};            // productId -> { items:{ key:{ shots:{shot:entry}} }, found, skipped, missing:[], notes:[] }
+  var busy = false, cancelled = false;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  function vgKey(v) { return [v.option1_value, v.option2_value, v.option3_value].join('|'); }
+  function getJSON(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(url + ' -> ' + r.status); return r.json(); }); }
+
+  // remembered answers for zips whose folder names don't say whether the print has text
+  function loadChoices() { try { return JSON.parse(localStorage.getItem('cbj_print_zip_text') || '{}'); } catch (e) { return {}; } }
+  function saveChoice(id, v) { try { var c = loadChoices(); c[id] = v; localStorage.setItem('cbj_print_zip_text', JSON.stringify(c)); } catch (e) {} }
+
+  // ---- reading zips ----
+  function parseFolder(name) {
+    var m = name.match(/^((?:flat|framed_poster_mounted)_.+?_ver)\s+(.+)$/);
+    return m ? { uid: m[1], design: m[2].trim() } : null;
+  }
+
+  async function readZip(file) {
+    var z = await JSZip.loadAsync(file);
+    var folders = {}, innerId = null;
+    z.forEach(function (rel, entry) {
+      if (entry.dir) return;
+      var parts = rel.split('/').filter(Boolean);
+      if (parts.length < 3) return;
+      if (!innerId) innerId = parts[0];
+      var folder = parts[parts.length - 2], fname = parts[parts.length - 1];
+      var f = folders[folder] || (folders[folder] = { shots: {}, unknown: [] });
+      var key = SHOT_MAP[fname];
+      if (key) f.shots[key] = entry; else f.unknown.push(fname);
+    });
+    var names = Object.keys(folders);
+    var anyTextName = names.some(function (n) { var p = parseFolder(n); return p && /\stext$/i.test(p.design); });
+    var choices = loadChoices();
+    var item = { id: file.name + ':' + file.size, name: file.name, innerId: innerId || file.name, folders: folders,
+                 textMode: anyTextName ? 'name' : 'ask', textChoice: anyTextName ? null : (choices[innerId || file.name] || null) };
+    return item;
+  }
+
+  async function addFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList).filter(function (f) { return /\.zip$/i.test(f.name); });
+    if (!files.length) { $('read-status').innerHTML = '<span style="color:var(--error)">Those weren\'t .zip files.</span>'; return; }
+    if (busy) return;
+    if (!printIds.length) await loadProducts();
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      if (zips.some(function (z) { return z.id === f.name + ':' + f.size; })) continue;
+      $('read-status').textContent = 'Reading ' + f.name + ' (' + (i + 1) + ' of ' + files.length + ')…';
+      try { zips.push(await readZip(f)); }
+      catch (e) { $('read-status').innerHTML = '<span style="color:var(--error)">Couldn\'t read ' + esc(f.name) + ': ' + esc(e.message) + '</span>'; return; }
+    }
+    $('read-status').textContent = 'Read ' + zips.length + ' zip' + (zips.length === 1 ? '' : 's') + '.';
+    renderZips();
+    await buildPlan();
+  }
+
+  async function loadProducts() {
+    var list = await getJSON(API + '/products');
+    list = list.result || list;
+    printIds = list.map(function (p) { return p['Product ID']; }).filter(function (id) { return /^pod-print-/.test(id); });
+    for (var i = 0; i < printIds.length; i++) {
+      var id = printIds[i];
+      var v = await getJSON(API + '/products/' + id + '/variants');
+      var g = await getJSON(API + '/products/' + id + '/variant-gallery');
+      products[id] = { variants: v.result || [], existing: g.result || {} };
+    }
+  }
+
+  function renderZips() {
+    $('zips').innerHTML = zips.map(function (z, i) {
+      var n = Object.keys(z.folders).length;
+      var q = '';
+      if (z.textMode === 'name') q = '<div class="sub">Text or no text is taken from the design names in this zip (a name ending in "text" is the with-text version).</div>';
+      else q = '<div class="sub" style="margin-top:6px;">Does the print in this zip have the "DEAL · KENT" text on it? ' +
+        '<label><input type="radio" name="t' + i + '" value="Yes"' + (z.textChoice === 'Yes' ? ' checked' : '') + ' data-z="' + i + '"> Yes, with text</label>' +
+        '<label><input type="radio" name="t' + i + '" value="No"' + (z.textChoice === 'No' ? ' checked' : '') + ' data-z="' + i + '"> No text</label></div>';
+      return '<div class="zip-card"><div class="name">' + esc(z.name) + '</div><div class="sub">' + n + ' folders</div>' + q + '</div>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('#zips input[type=radio]'), function (r) {
+      r.addEventListener('change', function () {
+        var z = zips[+r.getAttribute('data-z')]; z.textChoice = r.value; saveChoice(z.innerId, r.value); buildPlan();
+      });
+    });
+  }
+
+  // ---- planning ----
+  function designToProduct(design) {
+    var d = design.toLowerCase();
+    if (DESIGN_ALIAS[d]) d = DESIGN_ALIAS[d];
+    var id = 'pod-print-' + slug(d);
+    return printIds.indexOf(id) >= 0 ? id : null;
+  }
+
+  async function buildPlan() {
+    plan = {};
+    printIds.forEach(function (id) { plan[id] = { items: {}, notes: [] }; });
+    var general = [];
+    zips.forEach(function (z) {
+      var unresolvedText = z.textMode === 'ask' && !z.textChoice;
+      if (unresolvedText) general.push('"' + z.name + '": answer the text question above to include it.');
+      Object.keys(z.folders).forEach(function (fname) {
+        var p = parseFolder(fname);
+        if (!p) { general.push('Skipped a folder that isn\'t in the expected Gelato format: ' + fname); return; }
+        var text, design = p.design;
+        if (z.textMode === 'name') { if (/\stext$/i.test(design)) { text = 'Yes'; design = design.replace(/\s+text$/i, ''); } else text = 'No'; }
+        else { if (unresolvedText) return; text = z.textChoice; }
+        var pid = designToProduct(design);
+        if (!pid) { general.push('No print product for design "' + design + '" (' + z.name + ').'); return; }
+        var variants = products[pid].variants.filter(function (v) { return v.gelato_product_uid === p.uid && v.option3_value === text; });
+        if (variants.length !== 1) { plan[pid].notes.push(variants.length + ' matching variants for ' + p.uid.slice(0, 40) + '… (' + text + ')'); return; }
+        var key = vgKey(variants[0]);
+        var f = z.folders[fname];
+        if (f.unknown.length) general.push('Unrecognised picture names in ' + fname.slice(-30) + ': ' + f.unknown.join(', ') + ' (skipped).');
+        if (Object.keys(f.shots).length === 0) return;
+        var it = plan[pid].items[key] || (plan[pid].items[key] = { shots: {}, label: variants[0].option1_value + ' ' + String(variants[0].option2_value).split(' ')[0] + ' text ' + text });
+        Object.keys(f.shots).forEach(function (s) { it.shots[s] = f.shots[s]; });
+      });
+    });
+    renderPlan(general);
+  }
+
+  function skipNow() { return $('skip-existing').checked; }
+
+  function renderPlan(general) {
+    var totalImgs = 0, rows = '';
+    printIds.forEach(function (id) {
+      var pl = plan[id], all = products[id].variants.map(vgKey);
+      var keys = Object.keys(pl.items);
+      var exist = products[id].existing;
+      var already = keys.filter(function (k) { return exist[k] && Object.keys(exist[k]).length >= Object.keys(pl.items[k].shots).length; });
+      var todo = keys.filter(function (k) { return !(skipNow() && already.indexOf(k) >= 0); });
+      var imgs = todo.reduce(function (n, k) { return n + Object.keys(pl.items[k].shots).length; }, 0);
+      totalImgs += imgs;
+      pl.todo = todo;
+      var missing = all.filter(function (k) { return !pl.items[k] && !(exist[k]); });
+      var mtxt = missing.length ? '<details><summary>' + missing.length + ' not covered</summary><div>' + missing.map(function (k) { var a = k.split('|'); return esc(a[0] + ' ' + a[1].split(' ')[0] + ' text ' + a[2]); }).join('<br>') + '</div></details>' : '';
+      rows += '<tr><td>' + esc(id.replace('pod-print-', '')) + '</td>' +
+        '<td><span class="chip ' + (keys.length === all.length ? 'green' : keys.length ? 'amber' : 'grey') + '">' + keys.length + ' / ' + all.length + '</span></td>' +
+        '<td>' + already.length + '</td><td>' + todo.length + ' combos, ' + imgs + ' pictures</td>' +
+        '<td>' + mtxt + esc(pl.notes.join(' ')) + '</td></tr>';
+    });
+    document.querySelector('#plan tbody').innerHTML = rows;
+    var uniq = general.filter(function (g, i) { return general.indexOf(g) === i; });
+    $('plan-notes').innerHTML = uniq.slice(0, 12).map(function (g) { return '<div class="note warn">' + esc(g) + '</div>'; }).join('') +
+      (uniq.length > 12 ? '<div class="note warn">…and ' + (uniq.length - 12) + ' more.</div>' : '');
+    $('btn-upload').disabled = busy || totalImgs === 0;
+    $('btn-upload').textContent = totalImgs ? 'Upload ' + totalImgs + ' pictures' : 'Upload pictures';
+  }
+
+  // ---- uploading ----
+  async function shrink(blob) {
+    var bmp = await createImageBitmap(blob);
+    var sc = Math.min(1, MAX_PX / Math.max(bmp.width, bmp.height));
+    var c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return await new Promise(function (res, rej) { c.toBlob(function (b) { b ? res(b) : rej(new Error('image conversion failed')); }, 'image/jpeg', JPEG_Q); });
+  }
+
+  async function uploadOne(pid, key, shot, entry) {
+    var blob = await shrink(await entry.async('blob'));
+    var a = key.split('|');
+    var fd = new FormData();
+    fd.append('image', blob, pid.replace('pod-print-', '') + '-' + slug(a[0]) + '-' + slug(a[1].split(' ')[0]) + '-text-' + slug(a[2]) + '-' + shot + '.jpeg');
+    fd.append('productId', pid);
+    var r = await fetch(UPLOAD_API, { method: 'POST', body: fd });
+    var d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || ('upload failed ' + r.status));
+    return d.url;
+  }
+
+  async function uploadAll() {
+    busy = true; cancelled = false;
+    $('btn-upload').disabled = true; $('btn-cancel').style.display = '';
+    var total = 0, done = 0, failed = [];
+    printIds.forEach(function (id) { (plan[id].todo || []).forEach(function (k) { total += Object.keys(plan[id].items[k].shots).length; }); });
+    var setStatus = function (t) { $('upload-status').textContent = t; $('bar').style.width = (total ? Math.round(done / total * 100) : 0) + '%'; };
+    try {
+      for (var p = 0; p < printIds.length && !cancelled; p++) {
+        var pid = printIds[p], keys = (plan[pid].todo || []).slice(), batch = {};
+        if (!keys.length) continue;
+        var post = async function (b) {
+          if (!Object.keys(b).length) return;
+          var r = await fetch(API + '/products/' + pid + '/variant-gallery', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries: b }) });
+          var d = await r.json();
+          if (!r.ok) throw new Error(d.error || 'save failed');
+          if (d.result && (d.result.unknown_keys.length || d.result.bad_shots.length)) failed.push(pid + ': server rejected ' + (d.result.unknown_keys.length + d.result.bad_shots.length) + ' item(s)');
+        };
+        var idx = 0;
+        var worker = async function () {
+          while (idx < keys.length && !cancelled) {
+            var k = keys[idx++], it = plan[pid].items[k], urls = {};
+            var shots = Object.keys(it.shots);
+            for (var s = 0; s < shots.length; s++) {
+              try { urls[shots[s]] = await uploadOne(pid, k, shots[s], it.shots[shots[s]]); }
+              catch (e) { failed.push(pid + ' ' + k + ' ' + shots[s] + ': ' + e.message); }
+              done++; setStatus('Uploading ' + pid.replace('pod-print-', '') + ' — ' + done + ' of ' + total + ' pictures');
+            }
+            if (Object.keys(urls).length) batch[k] = urls;
+            if (Object.keys(batch).length >= 8) { var b8 = batch; batch = {}; await post(b8); }
+          }
+        };
+        var workers = []; for (var w = 0; w < PARALLEL; w++) workers.push(worker());
+        await Promise.all(workers);
+        var rest = batch; batch = {}; await post(rest);
+        var g = await getJSON(API + '/products/' + pid + '/variant-gallery');
+        products[pid].existing = g.result || {};
+      }
+      setStatus((cancelled ? 'Stopped. ' : 'Finished. ') + done + ' of ' + total + ' pictures uploaded' + (failed.length ? ', ' + failed.length + ' problem(s) below.' : '.'));
+      if (failed.length) $('plan-notes').innerHTML += failed.slice(0, 15).map(function (f) { return '<div class="note bad">' + esc(f) + '</div>'; }).join('');
+    } catch (e) {
+      $('upload-status').innerHTML = '<span style="color:var(--error)">Stopped: ' + esc(e.message) + '</span>';
+    }
+    busy = false; $('btn-cancel').style.display = 'none';
+    renderPlan([]);
+  }
+
+  // ---- wiring ----
+  $('picker').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
+  $('btn-upload').addEventListener('click', uploadAll);
+  $('btn-cancel').addEventListener('click', function () { cancelled = true; });
+  $('skip-existing').addEventListener('change', function () { if (printIds.length) renderPlan([]); });
+  var dragDepth = 0;
+  window.addEventListener('dragenter', function (e) { e.preventDefault(); dragDepth++; document.body.classList.add('drag-over'); });
+  window.addEventListener('dragleave', function (e) { e.preventDefault(); dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) document.body.classList.remove('drag-over'); });
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('drop', function (e) {
+    e.preventDefault(); dragDepth = 0; document.body.classList.remove('drag-over');
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+  });
+})();
+</script>
+</body>
+</html>
