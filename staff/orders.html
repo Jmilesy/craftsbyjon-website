@@ -570,6 +570,7 @@
               ${o.gelato_processing_emailed_at ? '<div style="margin-top:4px;color:#333;">&#9993; "Being made" email sent</div>' : ''}
               <div style="margin-top:6px;"><button class="filter-btn" onclick="refreshGelato(${o.id}, '${o.order_ref}')">&#128260; Refresh from Gelato</button></div>
             </div>` : ''}
+            ${o.has_inkthreadable_lines ? renderInkBlock(o) : ''}
             ${o.shipping_notes ? `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#1A5FA8;">&#128230; SHIPPING NOTES</strong><br>
               <span style="font-size:0.88rem;color:#333;white-space:pre-wrap;">${o.shipping_notes}</span>
@@ -583,8 +584,8 @@
               ${o.stripe_payment_intent ? `<a class="filter-btn" style="text-decoration:none" href="https://dashboard.stripe.com/payments/${o.stripe_payment_intent}" target="_blank">💳 Stripe</a>` : ''}
             </div>
           </div>
-          ${isPending && o.is_pure_gelato && o.gelato_orders && o.gelato_orders.length ? `
-          <div class="order-action" style="font-size:0.8rem;color:#555;max-width:160px;">Print-only order: marks itself dispatched when Gelato ships it.</div>` : isPending ? `
+          ${isPending && (o.is_all_pod || o.is_pure_gelato) && ((o.gelato_orders && o.gelato_orders.length) || (o.ink_orders && o.ink_orders.length)) ? `
+          <div class="order-action" style="font-size:0.8rem;color:#555;max-width:160px;">Print-only order: marks itself dispatched when every print partner has shipped it.</div>` : isPending ? `
           <div class="order-action">
             <button class="btn-dispatch" id="btn-${o.id}" onclick="dispatch(${o.id}, '${o.order_ref}')">
               Mark Dispatched
@@ -794,6 +795,76 @@
       showToast('✓ ' + ref + ' refreshed from Gelato');
       await Promise.all([loadStats(), loadOrders()]);
     } catch (e) { alert('Could not refresh: ' + e.message); }
+  }
+
+  // ---- Inkthreadable (made to order by Inkthreadable; Jon pays the unpaid order on their site) ----
+  function renderInkBlock(o) {
+    const st = o.ink_fulfilment_status || 'none';
+    const note = esc(o.ink_fulfilment_note || '');
+    const linkBox = `<div style="margin-top:8px;font-size:0.82rem;color:#333;">Placed it by hand at Inkthreadable? Paste the Inkthreadable order number so customer emails work:<br>
+        <input type="text" id="il-${o.id}" placeholder="Inkthreadable order number" style="padding:4px 6px;width:290px;max-width:100%;"> <button class="filter-btn" onclick="linkInk(${o.id}, '${esc(o.order_ref)}')">Link</button></div>`;
+    const retry = `<button class="filter-btn" onclick="createInk(${o.id}, '${esc(o.order_ref)}')">&#128260; Try again</button>`;
+    if (st === 'pending_payment') {
+      return `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
+        <strong style="font-size:0.9rem;color:#1A5FA8;">&#128424; INKTHREADABLE &mdash; WAITING FOR YOU TO PAY</strong><br>
+        <span style="font-size:0.85rem;color:#333;">An unpaid order for this has been created at Inkthreadable (order ${esc((o.ink_orders && o.ink_orders[0] && o.ink_orders[0].ink_order_id) || o.ink_order_id)}). Check it on their unpaid orders page and pay it there. Nothing is made or charged until you do. About 30 minutes after you pay, the customer is emailed that it is being made.</span>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="filter-btn" onclick="refreshInk(${o.id}, '${esc(o.order_ref)}')">&#128260; Check payment now</button>
+          <button class="filter-btn" onclick="cancelInk(${o.id}, '${esc(o.order_ref)}')">&#10005; Delete unpaid order</button>
+        </div></div>`;
+    }
+    if (st === 'needs_manual_file' || st === 'error') {
+      return `<div style="background:#FFEBEE;border:1.5px solid #E57373;border-radius:4px;padding:8px 12px;margin-top:8px;">
+        <strong style="font-size:0.9rem;color:#C62828;">&#9888; INKTHREADABLE &mdash; ${st === 'error' ? 'ORDER CREATION FAILED' : 'NEEDS MANUAL ORDER'}</strong><br>
+        <span style="font-size:0.85rem;color:#333;">${st === 'error' ? 'The unpaid order could not be created.' : 'No Inkthreadable order was created automatically.'} Fix the reason below and press Try again, or place it by hand on Inkthreadable.</span><br>
+        <span style="font-size:0.78rem;color:#999;">${note}</span>
+        <div style="margin-top:8px;">${retry}</div>${linkBox}</div>`;
+    }
+    if (st === 'cancelled') {
+      return `<div style="background:#f5f5f5;border:1.5px solid #bbb;border-radius:4px;padding:8px 12px;margin-top:8px;">
+        <strong style="font-size:0.9rem;color:#666;">INKTHREADABLE &mdash; CANCELLED</strong><br>
+        <span style="font-size:0.78rem;color:#999;">${note}</span>
+        <div style="margin-top:8px;">${retry}</div>${linkBox}</div>`;
+    }
+    if (st === 'submitted') {
+      return `<div style="background:#E8F5E9;border:1.5px solid #4CAF50;border-radius:4px;padding:6px 12px;margin-top:8px;font-size:0.8rem;color:#2e7d32;">
+        &#9989; Paid at Inkthreadable (order ${esc(o.ink_order_id)})
+        ${(o.ink_orders || []).map(g => `<div style="margin-top:4px;color:#333;">Status: <strong>${esc(g.status || 'unknown')}</strong>${(g.parcels || []).map(p => ' &middot; ' + esc(p.carrier || '') + ' ' + esc(p.code || '')).join('')}${g.shipped_emailed_at ? ' &middot; shipped email sent' : ''}</div>`).join('')}
+        ${o.ink_processing_emailed_at ? '<div style="margin-top:4px;color:#333;">&#9993; "Being made" email sent</div>' : ''}
+        <div style="margin-top:6px;"><button class="filter-btn" onclick="refreshInk(${o.id}, '${esc(o.order_ref)}')">&#128260; Refresh from Inkthreadable</button></div>
+      </div>`;
+    }
+    // none: a made-to-order line on an order that was not handled (for example placed before the switch-on)
+    return `<div style="background:#FFF8E1;border:1.5px solid #F5C542;border-radius:4px;padding:8px 12px;margin-top:8px;">
+      <strong style="font-size:0.9rem;color:#8a6d00;">INKTHREADABLE &mdash; NOT LINKED</strong><br>
+      <span style="font-size:0.85rem;color:#333;">This order has a made-to-order line but nothing has been set up at Inkthreadable for it.</span>${linkBox}</div>`;
+  }
+
+  async function inkPost(path, body) {
+    const res = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(out.error || res.status);
+    return out;
+  }
+  async function linkInk(id, ref) {
+    const v = (document.getElementById('il-' + id).value || '').trim();
+    if (!v) { alert('Paste the Inkthreadable order number first'); return; }
+    if (!window.confirm('Link Inkthreadable order ' + v + ' to ' + ref + '?\n\nFrom now on the customer is emailed from that order\'s real status. If it has already shipped, they are emailed their tracking straight away.')) return;
+    try { await inkPost('/orders/' + id + '/ink-link', { ink_order_id: v }); showToast('✓ ' + ref + ' linked to Inkthreadable'); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Could not link: ' + e.message); }
+  }
+  async function refreshInk(id, ref) {
+    try { await inkPost('/orders/' + id + '/ink-refresh'); showToast('✓ ' + ref + ' refreshed from Inkthreadable'); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Could not refresh: ' + e.message); }
+  }
+  async function createInk(id, ref) {
+    try { const out = await inkPost('/orders/' + id + '/ink-create'); showToast('✓ ' + ref + ': ' + ((out.check && (out.check.status || out.check.skipped)) || 'done')); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Could not create the order: ' + e.message); }
+  }
+  async function cancelInk(id, ref) {
+    if (!window.confirm('Delete the unpaid Inkthreadable order for ' + ref + '? No charge either way. It cannot be deleted once paid.')) return;
+    try { await inkPost('/orders/' + id + '/ink-cancel'); showToast('✓ Unpaid order deleted for ' + ref); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Could not delete: ' + e.message); }
   }
 
   async function cancelFulfilment(id, ref) {
