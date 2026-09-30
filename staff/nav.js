@@ -14,6 +14,7 @@
     ['Finance',     '/staff/finance.html',     '💷'],
     ['POD Intake',  '/staff/pod-intake.html',  '🖨️'],
     ['Gelato Intake', '/staff/gelato-intake.html', '🎨'],
+    ['Print Images', '/staff/print-images.html', '🖼️'],
     ['Promo Codes', '/staff/promo-codes.html', '🏷']
   ];
 
