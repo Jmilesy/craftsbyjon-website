@@ -1682,6 +1682,7 @@
   </div>
 </div>
 
+<script src="/store/print-picker.js?v=20260930"></script>
 <script>
   const API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api';
 
@@ -1760,6 +1761,8 @@
   let podSelectedProductUid = null;
   let podSelectedPrice = null;  // pence — set when a variant carries its own retail_price_pence (e.g. prints by size), null otherwise (flat product price applies)
   let podGalleryData = {};
+  let podSelectedImage = null;  // print picker: main picture of the chosen Frame/Size/Text (used for the cart line)
+  let printState = null;        // print picker state, null for every other product
 
   async function load() {
     const main = document.getElementById('main');
@@ -2364,6 +2367,8 @@
     podSelectedVariantId = null;
     podSelectedProductUid = null;
     podSelectedPrice = null;
+    podSelectedImage = null;
+    printState = null;
     _podVariants = [];
     podGalleryData = {};
     try { podGalleryData = JSON.parse(p.pod_gallery_images || '{}'); } catch (e) {}
@@ -2373,7 +2378,11 @@
       ? (podColourKeys.find(function(c) { return c.toLowerCase() === 'natural'; }) || podColourKeys[0])
       : null;
     var podDefaultGallery = podDefaultColour ? (podGalleryData[podDefaultColour] || {}) : {};
-    if (isPod) {
+    var isPrintProduct = isPod && (p.product_type || '').toLowerCase() === 'print';
+    if (isPrintProduct) {
+      printState = { vars: [], gallery: {}, frame: 'None', size: null, text: 'Yes', shownKey: null };
+      loadPrintData(id);
+    } else if (isPod) {
       podSelectedColour = podDefaultColour;
       loadPodVariants(id);
     }
@@ -2494,7 +2503,7 @@
       html += '<div class="modal-collection">' + escHtml(p['Collection']) + ' Collection</div>';
     }
     html += '<div class="modal-title">' + escHtml(p['Title']) + '</div>';
-    html += '<div class="modal-price-row"><span class="price">' + displayPrice + '</span></div>';
+    html += '<div class="modal-price-row"><span class="price" id="modalPriceVal">' + displayPrice + '</span></div>';
     html += stockNoteHtml(p);
     html += '<hr class="modal-hr">';
 
@@ -2574,7 +2583,9 @@
       html += '</div>';
     }
 
-    if (isPod) {
+    if (isPrintProduct) {
+      html += printPickerHtml();
+    } else if (isPod) {
       html += '<hr class="modal-hr">';
       html += '<div class="modal-variants-label">Colour</div>';
       html += '<div class="modal-variants" id="podColourRow">';
@@ -2593,7 +2604,7 @@
       html += '<div class="modal-variant-hint" id="modalVariantHint">Please select a finish before adding to cart</div>';
     } else if (isPod) {
       html += '<button class="btn-add" id="modalAddBtn" disabled onclick="modalAddToCart(' + pAttr + ')">Add to Cart</button>';
-      html += '<div class="modal-variant-hint" id="modalVariantHint">Please select a colour and size before adding to cart</div>';
+      html += '<div class="modal-variant-hint" id="modalVariantHint">' + (isPrintProduct ? 'Please choose a size before adding to cart' : 'Please select a colour and size before adding to cart') + '</div>';
     } else if (p.personalised === 1 && (p.product_type || '').toLowerCase() !== 'mug') {
       var basePriceStr = '£' + parseFloat(p.price || 3.50).toFixed(2);
       var persPriceStr = '£' + (parseFloat(p.price || 3.50) + 1.50).toFixed(2);
@@ -2759,6 +2770,141 @@
         if (podSelectedColour) renderPodSizes(podSelectedColour);
       })
       .catch(function() { _podVariants = []; });
+  }
+
+  // ===== Print picker: Frame x Size x Text (30 Sep 2026) =====
+  // Logic lives in /store/print-picker.js (CBJPrint). Only prints use this; every other product is untouched.
+  function printPickerHtml() {
+    var loading = '<span style="font-size:0.85rem;color:#888">Loading&hellip;</span>';
+    return '<hr class="modal-hr">'
+      + '<div class="modal-variants-label">Frame</div><div class="modal-variants" id="printFrameRow">' + loading + '</div>'
+      + '<div id="printFrameNote" style="font-size:0.8rem;color:#888;margin:-2px 0 12px;line-height:1.4"></div>'
+      + '<div class="modal-variants-label">Size</div><div class="modal-variants" id="printSizeRow"></div>'
+      + '<div class="modal-variants-label">Wording</div><div class="modal-variants" id="printTextRow"></div>';
+  }
+
+  function loadPrintData(productId) {
+    var st = printState;
+    var base = API + '/products/' + encodeURIComponent(productId);
+    Promise.all([
+      fetch(base + '/public-variants').then(function(r) { return r.json(); }).catch(function() { return {}; }),
+      fetch(base + '/public-variant-gallery').then(function(r) { return r.json(); }).catch(function() { return {}; })
+    ]).then(function(res) {
+      if (printState !== st) return;  // the modal moved on to another product
+      st.vars = (res[0] && res[0].result) || [];
+      st.gallery = (res[1] && res[1].result) || {};
+      var row = document.getElementById('printFrameRow');
+      if (!window.CBJPrint || !CBJPrint.isPrintVariants(st.vars)) {
+        if (row) row.innerHTML = '<span style="font-size:0.85rem;color:#888">Options are not available right now.</span>';
+        return;
+      }
+      var fr = CBJPrint.frames(st.vars);
+      st.frame = fr.indexOf('None') >= 0 ? 'None' : fr[0];
+      var tx = CBJPrint.texts(st.vars);
+      st.text = tx.indexOf('Yes') >= 0 ? 'Yes' : tx[0];
+      renderPrintPicker();
+      refreshPrintGallery();
+    });
+  }
+
+  function renderPrintPicker() {
+    var st = printState;
+    if (!st || !document.getElementById('printFrameRow')) return;
+    function btn(kind, val, label, selected) {
+      return '<button class="modal-variant-btn' + (selected ? ' selected' : '') + '" data-val="' + escAttr(val) + '" onclick="printPick(\'' + kind + '\', this)">' + label + '</button>';
+    }
+    document.getElementById('printFrameRow').innerHTML = CBJPrint.frames(st.vars).map(function(f) {
+      return btn('frame', f, escHtml(CBJPrint.frameLabel(f)), f === st.frame);
+    }).join('');
+    document.getElementById('printSizeRow').innerHTML = CBJPrint.sizes(st.vars, st.frame).map(function(sz) {
+      var v = CBJPrint.find(st.vars, st.frame, sz, st.text);
+      var price = v && v.retail_price_pence != null ? ' &mdash; £' + (v.retail_price_pence / 100).toFixed(2) : '';
+      return btn('size', sz, escHtml(sz) + price, sz === st.size);
+    }).join('');
+    document.getElementById('printTextRow').innerHTML = CBJPrint.texts(st.vars).map(function(t) {
+      return btn('text', t, escHtml(CBJPrint.textLabel(t)), t === st.text);
+    }).join('');
+    var charges = CBJPrint.frameChargeList(st.vars, st.text);
+    var note = document.getElementById('printFrameNote');
+    if (note) {
+      note.textContent = charges.length
+        ? 'Framed prints arrive ready to hang. Add a frame for ' + charges.map(function(c) {
+            return '+£' + (c.charge / 100).toFixed(2).replace(/\.00$/, '') + ' at ' + parseInt(c.size, 10) + ' cm';
+          }).join(', ') + '.'
+        : '';
+    }
+    updatePrintSelection();
+  }
+
+  function printPick(kind, btn) {
+    var st = printState;
+    if (!st) return;
+    var val = btn.getAttribute('data-val');
+    if (kind === 'frame') st.frame = val;
+    else if (kind === 'size') st.size = val;
+    else if (kind === 'text') st.text = val;
+    // keep the chosen size only if this Frame and Text still offer it
+    if (st.size && !CBJPrint.find(st.vars, st.frame, st.size, st.text)) st.size = null;
+    renderPrintPicker();
+    refreshPrintGallery();
+  }
+
+  // Sets the same cart/price state the other POD products use, once a full combination is chosen.
+  function updatePrintSelection() {
+    var st = printState;
+    var addBtn = document.getElementById('modalAddBtn');
+    var hint = document.getElementById('modalVariantHint');
+    var priceEl = document.getElementById('modalPriceVal');
+    var v = st.size ? CBJPrint.find(st.vars, st.frame, st.size, st.text) : null;
+    if (v) {
+      var g = CBJPrint.galleryFor(st.gallery, st.vars, st.frame, st.size, st.text);
+      podSelectedColour = CBJPrint.cartLabel(st.frame, st.text);
+      podSelectedSize = st.size;
+      podSelectedVariantId = v.gelato_variant_id;
+      podSelectedProductUid = v.gelato_product_uid;
+      podSelectedPrice = v.retail_price_pence != null ? v.retail_price_pence : null;
+      podSelectedImage = g.urls[0] || null;
+      if (addBtn) addBtn.disabled = false;
+      if (hint) hint.style.display = 'none';
+    } else {
+      podSelectedColour = null; podSelectedSize = null; podSelectedVariantId = null;
+      podSelectedProductUid = null; podSelectedPrice = null; podSelectedImage = null;
+      if (addBtn) addBtn.disabled = true;
+      if (hint) hint.style.display = '';
+    }
+    updatePodPriceDisplay();
+    if (priceEl) {
+      if (podSelectedPrice != null) {
+        priceEl.textContent = '£' + (podSelectedPrice / 100).toFixed(2);
+      } else {
+        var prices = st.vars.map(function(x) { return x.retail_price_pence; }).filter(function(n) { return n != null; });
+        if (prices.length) priceEl.textContent = 'From £' + (Math.min.apply(null, prices) / 100).toFixed(2);
+      }
+    }
+  }
+
+  // Pictures follow Frame, Size and Text (see CBJPrint.galleryFor for the fallback order).
+  function refreshPrintGallery() {
+    var st = printState;
+    if (!st) return;
+    var g = CBJPrint.galleryFor(st.gallery, st.vars, st.frame, st.size, st.text);
+    if (!g.urls.length || g.key === st.shownKey) return;
+    st.shownKey = g.key;
+    var alt = CBJPrint.frameLabel(st.frame) + ' print';
+    document.getElementById('modalMainImg').src = g.urls[0];
+    currentModalImages = g.urls;
+    var thumbsHtml = g.urls.map(function(u, i) {
+      return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(u) + '" alt="' + escHtml(alt) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
+    }).join('');
+    var existing = document.querySelector('.modal-img-col .modal-thumbs');
+    if (existing) {
+      existing.innerHTML = thumbsHtml;
+    } else {
+      var wrap = document.createElement('div');
+      wrap.className = 'modal-thumbs';
+      wrap.innerHTML = thumbsHtml;
+      document.getElementById('modalMainImg').insertAdjacentElement('afterend', wrap);
+    }
   }
 
   function selectPodColour(colour, btn) {
@@ -2946,7 +3092,7 @@
         size: podSelectedSize,
         gelato_variant_id: podSelectedVariantId,
         gelato_product_uid: podSelectedProductUid,
-        image_url: buildImageUrl((podGalleryData[podSelectedColour] || {}).front),
+        image_url: podSelectedImage || buildImageUrl((podGalleryData[podSelectedColour] || {}).front),
         price_pence: podSelectedPrice
       };
     }
