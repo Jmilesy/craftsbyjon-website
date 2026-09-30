@@ -3336,7 +3336,8 @@
   // Print-on-demand items ship direct from the print partner, so no gift option for all-POD carts.
   function cartIsAllPod() {
     var vals = Object.values(cart);
-    return vals.length > 0 && vals.every(function(d) { return !!d.gelato_variant_id; });
+    // made_to_order is a yes/no set by products-api for products another print partner makes (30 Sep 2026).
+    return vals.length > 0 && vals.every(function(d) { return !!d.gelato_variant_id || !!(d.product && d.product.made_to_order); });
   }
   function syncGiftOption() {
     var box = document.getElementById('giftOption');
