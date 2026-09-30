@@ -555,13 +555,20 @@
               <strong style="font-size:0.9rem;color:#C62828;">&#9888; POD FULFILMENT &mdash; NEEDS MANUAL ORDER</strong><br>
               <span style="font-size:0.85rem;color:#333;">No print-ready file on file for this item, so no Gelato draft was created automatically. Place this order manually in the Gelato dashboard.</span><br>
               <span style="font-size:0.78rem;color:#999;">${o.gelato_fulfilment_note || ''}</span>
+              <div style="margin-top:8px;font-size:0.82rem;color:#333;">Placed it by hand in Gelato? Paste the Gelato order ID so customer emails work:<br>
+                <input type="text" id="gl-${o.id}" placeholder="Gelato order ID" style="padding:4px 6px;width:290px;max-width:100%;"> <button class="filter-btn" onclick="linkGelato(${o.id}, '${o.order_ref}')">Link</button></div>
             </div>` : ''}
             ${o.pod_fulfilment_status === 'error' ? `<div style="background:#FFEBEE;border:1.5px solid #E57373;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#C62828;">&#9888; POD FULFILMENT &mdash; DRAFT CREATION FAILED</strong><br>
               <span style="font-size:0.85rem;color:#333;">${o.gelato_fulfilment_note || 'Unknown error'}</span>
+              <div style="margin-top:8px;font-size:0.82rem;color:#333;">Placed it by hand in Gelato? Paste the Gelato order ID so customer emails work:<br>
+                <input type="text" id="gl-${o.id}" placeholder="Gelato order ID" style="padding:4px 6px;width:290px;max-width:100%;"> <button class="filter-btn" onclick="linkGelato(${o.id}, '${o.order_ref}')">Link</button></div>
             </div>` : ''}
             ${o.pod_fulfilment_status === 'submitted' ? `<div style="background:#E8F5E9;border:1.5px solid #4CAF50;border-radius:4px;padding:6px 12px;margin-top:8px;font-size:0.8rem;color:#2e7d32;">
               &#9989; Submitted to Gelato for production (order ${o.gelato_order_id})
+              ${(o.gelato_orders || []).map(g => `<div style="margin-top:4px;color:#333;">Gelato ${String(g.gelato_order_id).slice(0,8)}: <strong>${g.status || 'unknown'}</strong>${(g.parcels || []).map(p => ' &middot; ' + (p.carrier || '') + ' ' + (p.trackingCode || '')).join('')}${g.shipped_emailed_at ? ' &middot; shipped email sent' : ''}</div>`).join('')}
+              ${o.gelato_processing_emailed_at ? '<div style="margin-top:4px;color:#333;">&#9993; "Being made" email sent</div>' : ''}
+              <div style="margin-top:6px;"><button class="filter-btn" onclick="refreshGelato(${o.id}, '${o.order_ref}')">&#128260; Refresh from Gelato</button></div>
             </div>` : ''}
             ${o.shipping_notes ? `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#1A5FA8;">&#128230; SHIPPING NOTES</strong><br>
@@ -576,7 +583,8 @@
               ${o.stripe_payment_intent ? `<a class="filter-btn" style="text-decoration:none" href="https://dashboard.stripe.com/payments/${o.stripe_payment_intent}" target="_blank">💳 Stripe</a>` : ''}
             </div>
           </div>
-          ${isPending ? `
+          ${isPending && o.is_pure_gelato && o.gelato_orders && o.gelato_orders.length ? `
+          <div class="order-action" style="font-size:0.8rem;color:#555;max-width:160px;">Print-only order: marks itself dispatched when Gelato ships it.</div>` : isPending ? `
           <div class="order-action">
             <button class="btn-dispatch" id="btn-${o.id}" onclick="dispatch(${o.id}, '${o.order_ref}')">
               Mark Dispatched
@@ -765,6 +773,27 @@
     } catch (e) {
       alert('Error approving fulfilment: ' + e.message);
     }
+  }
+
+  async function linkGelato(id, ref) {
+    const v = (document.getElementById('gl-' + id).value || '').trim();
+    if (!v) { alert('Paste the Gelato order ID first'); return; }
+    try {
+      const res = await fetch(API + '/orders/' + id + '/gelato-link', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ gelato_order_id: v }) });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || res.status);
+      showToast('✓ ' + ref + ' linked to Gelato');
+      await Promise.all([loadStats(), loadOrders()]);
+    } catch (e) { alert('Could not link: ' + e.message); }
+  }
+
+  async function refreshGelato(id, ref) {
+    try {
+      const res = await fetch(API + '/orders/' + id + '/gelato-refresh', { method: 'POST' });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || res.status); }
+      showToast('✓ ' + ref + ' refreshed from Gelato');
+      await Promise.all([loadStats(), loadOrders()]);
+    } catch (e) { alert('Could not refresh: ' + e.message); }
   }
 
   async function cancelFulfilment(id, ref) {
