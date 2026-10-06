@@ -58,6 +58,7 @@
     Customer status emails start separately, when the go-live date is set on the server.
   </div>
   <div id="products"></div>
+  <div id="totes"></div>
 </div>
 
 <script>
@@ -155,7 +156,69 @@
     } catch (e) { alert('Could not change it: ' + e.message); }
   }
 
+  // ---- Tote bags (6 Oct 2026): two print files per design, text and no text. The colour only changes
+  // which Inkthreadable product code is ordered, never the artwork. Automatic ordering is switched on when the
+  // listing is created in pod-intake; until both files are stored an order for that option is left for you to place by hand.
+  const TOTE_KEYS = [{ key: 'notext', label: 'No text' }, { key: 'text', label: 'With DEAL · KENT text' }];
+  const TOTE_EXPECTED = 3189; // px, 27 cm at 300 ppi (Inkthreadable tote template 27 x 27 cm)
+
+  async function renderTotes() {
+    const host = document.getElementById('totes');
+    let list = [];
+    try { list = ((await getJson('/products')).result || []).filter(p => String(p.product_type || '').toLowerCase() === 'tote bag'); } catch (e) {
+      host.innerHTML = `<div class="card"><div class="card-section"><div class="line bad">Could not load tote bags: ${esc(e.message)}</div></div></div>`;
+      return;
+    }
+    const parts = [];
+    for (const p of list) {
+      const pid = p['Product ID'];
+      let files = [], sup = null, err = '';
+      try { files = (await getJson('/products/' + pid + '/print-files')).result || []; } catch (e) { err = e.message; }
+      try { sup = (await getJson('/products/' + pid + '/supplier')).result; } catch (e) { err = err || e.message; }
+      const rows = TOTE_KEYS.map(k => {
+        const f = files.find(x => x.variant_key === k.key && x.print_area === 'default');
+        return `<div class="line">${esc(k.label)}: ${f ? `<span class="ok">stored</span> &middot; ${esc(f.original_name || '')} &middot; ${f.width_px || '?'} &times; ${f.height_px || '?'} px` : '<span class="warn">none stored yet</span>'}</div>
+        <div class="row">
+          <input type="file" id="f-${esc(pid)}-${k.key}" accept=".png,image/png" />
+          <button class="btn btn-teal" onclick="uploadTote('${esc(pid)}', '${k.key}', ${!!f})">${f ? 'Replace file' : 'Upload file'}</button>
+        </div>
+        <div class="line" id="msg-${esc(pid)}-${k.key}"></div>`;
+      }).join('');
+      parts.push(`<div class="card"><div class="card-section">
+        <div class="section-title">${esc(p['Title'] || pid)}</div>
+        <div class="section-hint" style="margin:2px 0 8px">${esc(pid)} &middot; Ready to Go: ${esc(p['Ready to Go'] || 'No')}</div>
+        ${err ? `<div class="line bad">Could not load: ${esc(err)}</div>` : ''}
+        <div class="line">Automatic ordering: <span class="chip ${sup && sup.supplier ? 'on' : 'off'}">${sup && sup.supplier ? 'ON' : 'OFF'}</span></div>
+        ${rows}
+      </div></div>`);
+    }
+    host.innerHTML = parts.length ? '<div class="section-title" style="margin:18px 0 6px">Tote bags</div>' + parts.join('') : '';
+  }
+
+  async function uploadTote(pid, key, replacing) {
+    const msg = document.getElementById('msg-' + pid + '-' + key);
+    const input = document.getElementById('f-' + pid + '-' + key);
+    const file = input.files && input.files[0];
+    if (!file) { msg.className = 'line warn'; msg.textContent = 'Choose a PNG file first.'; return; }
+    const size = await pngSize(file);
+    if (!size) { msg.className = 'line bad'; msg.textContent = 'That is not a PNG file.'; return; }
+    if (size.w !== size.h) { msg.className = 'line bad'; msg.textContent = `The file is ${size.w} × ${size.h} px. The tote design must be square.`; return; }
+    if (size.w !== TOTE_EXPECTED && !window.confirm(`This file is ${size.w} × ${size.h} px. The tote template (27 cm at 300 ppi) is ${TOTE_EXPECTED} × ${TOTE_EXPECTED} px. Upload it anyway?`)) return;
+    if (replacing && !window.confirm('Replace the stored print file for ' + pid + ' (' + key + ')? Orders already created keep the file they were given.')) return;
+    msg.className = 'line soft'; msg.textContent = 'Uploading…';
+    const fd = new FormData();
+    fd.append('productId', pid); fd.append('variantKey', key); fd.append('printArea', 'default'); fd.append('file', file, file.name);
+    try {
+      const r = await fetch(API + '/print-files', { method: 'POST', body: fd });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(out.error || ('server returned ' + r.status));
+      await renderTotes();
+      const m2 = document.getElementById('msg-' + pid + '-' + key); if (m2) { m2.className = 'line ok'; m2.textContent = 'Stored.'; }
+    } catch (e) { msg.className = 'line bad'; msg.textContent = 'Upload failed: ' + e.message; }
+  }
+
   render();
+  renderTotes();
 </script>
 </body>
 </html>

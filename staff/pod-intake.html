@@ -151,7 +151,7 @@
       <!-- Manual path: Tote Bag -->
       <div id="section2-tote" style="display:none;">
         <div class="section-title">2. Colour Images</div>
-        <div class="section-hint">Drop a mockup image into each colour that this design comes in. Skip any colour you're not launching yet — whichever slots get an image become that design's variant list. No Gelato template involved (Inkthreadable isn't on Gelato).</div>
+        <div class="section-hint">Drop a mockup image into each Colour and Text combination this design comes in (No text and With DEAL · KENT text). Skip any you're not launching yet — whichever slots get an image become that design's options on the store. Each colour is ordered from Inkthreadable with its own product code. No Gelato template involved.</div>
         <div class="colour-slot-grid" id="tote-colour-grid"></div>
       </div>
     </div>
@@ -200,6 +200,17 @@
   // colourway names (confirmed 21 Aug 2026), not derived from anywhere automatically since
   // Inkthreadable has no template/API structure to pull them from.
   const TOTE_COLOURS = ['Natural Raw', 'Anthracite', 'French Navy', 'White', 'Black'];
+  // Inkthreadable product code per colour (STAU773, each API-tested 5 Oct 2026, all £7.15 ex VAT).
+  const TOTE_CODES = {
+    'Natural Raw': 'STAU773-NRW', 'Anthracite': 'STAU773-ANT', 'French Navy': 'STAU773-FNY',
+    'White': 'STAU773-WHI', 'Black': 'STAU773-BLK'
+  };
+  // Text option: 'No' = artwork only, 'Yes' = with the DEAL · KENT wording. The key is also the
+  // name of the print master (product_print_files.variant_key) used when an order is placed.
+  const TOTE_TEXTS = [{ value: 'No', label: 'No text', key: 'notext' }, { value: 'Yes', label: 'With text', key: 'text' }];
+  const toteSlotKey = (colour, text) => `${colour}|${text}`;
+  const toteSlotId = (colour, text) => `${slugify(colour)}-${text === 'Yes' ? 'text' : 'notext'}`;
+  const toteSlots = () => TOTE_COLOURS.flatMap(c => TOTE_TEXTS.map(t => ({ colour: c, text: t.value, textLabel: t.label, key: toteSlotKey(c, t.value) })));
 
   function slugify(text) {
     return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -224,7 +235,7 @@
   let zipDesigns = {};
   let zipImageEntries = {};  // { designName: { colour: { shotKey: JSZip file object } } }
   let mergedDesigns = [];
-  let toteFiles = {};  // { colourName: File }
+  let toteFiles = {};  // { 'Colour|No' or 'Colour|Yes': File }
   let toteDesign = { title: '', price: 17.99 };
 
   // Prints price by size, not a single flat figure across the whole design (confirmed
@@ -265,34 +276,37 @@
   // ---------- Tote Bag manual path ----------
   function buildToteColourGrid() {
     const grid = document.getElementById('tote-colour-grid');
-    grid.innerHTML = TOTE_COLOURS.map(colour => `
-      <div class="colour-slot" id="tote-slot-${slugify(colour)}" onclick="document.getElementById('tote-file-${slugify(colour)}').click()">
-        <img class="colour-slot-preview" id="tote-preview-${slugify(colour)}" />
+    grid.innerHTML = toteSlots().map(sl => {
+      const id = toteSlotId(sl.colour, sl.text);
+      return `
+      <div class="colour-slot" id="tote-slot-${id}" onclick="document.getElementById('tote-file-${id}').click()">
+        <img class="colour-slot-preview" id="tote-preview-${id}" />
         <div class="colour-slot-icon">🖼️</div>
-        <div class="colour-slot-name">${colour}</div>
-        <div class="colour-slot-status" id="tote-status-${slugify(colour)}">No image</div>
-        <input type="file" accept="image/*" id="tote-file-${slugify(colour)}" onchange="handleToteFile('${colour}', this.files[0])" />
-      </div>
-    `).join('');
+        <div class="colour-slot-name">${sl.colour}</div>
+        <div class="colour-slot-status" id="tote-status-${id}">${sl.textLabel}: no image</div>
+        <input type="file" accept="image/*" id="tote-file-${id}" onchange="handleToteFile('${sl.colour}', '${sl.text}', this.files[0])" />
+      </div>`;
+    }).join('');
   }
 
-  function handleToteFile(colour, file) {
+  function handleToteFile(colour, text, file) {
     if (!file) return;
-    toteFiles[colour] = file;
-    const slot = document.getElementById(`tote-slot-${slugify(colour)}`);
-    const preview = document.getElementById(`tote-preview-${slugify(colour)}`);
-    const status = document.getElementById(`tote-status-${slugify(colour)}`);
+    toteFiles[toteSlotKey(colour, text)] = file;
+    const id = toteSlotId(colour, text);
+    const slot = document.getElementById(`tote-slot-${id}`);
+    const preview = document.getElementById(`tote-preview-${id}`);
+    const status = document.getElementById(`tote-status-${id}`);
     slot.classList.add('filled');
     preview.src = URL.createObjectURL(file);
-    status.textContent = 'Image added';
+    status.textContent = `${text === 'Yes' ? 'With text' : 'No text'}: image added`;
     renderToteDesign();
   }
 
   function renderToteDesign() {
     const listEl = document.getElementById('designs-list');
-    const filledColours = TOTE_COLOURS.filter(c => toteFiles[c]);
+    const filled = toteSlots().filter(sl => toteFiles[sl.key]);
 
-    if (filledColours.length === 0) {
+    if (filled.length === 0) {
       listEl.innerHTML = '<div class="empty-state">Upload at least one colour image above to see the listing here.</div>';
       document.getElementById('btn-submit').disabled = true;
       document.getElementById('submit-guard-note').textContent = 'Upload at least one colour image before creating the listing.';
@@ -304,7 +318,7 @@
       <div class="design-card">
         <div class="design-card-head">
           <div class="design-card-name">New Tote Bag Design</div>
-          <div class="design-card-meta">${filledColours.length} colour${filledColours.length === 1 ? '' : 's'} uploaded</div>
+          <div class="design-card-meta">${filled.length} option${filled.length === 1 ? '' : 's'} uploaded</div>
         </div>
         <div class="two-col">
           <div class="field">
@@ -321,7 +335,7 @@
           <input type="text" id="f-tote-product-id" placeholder="e.g. totebag001" />
         </div>
         <div class="variant-chip-row">
-          ${filledColours.map(c => `<span class="variant-chip">${c}</span>`).join('')}
+          ${filled.map(sl => `<span class="variant-chip">${sl.colour}, ${sl.textLabel.toLowerCase()}</span>`).join('')}
         </div>
       </div>
     `;
@@ -350,33 +364,37 @@
     progressEl.innerHTML = `<div class="status-line" id="progress-tote">⏳ ${toteDesign.title || productId} — saving product…</div>`;
 
     const collection = document.getElementById('f-collection').value;
-    const filledColours = TOTE_COLOURS.filter(c => toteFiles[c]);
+    const filledSlots = toteSlots().filter(sl => toteFiles[sl.key]);
 
     try {
-      // 1. Upload each colour's image first.
-      setProgressLine('tote', 'pending', `${toteDesign.title || productId} — uploading ${filledColours.length} image(s)…`);
-      const variantImages = {};
-      for (const colour of filledColours) {
+      // 1. Upload each colour and text image first.
+      setProgressLine('tote', 'pending', `${toteDesign.title || productId} — uploading ${filledSlots.length} image(s)…`);
+      const variantImages = {};  // { 'Colour|No': url }
+      for (const sl of filledSlots) {
+        const id = toteSlotId(sl.colour, sl.text);
         const fd = new FormData();
-        fd.append('image', toteFiles[colour], `${productId}-${slugify(colour)}.jpg`);
-        fd.append('productId', `${productId}-${slugify(colour)}`);
+        fd.append('image', toteFiles[sl.key], `${productId}-${id}.jpg`);
+        fd.append('productId', `${productId}-${id}`);
         const upRes = await fetch(UPLOAD_API, { method: 'POST', body: fd });
         const upData = await upRes.json();
-        if (upRes.ok && upData.success) variantImages[colour] = upData.url;
+        if (upRes.ok && upData.success) variantImages[sl.key] = upData.url;
       }
 
-      if (Object.keys(variantImages).length === 0) {
+      const uploadedSlots = filledSlots.filter(sl => variantImages[sl.key]);
+      if (uploadedSlots.length === 0) {
         throw new Error('No images uploaded successfully — nothing to attach.');
       }
+      if (uploadedSlots.length < filledSlots.length) {
+        throw new Error(`Only ${uploadedSlots.length} of ${filledSlots.length} images uploaded — nothing saved. Try again.`);
+      }
 
-      // Default hero image: prefer Natural Raw, else first uploaded colour.
-      const defaultColour = filledColours.find(c => c === 'Natural Raw') || filledColours[0];
-      const heroUrl = variantImages[defaultColour];
+      // Default hero image: Natural Raw with no text, else the first uploaded option.
+      const heroSlot = uploadedSlots.find(sl => sl.colour === 'Natural Raw' && sl.text === 'No') || uploadedSlots[0];
+      const heroUrl = variantImages[heroSlot.key];
 
-      // 2. Save the product itself — simple model, same as the existing keyring
-      // Clear/Black finish pattern: a plain `variants` list + `variant_images` JSON,
-      // one flat price. No Gelato variant IDs, no product_variants rows — checkout
-      // already prices this via the generic `item.variant` branch.
+      // 2. Save the product itself, then its supplier and its Colour x Text option rows (6 Oct 2026).
+      // Each option row carries its own Inkthreadable product code (per colour) and which print master
+      // is printed (text or notext). No Gelato variant IDs: checkout and order handling read the row.
       setProgressLine('tote', 'pending', `${toteDesign.title || productId} — saving product…`);
       const res = await fetch(PRODUCTS_API, {
         method: 'POST',
@@ -392,14 +410,43 @@
           'original_design': 'Yes',
           'Ready to Go': 'No',
           'Collection': collection,
-          'variants': Object.keys(variantImages).join(', '),
-          'variant_images': JSON.stringify(variantImages),
           'Image URL': heroUrl
         })
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || `Product save returned ${res.status}`);
+      }
+
+      // 2b. Supplier: Inkthreadable, with the Natural Raw code as the product-level default.
+      const supRes = await fetch(`${PRODUCTS_API}/${productId}/supplier`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ supplier: 'inkthreadable', supplier_code: TOTE_CODES['Natural Raw'] })
+      });
+      if (!supRes.ok) {
+        const e = await supRes.json().catch(() => ({}));
+        throw new Error('Product saved but setting the supplier failed: ' + (e.error || supRes.status));
+      }
+
+      // 2c. One option row per Colour and Text combination.
+      const pricePence = Math.round((toteDesign.price || 17.99) * 100);
+      const variantRows = uploadedSlots.map(sl => ({
+        option1_name: 'Colour', option1_value: sl.colour,
+        option2_name: 'Text', option2_value: sl.text,
+        supplier_code: TOTE_CODES[sl.colour],
+        print_file_key: sl.text === 'Yes' ? 'text' : 'notext',
+        retail_price_pence: pricePence,
+        image_url: variantImages[sl.key]
+      }));
+      const varRes = await fetch(`${PRODUCTS_API}/${productId}/variants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variants: variantRows })
+      });
+      if (!varRes.ok) {
+        const e = await varRes.json().catch(() => ({}));
+        throw new Error('Product saved but saving the options failed: ' + (e.error || varRes.status));
       }
 
       // 3. Generate listing copy + social posts, same as the Gelato path.
