@@ -1683,6 +1683,7 @@
 </div>
 
 <script src="/store/print-picker.js?v=20260930"></script>
+<script src="/store/tote-picker.js?v=20261006"></script>
 <script>
   const API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api';
 
@@ -1763,6 +1764,7 @@
   let podGalleryData = {};
   let podSelectedImage = null;  // print picker: main picture of the chosen Frame/Size/Text (used for the cart line)
   let printState = null;        // print picker state, null for every other product
+  let toteState = null;         // tote picker state (Colour x Text), null for every other product
 
   async function load() {
     const main = document.getElementById('main');
@@ -1793,7 +1795,9 @@
         // store because this filter required stripe_price_id for every product with no
         // exception, before the Ready to Go check even ran.
         var isPodProduct = !!(p.pod_gallery_images && p.pod_gallery_images !== '{}');
-        if (!p.stripe_price_id && !isPodProduct) return false;
+        // Tote bags made by a print partner (6 Oct 2026) have no Stripe price either: each colour and
+        // text choice is priced at checkout from its own row.
+        if (!p.stripe_price_id && !isPodProduct && !isToteListing(p)) return false;
         var cs = collectionsStatus[p['Collection']];
         if (p['Collection'] && cs === 'archived') return false;
         if (Number(p.design_stock_tracked) === 1 && Number(p.design_stock_qty) <= 0) return false;
@@ -2284,7 +2288,7 @@
         variants = (p.variants || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean);
       }
       var isPodProduct = !!(p.pod_gallery_images && p.pod_gallery_images !== '{}');
-      var needsVariant = variants.length > 1 || isPodProduct;
+      var needsVariant = variants.length > 1 || isPodProduct || isToteListing(p);
       var inCart = Object.keys(cart).some(function(k) { return k.startsWith(priceId + '|'); });
       var isPersonalisedNonMug = p.personalised === 1;
       var addBtn = (needsVariant || isPersonalisedNonMug)
@@ -2318,7 +2322,7 @@
       variants = (p.variants || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean);
     }
     var isPodProduct = !!(p.pod_gallery_images && p.pod_gallery_images !== '{}');
-    var needsVariant = variants.length > 1 || isPodProduct;
+    var needsVariant = variants.length > 1 || isPodProduct || isToteListing(p);
     var inCart = Object.keys(cart).some(function(k) { return k.startsWith(priceId + '|'); });
     var isPersonalisedNonMug = p.personalised === 1;
     var addBtn = (needsVariant || isPersonalisedNonMug)
@@ -2369,6 +2373,7 @@
     podSelectedPrice = null;
     podSelectedImage = null;
     printState = null;
+    toteState = null;
     _podVariants = [];
     podGalleryData = {};
     try { podGalleryData = JSON.parse(p.pod_gallery_images || '{}'); } catch (e) {}
@@ -2385,6 +2390,11 @@
     } else if (isPod) {
       podSelectedColour = podDefaultColour;
       loadPodVariants(id);
+    }
+    var isToteProduct = !isPod && isToteListing(p);
+    if (isToteProduct) {
+      toteState = { vars: [], colour: null, text: null, shownKey: null };
+      loadToteData(id);
     }
     var mainImgUrl = buildImageUrl(p['Image URL']) || buildImageUrl(id.toLowerCase());
     var mugFrontUrl = isMug ? buildImageUrl(p.mug_image_front) : null;
@@ -2598,10 +2608,15 @@
       html += '<div class="modal-variants" id="podSizeRow"></div>';
     }
 
+    if (isToteProduct) html += totePickerHtml();
+
     html += '<div class="modal-actions">';
     if (needsVariantSelection) {
       html += '<button class="btn-add" id="modalAddBtn" disabled onclick="modalAddToCart(' + pAttr + ')">Add to Cart</button>';
       html += '<div class="modal-variant-hint" id="modalVariantHint">Please select a finish before adding to cart</div>';
+    } else if (isToteProduct) {
+      html += '<button class="btn-add" id="modalAddBtn" disabled onclick="modalAddToCart(' + pAttr + ')">Add to Cart</button>';
+      html += '<div class="modal-variant-hint" id="modalVariantHint">Please choose a colour and text option before adding to cart</div>';
     } else if (isPod) {
       html += '<button class="btn-add" id="modalAddBtn" disabled onclick="modalAddToCart(' + pAttr + ')">Add to Cart</button>';
       html += '<div class="modal-variant-hint" id="modalVariantHint">' + (isPrintProduct ? 'Please choose a size before adding to cart' : 'Please select a colour and size before adding to cart') + '</div>';
@@ -2700,7 +2715,7 @@
         variants = (p.variants || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean);
       }
       var isPodProduct = !!(p.pod_gallery_images && p.pod_gallery_images !== '{}');
-      var needsVariant = variants.length > 1 || isPodProduct;
+      var needsVariant = variants.length > 1 || isPodProduct || isToteListing(p);
       var inCart = Object.keys(cart).some(function(k) { return k.startsWith(priceId + '|'); });
       var isPersonalisedNonMug = p.personalised === 1;
       var addBtn = (needsVariant || isPersonalisedNonMug)
@@ -2907,6 +2922,96 @@
     }
   }
 
+  // ===== Tote picker: Colour x Text (6 Oct 2026) =====
+  // Logic lives in /store/tote-picker.js (CBJTote). Only tote bags made by a print partner use this.
+  function isToteListing(p) {
+    return !!p && Number(p.made_to_order) === 1 && (p.product_type || '').toLowerCase() === 'tote bag';
+  }
+
+  function totePickerHtml() {
+    var loading = '<span style="font-size:0.85rem;color:#888">Loading&hellip;</span>';
+    return '<hr class="modal-hr">'
+      + '<div class="modal-variants-label">Colour</div><div class="modal-variants" id="toteColourRow">' + loading + '</div>'
+      + '<div class="modal-variants-label">Wording</div><div class="modal-variants" id="toteTextRow"></div>';
+  }
+
+  function loadToteData(productId) {
+    var st = toteState;
+    fetch(API + '/products/' + encodeURIComponent(productId) + '/public-variants')
+      .then(function(r) { return r.json(); })
+      .catch(function() { return {}; })
+      .then(function(res) {
+        if (toteState !== st) return;  // the modal moved on to another product
+        st.vars = (res && res.result) || [];
+        var row = document.getElementById('toteColourRow');
+        if (!window.CBJTote || !CBJTote.isToteVariants(st.vars)) {
+          if (row) row.innerHTML = '<span style="font-size:0.85rem;color:#888">Options are not available right now.</span>';
+          return;
+        }
+        var cs = CBJTote.colours(st.vars);
+        st.colour = cs.indexOf('Natural Raw') >= 0 ? 'Natural Raw' : cs[0];
+        var ts = CBJTote.texts(st.vars, st.colour);
+        st.text = ts.indexOf('No') >= 0 ? 'No' : ts[0];
+        renderTotePicker();
+        refreshToteGallery();
+      });
+  }
+
+  function renderTotePicker() {
+    var st = toteState;
+    if (!st || !document.getElementById('toteColourRow')) return;
+    function btn(kind, val, label, selected) {
+      return '<button class="modal-variant-btn' + (selected ? ' selected' : '') + '" data-val="' + escAttr(val) + '" onclick="totePick(\'' + kind + '\', this)">' + label + '</button>';
+    }
+    document.getElementById('toteColourRow').innerHTML = CBJTote.colours(st.vars).map(function(c) {
+      return btn('colour', c, escHtml(c), c === st.colour);
+    }).join('');
+    document.getElementById('toteTextRow').innerHTML = CBJTote.texts(st.vars, st.colour).map(function(t) {
+      return btn('text', t, escHtml(CBJTote.textLabel(t)), t === st.text);
+    }).join('');
+    var ok = !!CBJTote.find(st.vars, st.colour, st.text);
+    var addBtn = document.getElementById('modalAddBtn');
+    var hint = document.getElementById('modalVariantHint');
+    if (addBtn) addBtn.disabled = !ok;
+    if (hint) hint.style.display = ok ? 'none' : '';
+  }
+
+  function totePick(kind, btn) {
+    var st = toteState;
+    if (!st) return;
+    var val = btn.getAttribute('data-val');
+    if (kind === 'colour') st.colour = val;
+    else if (kind === 'text') st.text = val;
+    // keep the chosen text only if this colour offers it
+    if (!CBJTote.find(st.vars, st.colour, st.text)) st.text = CBJTote.texts(st.vars, st.colour)[0] || null;
+    renderTotePicker();
+    refreshToteGallery();
+  }
+
+  function refreshToteGallery() {
+    var st = toteState;
+    if (!st) return;
+    var raw = CBJTote.imagesFor(st.vars, st.colour, st.text);
+    var urls = raw.map(buildImageUrl).filter(Boolean);
+    var key = st.colour + '|' + st.text;
+    if (!urls.length || key === st.shownKey) return;
+    st.shownKey = key;
+    document.getElementById('modalMainImg').src = urls[0];
+    currentModalImages = urls;
+    var thumbsHtml = urls.map(function(u, i) {
+      return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(u) + '" alt="' + escHtml(st.colour + ' tote bag') + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
+    }).join('');
+    var existing = document.querySelector('.modal-img-col .modal-thumbs');
+    if (existing) {
+      existing.innerHTML = thumbsHtml;
+    } else {
+      var wrap = document.createElement('div');
+      wrap.className = 'modal-thumbs';
+      wrap.innerHTML = thumbsHtml;
+      document.getElementById('modalMainImg').insertAdjacentElement('afterend', wrap);
+    }
+  }
+
   function selectPodColour(colour, btn) {
     podSelectedColour = colour;
     podSelectedSize = null;
@@ -3096,10 +3201,23 @@
         price_pence: podSelectedPrice
       };
     }
-    addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta);
+    var toteMeta = null;
+    if (toteState && toteState.colour && toteState.text) {
+      var tv = CBJTote.find(toteState.vars, toteState.colour, toteState.text);
+      if (tv) {
+        toteMeta = {
+          variant_id: tv.id,
+          label: toteState.colour + ', ' + (toteState.text === 'Yes' ? 'with text' : 'no text'),
+          image_url: tv.image_url ? buildImageUrl(tv.image_url) : null,
+          price_pence: tv.retail_price_pence != null ? tv.retail_price_pence : null
+        };
+      }
+    }
+    if (isToteListing(p) && !toteMeta) return;  // button is disabled until a full choice is made
+    addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta, toteMeta);
   }
 
-  function addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta) {
+  function addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta, toteMeta) {
     trackEvent('add_to_basket', p['Product ID']);
     mugName = mugName || null;
     mugMessage = mugMessage || null;
@@ -3121,6 +3239,7 @@
     // A variant with its own retail_price_pence (e.g. a print priced by size) overrides
     // the flat product price entirely - it's not a surcharge on top, it IS the price.
     if (podMeta && podMeta.price_pence != null) basePrice = podMeta.price_pence / 100;
+    if (toteMeta) { variant = toteMeta.label; if (toteMeta.price_pence != null) basePrice = toteMeta.price_pence / 100; }
     var itemPrice = persText && p.personalised === 1 ? basePrice + 1.50 : basePrice;
     gtag('event', 'add_to_cart', {
       currency: 'GBP',
@@ -3128,7 +3247,9 @@
       items: [{ item_id: p['Product ID'], item_name: p['Title'], item_category: p['Collection'] || '', item_variant: variant || '', price: itemPrice, quantity: 1 }]
     });
     var priceId = p.stripe_price_id;
-    var cartKey = podMeta
+    var cartKey = toteMeta
+      ? (p['Product ID'] + '|sv:' + toteMeta.variant_id)
+      : podMeta
       ? (p['Product ID'] + '|pod:' + podMeta.gelato_variant_id)
       : priceId + '|' + (variant || '') + (mugName ? '|mug:' + mugName : '') + (persText ? '|pers:' + persText : '');
     var heroUrl = buildImageUrl(p['Image URL']) || buildImageUrl((p['Product ID'] || '').toLowerCase());
@@ -3145,6 +3266,7 @@
       if (mugFront) imageUrl = mugFront;
     }
     if (podMeta && podMeta.image_url) imageUrl = podMeta.image_url;
+    if (toteMeta && toteMeta.image_url) imageUrl = toteMeta.image_url;
     if (cart[cartKey]) {
       cart[cartKey].qty++;
     } else {
@@ -3155,6 +3277,7 @@
                         pod_size: podMeta ? podMeta.size : null,
                         gelato_variant_id: podMeta ? podMeta.gelato_variant_id : null,
                         gelato_product_uid: podMeta ? podMeta.gelato_product_uid : null,
+                        variant_id: toteMeta ? toteMeta.variant_id : null,
                         price: itemPrice };
     }
     updateCartUI();
@@ -3303,7 +3426,7 @@
         + '<div class="cart-item-info">'
         + '<div class="cart-item-title">' + escHtml(p['Title']) + '</div>'
         + (data.gelato_variant_id ? '<div class="cart-item-variant">' + escHtml([data.pod_colour, data.pod_size].filter(Boolean).join(' / ')) + '</div>' : '')
-        + (!data.gelato_variant_id && variant ? '<div class="cart-item-variant">Finish: ' + escHtml(variant) + '</div>' : '')
+        + (!data.gelato_variant_id && variant ? '<div class="cart-item-variant">' + (data.variant_id ? '' : 'Finish: ') + escHtml(variant) + '</div>' : '')
         + (data.mug_name ? '<div class="cart-item-variant">Name: ' + escHtml(data.mug_name) + '</div>' : '')
         + (data.personalisation_text ? '<div class="cart-item-variant">Personalised: ' + escHtml(data.personalisation_text) + '</div>' : '')
         + (data.mug_message ? '<div class="cart-item-variant">Message: ' + escHtml(data.mug_message) + '</div>' : '')
@@ -3384,6 +3507,7 @@
         mug_text_colour: data.mug_text_colour || null,
         gelato_variant_id: data.gelato_variant_id || null,
         gelato_product_uid: data.gelato_product_uid || null,
+        variant_id: data.variant_id || null,
         pod_colour: data.pod_colour || null,
         pod_size: data.pod_size || null
       };
