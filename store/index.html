@@ -338,6 +338,15 @@
       border-radius: 10px;
       background: #eaf3ff;
     }
+    /* Tote bags: a thin strip under the main picture showing the five colours */
+    .card img.tote-strip {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      margin: 6px 0 0;
+      border-radius: 0;
+      background: #f4f1ec;
+    }
     .card-body {
       padding: 18px;
       flex: 1;
@@ -2299,6 +2308,7 @@
       var isBookmark = id.toLowerCase().startsWith('bookmark-') || (p.product_type || '').toLowerCase() === 'bookmark';
       return '<div class="card"' + (isBookmark ? ' data-product-type="bookmark"' : '') + ' onclick="trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ')">'
         + '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(p['Title']) + '" loading="lazy">'
+        + toteStripHtml(p)
         + '<div class="card-body">'
         + '<div class="card-title"><a class="card-title-link" href="/products/' + encodeURIComponent(id) + '" onclick="event.preventDefault(); event.stopPropagation(); trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ');">' + escHtml(p['Title']) + '</a></div>'
         + '<div class="card-desc">' + escHtml(p['Short Description']) + '</div>'
@@ -2333,6 +2343,7 @@
     var isBookmark = id.toLowerCase().startsWith('bookmark-') || (p.product_type || '').toLowerCase() === 'bookmark';
     return '<div class="card"' + (isBookmark ? ' data-product-type="bookmark"' : '') + ' onclick="trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ')">'
       + '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(p['Title']) + '" loading="lazy">'
+      + toteStripHtml(p)
       + '<div class="card-body">'
       + '<div class="card-title"><a class="card-title-link" href="/products/' + encodeURIComponent(id) + '" onclick="event.preventDefault(); event.stopPropagation(); trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ');">' + escHtml(p['Title']) + '</a></div>'
       + '<div class="card-desc">' + escHtml(p['Short Description']) + '</div>'
@@ -2926,6 +2937,15 @@
   // Logic lives in /store/tote-picker.js (CBJTote). Only tote bags made by a print partner use this.
   function isToteListing(p) {
     return !!p && Number(p.made_to_order) === 1 && (p.product_type || '').toLowerCase() === 'tote bag';
+  }
+
+  // Strip under a tote card's main picture: the product in all five colours.
+  // File is <product-id>-colours.jpg in the product images folder. A product with no such file shows nothing.
+  function toteStripHtml(p) {
+    if (!isToteListing(p)) return '';
+    var url = buildImageUrl(String(p['Product ID'] || '').toLowerCase() + '-colours.jpg');
+    if (!url) return '';
+    return '<img class="tote-strip" src="' + escHtml(url) + '" alt="Also available in Natural Raw, White, Black, Anthracite and French Navy" loading="lazy" onerror="this.remove()">';
   }
 
   function totePickerHtml() {
