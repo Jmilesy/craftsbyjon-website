@@ -2940,10 +2940,10 @@
   }
 
   // Strip under a tote card's main picture: the product in all five colours.
-  // File is <product-id>-colours.jpg in the product images folder. A product with no such file shows nothing.
+  // One shared picture (tote-colours.jpg in the product images folder) showing the bag in all five colours.
   function toteStripHtml(p) {
     if (!isToteListing(p)) return '';
-    var url = buildImageUrl(String(p['Product ID'] || '').toLowerCase() + '-colours.jpg');
+    var url = buildImageUrl('tote-colours.jpg');
     if (!url) return '';
     return '<img class="tote-strip" src="' + escHtml(url) + '" alt="Also available in Natural Raw, White, Black, Anthracite and French Navy" loading="lazy" onerror="this.remove()">';
   }
