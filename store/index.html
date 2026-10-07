@@ -1623,6 +1623,11 @@
       </label>
       <textarea id="giftNoteText" placeholder="Add a gift message for the recipient (optional)" maxlength="300" rows="2" style="display:none;width:100%;margin-top:6px;padding:8px;border-radius:6px;border:1px solid #ccc;font-family:inherit;font-size:0.84rem;box-sizing:border-box;"></textarea>
     </div>
+    <div class="marketing-option" style="margin:6px 0 4px;">
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.84rem;cursor:pointer;color:#333;line-height:1.35;">
+        <input type="checkbox" id="marketingOptIn" style="margin-top:2px;"> <span>Email me when new products are added. New products only, nothing else, and you can unsubscribe any time. <a href="/privacy.html" target="_blank" rel="noopener" style="color:#4a90e2;">Privacy</a></span>
+      </label>
+    </div>
     <div class="cart-note" id="shippingNote">Shipping calculated at checkout · UK only</div>
     <button class="btn-checkout" id="checkoutBtn" onclick="checkout()" disabled>Checkout →</button>
     <div class="checkout-reassurance">🔒 You'll be securely redirected to Stripe to complete payment</div>
@@ -3542,7 +3547,8 @@
           source: getSource(),
           is_gift: cartIsAllPod() ? false : document.getElementById('giftCheckbox').checked,
           gift_message: cartIsAllPod() ? '' : document.getElementById('giftNoteText').value.trim(),
-          promo_code: document.getElementById('promoCodeInput').value.trim() || null
+          promo_code: document.getElementById('promoCodeInput').value.trim() || null,
+          marketing_opt_in: document.getElementById('marketingOptIn').checked === true
         })
       });
       var data = await res.json();
