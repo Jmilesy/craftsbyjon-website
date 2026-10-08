@@ -865,6 +865,17 @@
       color: #856404;
       transition: background 0.25s, color 0.25s, border-color 0.25s;
     }
+    .gifts-strip {
+      background: #e8f5e9;
+      border-bottom: 2px solid #28a745;
+      padding: 7px 24px;
+      text-align: center;
+      font-size: large;
+      font-weight: 700;
+    }
+    .gifts-strip a { color: #155724; text-decoration: none; }
+    .gifts-strip a:hover { text-decoration: underline; }
+    .col-btn.gifts-col { border-color: #28a745; }
     .bundle-banner.qualified {
       background: #d4edda;
       border-bottom-color: #28a745;
@@ -1126,6 +1137,7 @@
       .pride-banner { padding: 8px 16px; }
       .mobile-filter-bar { padding: 4px 0 4px; }
       .bundle-banner { padding: 6px 16px; font-size: 0.82rem; }
+      .gifts-strip { padding: 6px 16px; font-size: 0.85rem; }
       .filter-bar { margin-bottom: 12px; }
     }
 
@@ -1584,6 +1596,10 @@
   <span id="bundleBannerText">Any 3 bookmarks or keyrings for £10 &#9830; Mix and match your favourites</span>
 </div>
 
+<div id="giftsStrip" class="gifts-strip" style="display:none">
+  <a href="?collection=gifts" onclick="openGiftsView(); return false;">&#127876; Christmas gifts: see everything ready to give &rarr;</a>
+</div>
+
 <div class="collection-hero" id="collectionHero">
   <img id="collectionHeroImg" src="" alt="">
 </div>
@@ -1759,6 +1775,7 @@
   let allProductsRaw = [];  // unfiltered - includes drafts, used for staff preview links
   let mainProducts = [];
   let availableProducts = [];
+  var collectionsMonths = {};  // valid_months per collection name (e.g. '5,6,7,8'), used by the Christmas gifts view
   let products = [];
   let cart = {};
   let selectedVariant = null;
@@ -1796,6 +1813,7 @@
       (colResult || []).forEach(function(c) {
         collectionsOrder[c.name] = c.sort_order;
         collectionsStatus[c.name] = c.status;
+        collectionsMonths[c.name] = c.valid_months;
       });
 
       allProductsRaw = result || [];
@@ -1846,6 +1864,9 @@
       var hasPersonalised = allProducts.some(function(p) { return p.personalised === 1; });
       var colBtnsHtml = '<div class="collection-filter-bar" id="collectionFilterBar">';
       colBtnsHtml += '<button class="col-btn active" data-col="" onclick="setCollectionFilter(this)">All</button>';
+      if (giftsSeasonActive()) {
+        colBtnsHtml += '<button class="col-btn gifts-col" data-col="__gifts__" onclick="setCollectionFilter(this)">&#127876; Christmas gifts</button>';
+      }
       collections.forEach(function(cName) {
         var status = collectionsStatus[cName] || 'live';
         var extraClass = status === 'available' ? ' available-col' : '';
@@ -2032,10 +2053,56 @@
   }
 
   // Set active collection filter button and re-filter
+  // ── Christmas gifts view (task 173, 8 Oct 2026) ──
+  // A pseudo-collection (like __personalised__) showing everything currently in season. In season =
+  // the product's collection has no valid_months, or this month is one of them. The button, the top
+  // strip and the link only exist from 1 Oct to 25 Dec. ?collection=gifts deep-links to it, and
+  // /src/{source}/collection/gifts is the tracked version (shop-redirect already handles that shape).
+  function giftsSeasonActive() {
+    var d = new Date(), m = d.getMonth() + 1;
+    return m === 10 || m === 11 || (m === 12 && d.getDate() <= 25);
+  }
+  function isInSeason(p) {
+    var vm = collectionsMonths[p['Collection']];
+    if (!vm) return true;
+    var months = String(vm).split(',').map(function(x) { return parseInt(x, 10); });
+    return months.indexOf(new Date().getMonth() + 1) !== -1;
+  }
+  // Coaster sets first (best seller), then tote bags, then the rest in the normal featured order
+  function giftRank(p) {
+    var t = getProductType(p);
+    return t === 'Coaster Set' ? 0 : (t === 'Tote Bag' ? 1 : 2);
+  }
+  function giftsIntroHtml(activeCol) {
+    if (activeCol !== '__gifts__') return '';
+    return '<div style="grid-column:1/-1;background:#fff;border:2px solid #b7e1c1;border-radius:12px;padding:14px 18px;margin-bottom:4px">'
+      + '<div style="font-weight:700;font-size:1.15rem;color:#155724">&#127876; Christmas gifts</div>'
+      + '<div style="color:#555;font-size:0.95rem;margin-top:4px">Everything that is in season right now, with the coaster sets and tote bags first. Free UK shipping on orders of &pound;10 or more.</div>'
+      + '</div>';
+  }
+  function updateGiftsStrip() {
+    var el = document.getElementById('giftsStrip');
+    if (!el) return;
+    var activeBtn = document.querySelector('#collectionFilterBar .col-btn.active');
+    var activeCol = activeBtn ? (activeBtn.dataset.col || '') : '';
+    var hasBtn = !!document.querySelector('#collectionFilterBar .col-btn[data-col="__gifts__"]');
+    el.style.display = (giftsSeasonActive() && hasBtn && activeCol !== '__gifts__') ? 'block' : 'none';
+  }
+  function openGiftsView() {
+    var btn = document.querySelector('#collectionFilterBar .col-btn[data-col="__gifts__"]');
+    if (!btn) return;
+    _prevCollection = '';
+    setCollectionFilter(btn);
+    updateCollectionHero('');
+    refreshDrawerNav();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function setCollectionFilter(btn) {
     document.querySelectorAll('#collectionFilterBar .col-btn').forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active');
     var colName = btn.dataset.col || 'all';
+    if (colName === '__gifts__') updateCollectionHero('');
     trackCollectionView(colName);
     applyFilters();
     updateBundleBanner();
@@ -2131,6 +2198,7 @@
     const activeColBtn = document.querySelector('#collectionFilterBar .col-btn.active');
     const collection = activeColBtn ? activeColBtn.dataset.col : '';
     const isPersonalised = collection === '__personalised__';
+    const isGifts = collection === '__gifts__';
 
     // Determine product pool
     var pool;
@@ -2138,9 +2206,12 @@
       pool = allProducts.filter(function(p) {
         if (!p.personalised) return false;
         // If toggled within a collection, only show personalised from that collection
-        if (_prevCollection) return p['Collection'] === _prevCollection;
+        if (_prevCollection && _prevCollection !== '__gifts__') return p['Collection'] === _prevCollection;
         return true;
       });
+    } else if (isGifts) {
+      // Christmas gifts view: everything in season
+      pool = allProducts.filter(isInSeason);
     } else if (collection) {
       // Specific collection: pull from all non-archived (includes available-status collections full-size)
       pool = allProducts;
@@ -2156,7 +2227,7 @@
         if (searchable.indexOf(q) === -1) return false;
       }
       // Collection filter (skip for personalised and all-view)
-      if (!isPersonalised && collection && p['Collection'] !== collection) return false;
+      if (!isPersonalised && !isGifts && collection && p['Collection'] !== collection) return false;
       // Price filter (skip for personalised)
       if (!isPersonalised) {
         var price = parseFloat(p.price || 3.50);
@@ -2178,6 +2249,10 @@
     } else {
       // Featured: group by collection sort_order ASC, then per-product sort_order, then product_id
       filtered.sort(function(a, b) {
+        if (isGifts) {
+          var aRank = giftRank(a), bRank = giftRank(b);
+          if (aRank !== bRank) return aRank - bRank;
+        }
         var aColOrder = collectionsOrder[a['Collection']] !== undefined ? collectionsOrder[a['Collection']] : 99999;
         var bColOrder = collectionsOrder[b['Collection']] !== undefined ? collectionsOrder[b['Collection']] : 99999;
         if (aColOrder !== bColOrder) return aColOrder - bColOrder;
@@ -2195,6 +2270,8 @@
       var poolSize;
       if (isPersonalised) {
         poolSize = allProducts.filter(function(p) { return p.personalised === 1; }).length;
+      } else if (isGifts) {
+        poolSize = allProducts.filter(isInSeason).length;
       } else if (collection) {
         poolSize = allProducts.filter(function(p) { return p['Collection'] === collection; }).length;
       } else {
@@ -2224,6 +2301,7 @@
     }
 
     updatePriceSliderFill();
+    updateGiftsStrip();
   }
 
   function clearFilters() {
@@ -2291,7 +2369,7 @@
       return;
     }
 
-    grid.innerHTML = products.map(function(p) {
+    grid.innerHTML = giftsIntroHtml(activeCol) + products.map(function(p) {
       var id = p['Product ID'];
       var priceId = p.stripe_price_id;
       var imgUrl = buildImageUrl(p['Image URL']) || buildImageUrl(id.toLowerCase());
@@ -3786,6 +3864,9 @@
     var h = '<a class="drawer-item home-link" href="https://craftsbyjon.co.uk/">&#127968; Home</a>';
     h += '<div class="drawer-divider"></div>';
     h += '<button class="drawer-item' + (av === '' ? ' active' : '') + '" data-col="" onclick="drawerSelectThis(this)">All Products</button>';
+    if (giftsSeasonActive()) {
+      h += '<button class="drawer-item' + (av === '__gifts__' ? ' active' : '') + '" data-col="__gifts__" onclick="drawerSelectGifts()">&#127876; Christmas gifts</button>';
+    }
     _dc.forEach(function(c) {
       var esc = escHtml(c);
       var active = av === c ? ' active' : '';
@@ -3806,6 +3887,13 @@
     h += '<option value="newest"' + (curSort==="newest"?" selected":"") + '>Newest</option>';
     h += '</select></div>';
     nav.innerHTML = h;
+  }
+  function drawerSelectGifts() {
+    _prevCollection = '';
+    var btn = document.querySelector('#collectionFilterBar .col-btn[data-col="__gifts__"]');
+    if (btn) setCollectionFilter(btn);
+    updateCollectionHero('');
+    closeDrawer(); refreshDrawerNav();
   }
   function drawerSelectAllPers() {
     // Select personalised across all collections (no _prevCollection scope)
