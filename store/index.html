@@ -41,6 +41,10 @@
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       })(window, document, "clarity", "script", "xjwf8ndu7r");
+      // Tell Clarity the visitor has accepted. Since 31 Oct 2025 Clarity needs this signal for UK/EEA/CH
+      // visitors; without it each page view gets its own ID and sessions are not tracked across pages.
+      // This code only runs after Accept, and the banner covers analytics and the Pinterest tag, so both are granted.
+      window.clarity('consentv2', { ad_Storage: 'granted', analytics_Storage: 'granted' });
 
       // Pinterest Tag (base code) -- same consent gate as GA4/Clarity above.
       !function(e){if(!window.pintrk){window.pintrk=function(){window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var n=window.pintrk;n.queue=[],n.version="3.0";var t=document.createElement("script");t.async=!0,t.src=e;var r=document.getElementsByTagName("script")[0];r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");
@@ -1554,7 +1558,7 @@
 
 <div class="cookie-banner" id="cookieBanner" role="dialog" aria-label="Cookie consent">
   <div class="cookie-banner-text">
-    We use cookies for site analytics (Google Analytics &amp; Microsoft Clarity) to understand and improve the store. No advertising cookies. See our <a href="/privacy.html" target="_blank">Privacy Policy</a>.
+    I use cookies for site analytics (Google Analytics &amp; Microsoft Clarity) and for the Pinterest tag, which shares visit data with Pinterest to measure and support my Pinterest listings and any Pinterest advertising. See my <a href="/privacy.html" target="_blank">Privacy Policy</a>.
   </div>
   <div class="cookie-banner-actions">
     <button class="cookie-btn" id="cookieDecline" type="button">Decline</button>
@@ -1729,6 +1733,7 @@
   }
   function trackCollectionView(collectionName) {
     var colSlug = (collectionName || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    clarityTrack('collection_view', colSlug);
     if (typeof fetch === 'function') {
       fetch('/n8n-proxy/products-api/event', { method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ event: 'collection_view', source: getSource(), product_id: colSlug, path: window.location.pathname + window.location.search }) }).catch(function(){});
@@ -1744,7 +1749,21 @@
     catch (e) { return ''; }
   }
 
+  // Clarity custom events and tags (task 179). window.clarity only exists once cookies are accepted, so every call is
+  // guarded. Events show up in Clarity's Recordings filters; tags let recordings be filtered by source, collection, product.
+  var CLARITY_EVENTS = { add_to_basket: 'addToBasket', checkout_started: 'checkoutStarted', design_link_click: 'designLinkClick', related_click: 'relatedClick', gifts_strip_click: 'giftsStripClick' };
+  function clarityTrack(eventName, productId) {
+    try {
+      if (typeof window.clarity !== 'function') return;
+      if (!window._cbjClaritySource) { window._cbjClaritySource = true; window.clarity('set', 'source', getSource()); }
+      if (CLARITY_EVENTS[eventName]) window.clarity('event', CLARITY_EVENTS[eventName]);
+      if (eventName === 'product_view' && productId) window.clarity('set', 'product', productId);
+      if (eventName === 'collection_view' && productId) window.clarity('set', 'collection', productId);
+    } catch (e) {}
+  }
+
   function trackEvent(eventName, productId, detail, checkoutSessionId) {
+    clarityTrack(eventName, productId);
     try {
       var body = { event: eventName, source: getSource(), product_id: productId || '', path: detail || '' };
       if (checkoutSessionId) body.checkout_session_id = checkoutSessionId;
