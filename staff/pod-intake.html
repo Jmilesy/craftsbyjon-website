@@ -806,7 +806,8 @@
             'personalisation_available': 'No',
             'original_design': 'Yes',
             'Ready to Go': 'No',
-            'Collection': collection
+            'Collection': collection,
+            'design_key': slugify(d.design)
           })
         });
         if (!res.ok) {

@@ -2688,7 +2688,26 @@
       });
       relHtml += '</div>';
     }
-    document.getElementById('modalRelated').innerHTML = relHtml;
+    // Same design in other printed product types (task 174): 'Love this design? Also available as'
+    var sameDesign = getDesignLinks(p);
+    var designHtml = '';
+    if (sameDesign.length > 0) {
+      designHtml += '<div class="related-heading">Love this design? Also available as</div>';
+      designHtml += '<div class="related-grid">';
+      sameDesign.forEach(function(dp) {
+        var did = dp['Product ID'];
+        var dpAttr = escAttr(JSON.stringify(dp));
+        var dImgUrl = buildImageUrl(dp['Image URL']) || buildImageUrl(did.toLowerCase());
+        designHtml += '<div class="related-card" onclick="openModal(' + dpAttr + ')">'
+          + '<img src="' + escHtml(dImgUrl) + '" alt="' + escHtml(dp['Title']) + '" loading="lazy">'
+          + '<div class="related-card-body">'
+          + '<div class="related-card-title">' + escHtml(DESIGN_LINK_LABELS[dp['product_type']] || dp['product_type']) + '</div>'
+          + '<button class="related-card-btn" onclick="event.stopPropagation(); openModal(' + dpAttr + ')">View &rarr;</button>'
+          + '</div></div>';
+      });
+      designHtml += '</div><div style="height:22px"></div>';
+    }
+    document.getElementById('modalRelated').innerHTML = designHtml + relHtml;
 
     document.getElementById('modalOverlay').classList.add('open');
     document.getElementById('modalWrap').classList.add('open');
@@ -2700,6 +2719,25 @@
       var j = Math.floor(Math.random() * (i + 1));
       var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
     }
+  }
+
+  // Same design in other printed product types, matched on design_key (task 174). Printed types only
+  // for now: add 'Bookmark' / 'Keyring' here (and in products-api/design-links.js) to include handmade.
+  var DESIGN_LINK_TYPES = ['Mug', 'Print', 'T-Shirt', 'Tote Bag'];
+  var DESIGN_LINK_LABELS = { 'Mug': 'Mug', 'Print': 'Art print', 'T-Shirt': 'T-shirt', 'Tote Bag': 'Tote bag' };
+  function getDesignLinks(p) {
+    var key = String(p['design_key'] || '').trim().toLowerCase();
+    if (!key) return [];
+    var out = [];
+    DESIGN_LINK_TYPES.forEach(function(type) {
+      if (p['product_type'] === type) return;
+      var matches = allProducts.filter(function(x) {
+        return x['Product ID'] !== p['Product ID'] && x['product_type'] === type
+          && String(x['design_key'] || '').trim().toLowerCase() === key;
+      }).sort(function(a, b) { return String(a['Product ID']).localeCompare(String(b['Product ID'])); });
+      if (matches.length) out.push(matches[0]);
+    });
+    return out;
   }
 
   function getRelatedProducts(currentId, currentCollection) {

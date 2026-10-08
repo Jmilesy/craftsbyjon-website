@@ -2972,6 +2972,7 @@
           ${fieldDropdown('Material', p['material'] || p['Material'], 'material', ['Acrylic', 'Sticker Sheet', 'Cotton', 'Cotton Canvas', 'Ceramic', 'Neoprene'])}
           ${fieldDropdown('Application Method', p['application_method'] || p['Application Method'], 'application_method', ['UV DTF', 'Cut Vinyl', 'UV DTF + Cut Vinyl', 'Print on Demand', 'Print on Demand (Gelato)', 'Print on Demand (Papello)'])}
           ${fieldDropdown('Original Design', p['original_design'] || p['Original Design'], 'original_design', ['Yes', 'No'])}
+          ${fieldRow('Design key (links the same design across mug, print, t-shirt, tote)', p['design_key'], 'design_key', true)}
           <div class="field-row" id="row-personalised">
             <div class="field-label">Personalised available</div>
             <div class="field-value" id="val-personalised">${p.personalised === 1 ? 'Yes (+£1.50)' : 'No'}</div>
