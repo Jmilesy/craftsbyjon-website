@@ -1738,6 +1738,12 @@
     }
   }
 
+  // Basket summary sent with checkout_started (task 177): "cart:productIdxQty+productIdxQty"
+  function cartPathFor(items) {
+    try { return 'cart:' + items.map(function(i) { return (i.product_id || '?') + 'x' + (i.quantity || 1); }).join('+'); }
+    catch (e) { return ''; }
+  }
+
   function trackEvent(eventName, productId, detail, checkoutSessionId) {
     try {
       var body = { event: eventName, source: getSource(), product_id: productId || '', path: detail || '' };
@@ -2091,6 +2097,7 @@
   function openGiftsView() {
     var btn = document.querySelector('#collectionFilterBar .col-btn[data-col="__gifts__"]');
     if (!btn) return;
+    trackEvent('gifts_strip_click', 'gifts');
     _prevCollection = '';
     setCollectionFilter(btn);
     updateCollectionHero('');
@@ -2756,12 +2763,12 @@
           rVariants = (rp.variants || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean);
         }
         var rBtnText = rVariants.length > 1 ? 'Choose Options &rarr;' : 'Add to Cart';
-        relHtml += '<div class="related-card" onclick="openModal(' + rpAttr + ')">'
+        relHtml += '<div class="related-card" onclick="openModalFrom(\'related_click\', ' + escAttr(JSON.stringify(p['Product ID'])) + ', ' + rpAttr + ')">'
           + '<img src="' + escHtml(rImgUrl) + '" alt="' + escHtml(rp['Title']) + '" loading="lazy">'
           + '<div class="related-card-body">'
           + '<div class="related-card-title">' + escHtml(rp['Title']) + '</div>'
           + '<div class="related-card-price">' + rPrice + '</div>'
-          + '<button class="related-card-btn" onclick="event.stopPropagation(); openModal(' + rpAttr + ')">' + rBtnText + '</button>'
+          + '<button class="related-card-btn" onclick="event.stopPropagation(); openModalFrom(\'related_click\', ' + escAttr(JSON.stringify(p['Product ID'])) + ', ' + rpAttr + ')">' + rBtnText + '</button>'
           + '</div></div>';
       });
       relHtml += '</div>';
@@ -2776,11 +2783,11 @@
         var did = dp['Product ID'];
         var dpAttr = escAttr(JSON.stringify(dp));
         var dImgUrl = buildImageUrl(dp['Image URL']) || buildImageUrl(did.toLowerCase());
-        designHtml += '<div class="related-card" onclick="openModal(' + dpAttr + ')">'
+        designHtml += '<div class="related-card" onclick="openModalFrom(\'design_link_click\', ' + escAttr(JSON.stringify(p['Product ID'])) + ', ' + dpAttr + ')">'
           + '<img src="' + escHtml(dImgUrl) + '" alt="' + escHtml(dp['Title']) + '" loading="lazy">'
           + '<div class="related-card-body">'
           + '<div class="related-card-title">' + escHtml(DESIGN_LINK_LABELS[dp['product_type']] || dp['product_type']) + '</div>'
-          + '<button class="related-card-btn" onclick="event.stopPropagation(); openModal(' + dpAttr + ')">View &rarr;</button>'
+          + '<button class="related-card-btn" onclick="event.stopPropagation(); openModalFrom(\'design_link_click\', ' + escAttr(JSON.stringify(p['Product ID'])) + ', ' + dpAttr + ')">View &rarr;</button>'
           + '</div></div>';
       });
       designHtml += '</div><div style="height:22px"></div>';
@@ -2797,6 +2804,12 @@
       var j = Math.floor(Math.random() * (i + 1));
       var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
     }
+  }
+
+  // Opens a product from the related or same-design row, recording which product the click came from (task 177)
+  function openModalFrom(kind, fromId, product) {
+    trackEvent(kind, product['Product ID'], 'from:' + fromId);
+    openModal(product);
   }
 
   // Same design in other printed product types, matched on design_key (task 174). Printed types only
@@ -3672,12 +3685,12 @@
       // Fired here (not at the top of this function) so the beacon can carry the exact
       // Stripe checkout session id for an exact diagnostics join — keepalive:true still
       // guarantees delivery through the redirect immediately below.
-      trackEvent('checkout_started', '', '', data.id);
+      trackEvent('checkout_started', '', cartPathFor(items), data.id);
       window.location.href = data.url;
     } catch (e) {
       // Session creation failed before an id ever existed — logged exactly as it always
       // was (no session id), preserving today's behaviour for a failed checkout attempt.
-      trackEvent('checkout_started', '');
+      trackEvent('checkout_started', '', cartPathFor(items));
       alert('Checkout error: ' + e.message);
       btn.disabled = false;
       btn.textContent = 'Checkout →';
