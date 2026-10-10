@@ -11,6 +11,8 @@
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-299D45HZTC');
+    // The order is paid, so the basket saved in this browser (store/photo-personaliser.js) is cleared.
+    try { localStorage.removeItem('cbj_cart_v1'); } catch (e) {}
   </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
