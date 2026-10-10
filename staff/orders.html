@@ -335,7 +335,20 @@
       background: var(--teal); color: #fff; font-family: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer;
     }
     .modal-btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
-  </style>
+      /* Personalised photo orders (10 Oct 2026) */
+    .ph-block { background:#F3E5F5; border:1.5px solid #8E24AA; border-radius:4px; padding:8px 12px; margin-top:8px; }
+    .ph-strip { display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin:6px 0; font-size:0.75rem; }
+    .ph-step { padding:2px 8px; border-radius:10px; background:#fff; color:#999; border:1px solid #ddd; }
+    .ph-step.done { color:#2e7d32; border-color:#a5d6a7; }
+    .ph-step.now { color:#fff; background:#8E24AA; border-color:#8E24AA; font-weight:700; }
+    .ph-arrow { color:#bbb; }
+    .ph-line { display:flex; gap:12px; align-items:flex-start; background:#fff; border-radius:4px; padding:8px; margin-top:6px; flex-wrap:wrap; }
+    .ph-thumb { width:120px; height:120px; object-fit:cover; border-radius:4px; border:1px solid #ddd; display:block; }
+    .ph-gone { width:120px; min-height:60px; font-size:0.75rem; color:#c62828; background:#fff3f3; border-radius:4px; padding:6px; }
+    .ph-info { flex:1; min-width:200px; font-size:0.85rem; color:#333; display:flex; flex-direction:column; gap:3px; }
+    .ph-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+    .ph-actions .filter-btn { font-size:0.78rem; }
+</style>
 </head>
 <body>
 
@@ -531,7 +544,7 @@
             </div>` : ''}
             ${o.personalisation_notes ? `<div style="background:#FFF3CD;border:1.5px solid #FFC107;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#856404;">&#9999; PERSONALISATION NEEDED</strong><br>
-              <span style="font-size:0.88rem;color:#333;">${esc(o.personalisation_notes)}</span>
+              <span style="font-size:0.88rem;color:#333;white-space:pre-wrap;">${esc(o.personalisation_notes)}</span>
             </div>` : ''}
             ${o.mug_name ? `<div style="background:#FFF3CD;border:1.5px solid #FFC107;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#856404;">☕ MUG PERSONALISATION</strong><br>
@@ -539,6 +552,7 @@
               ${o.mug_message ? `<span style="font-size:0.88rem;color:#333;display:block"><strong>Message:</strong> ${esc(o.mug_message)}</span>` : ''}
               ${o.mug_text_colour ? `<span style="font-size:0.88rem;color:#333;display:flex;align-items:center;gap:6px;margin-top:2px"><strong>Colour:</strong><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${safeColour(o.mug_text_colour)};border:1px solid #ccc;flex-shrink:0"></span>${esc(o.mug_text_colour)}</span>` : ''}
             </div>` : ''}
+            ${o.personalisations ? renderPhotoBlock(o) : ''}
             ${o.custom_order_notes ? `<div style="background:#EDE7F6;border:1.5px solid #7E57C2;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#4527A0;">&#127912; CUSTOM ORDER DETAILS</strong><br>
               <span style="font-size:0.88rem;color:#333;white-space:pre-wrap;">${esc(o.custom_order_notes)}</span>
@@ -551,7 +565,7 @@
                 <button class="filter-btn" onclick="cancelFulfilment(${o.id}, '${o.order_ref}')">&#10005; Cancel draft</button>
               </div>
             </div>` : ''}
-            ${o.pod_fulfilment_status === 'needs_manual_file' ? `<div style="background:#FFEBEE;border:1.5px solid #E57373;border-radius:4px;padding:8px 12px;margin-top:8px;">
+            ${o.pod_fulfilment_status === 'needs_manual_file' && !o.personalisations ? `<div style="background:#FFEBEE;border:1.5px solid #E57373;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#C62828;">&#9888; POD FULFILMENT &mdash; NEEDS MANUAL ORDER</strong><br>
               <span style="font-size:0.85rem;color:#333;">No print-ready file on file for this item, so no Gelato draft was created automatically. Place this order manually in the Gelato dashboard.</span><br>
               <span style="font-size:0.78rem;color:#999;">${esc(o.gelato_fulfilment_note || '')}</span>
@@ -913,6 +927,135 @@
         (o.items || []).map(i => i.name).join(' ')].filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     }));
+  }
+
+  // ── Personalised photo orders (10 Oct 2026) ────────────────────────────────────────────
+  // Photos and print files are served by products-api's staff routes (this page's login), never
+  // publicly. Stages: Paid > Awaiting artwork > Artwork ready > Submitted to Gelato > Dispatched.
+  // Gelato is ordered BY HAND for these orders; nothing here submits anything to Gelato.
+  const PHOTO_STAGES = [
+    ['paid', 'Paid'], ['awaiting_artwork', 'Awaiting artwork'], ['artwork_ready', 'Artwork ready'],
+    ['submitted_to_gelato', 'Submitted to Gelato'], ['dispatched', 'Dispatched']
+  ];
+
+  function photoUrl(o, l, v, download) {
+    const q = new URLSearchParams({ v, ref: o.order_ref, line: String(l.line_no) });
+    if (l.crop && (v === 'crop' || v === 'crop-thumb')) for (const k of ['x', 'y', 'w', 'h']) q.set(k, String(l.crop[k]));
+    if (download) q.set('download', '1');
+    return PRODUCTS_API + '/personalisation/photos/' + encodeURIComponent(l.upload_id) + '?' + q.toString();
+  }
+
+  function renderPhotoBlock(o) {
+    const stage = o.personalisation_stage || 'awaiting_artwork';
+    const at = PHOTO_STAGES.findIndex(s => s[0] === stage);
+    const strip = PHOTO_STAGES.map((s, i) =>
+      `<span class="ph-step ${i < at ? 'done' : i === at ? 'now' : ''}">${i < at ? '&#10003; ' : ''}${s[1]}</span>`).join('<span class="ph-arrow">&rsaquo;</span>');
+    const lines = (o.personalisations || []).map(l => {
+      const name = l.fields && l.fields.name ? esc(l.fields.name) : '<em style="color:#999">no name</em>';
+      const small = l.photo_width && l.crop ? Math.round(Math.min(l.crop.w * l.photo_width, l.crop.h * l.photo_height)) : null;
+      const lowRes = small != null && small < 1000;
+      const photo = l.upload_id
+        ? `<a href="${esc(photoUrl(o, l, l.crop ? 'crop' : 'full', false))}" target="_blank" rel="noopener"><img class="ph-thumb" src="${esc(photoUrl(o, l, l.crop ? 'crop-thumb' : 'thumb', false))}" alt="Customer photo, line ${l.line_no}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph-gone',textContent:'Photo not available (deleted or missing)'}))"></a>`
+        : `<div class="ph-gone">No photo on this line${l.claim_error ? ': ' + esc(l.claim_error) : ''}</div>`;
+      const art = l.artwork_upload_id
+        ? `<a class="filter-btn" style="text-decoration:none" href="${esc(PRODUCTS_API + '/personalisation/artwork/' + encodeURIComponent(l.artwork_upload_id) + '?ref=' + encodeURIComponent(o.order_ref) + '&line=' + l.line_no)}">&#11015; Print file (${esc(l.artwork_ext || 'file')})</a>`
+        : '';
+      return `<div class="ph-line">
+        ${photo}
+        <div class="ph-info">
+          <div><strong>Item ${l.line_no}:</strong> ${esc(l.title || l.product_id)}${l.option_label ? ' &middot; <strong>' + esc(l.option_label) + '</strong>' : ''} &times;${esc(l.quantity)}</div>
+          <div>Name on mug: <strong>${name}</strong></div>
+          ${l.photo_width ? `<div style="font-size:0.78rem;color:#777">Photo ${esc(l.photo_width)} &times; ${esc(l.photo_height)} px${small != null ? ', crop ' + small + ' px square' : ''}${lowRes ? ' <span style="color:#b45309;font-weight:700">(small, may print soft)</span>' : ''}</div>` : ''}
+          <div class="ph-status">Artwork: <strong>${l.artwork_status === 'artwork_ready' ? '&#9989; ready' : '&#9203; to do'}</strong></div>
+          <div class="ph-actions">
+            ${l.upload_id ? `<a class="filter-btn" style="text-decoration:none" href="${esc(photoUrl(o, l, 'crop', true))}">&#11015; Cropped photo</a>
+            <a class="filter-btn" style="text-decoration:none" href="${esc(photoUrl(o, l, 'full', true))}">&#11015; Full photo</a>` : ''}
+            ${art}
+            <label class="filter-btn" style="cursor:pointer">&#11014; Upload print file<input type="file" accept=".png,.jpg,.jpeg,.tif,.tiff,.pdf" style="display:none" onchange="uploadPhotoArtwork(${o.id}, '${esc(l.line_id)}', '${esc(o.order_ref)}', this)"></label>
+            ${l.artwork_status === 'artwork_ready'
+              ? `<button class="filter-btn" onclick="setArtworkStatus(${o.id}, '${esc(l.line_id)}', 'awaiting_artwork', '${esc(o.order_ref)}')">Mark artwork to do</button>`
+              : `<button class="filter-btn" onclick="setArtworkStatus(${o.id}, '${esc(l.line_id)}', 'artwork_ready', '${esc(o.order_ref)}')">&#9989; Mark artwork ready</button>`}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    const needsClaim = (o.personalisations || []).some(l => !l.claimed);
+    const gelatoBox = !o.gelato_order_id || o.pod_fulfilment_status !== 'submitted'
+      ? `<div style="margin-top:10px;font-size:0.82rem;color:#333;">${stage === 'artwork_ready' ? '<strong>Artwork is ready.</strong> ' : ''}Place the whole order by hand in Gelato (every Gelato item on this order), then paste the Gelato order ID here so the customer gets tracking emails:<br>
+          <input type="text" id="gl-${o.id}" placeholder="Gelato order ID" style="padding:4px 6px;width:290px;max-width:100%;"> <button class="filter-btn" onclick="linkGelato(${o.id}, '${esc(o.order_ref)}')">Link</button></div>`
+      : '';
+    return `<div class="ph-block" data-clarity-mask="true">
+      <strong style="font-size:0.9rem;color:#6a1b9a;">&#128247; PERSONALISED PHOTO ORDER</strong>
+      <div class="ph-strip">${strip}</div>
+      <div style="font-size:0.78rem;color:#555;margin-bottom:6px;">Payment: <strong>paid</strong> (Stripe). Fulfilment is separate and manual.</div>
+      ${lines}
+      ${gelatoBox}
+      <div class="ph-actions" style="margin-top:8px">
+        ${needsClaim ? `<button class="filter-btn" onclick="retryPhotoClaim(${o.id}, '${esc(o.order_ref)}')">&#128260; Fetch photos again</button>` : ''}
+        <button class="filter-btn" style="color:#c62828" onclick="erasePhotos(${o.id}, '${esc(o.order_ref)}')">Delete this order's photos now</button>
+      </div>
+      <div style="font-size:0.72rem;color:#999;margin-top:6px;">Photos and print files are deleted automatically 30 days after dispatch.</div>
+    </div>`;
+  }
+
+  async function uploadPhotoArtwork(id, lineId, ref, input) {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    try {
+      showToast('Uploading print file…');
+      const fd = new FormData();
+      fd.append('order_id', String(id));
+      fd.append('line_id', lineId);
+      fd.append('file', file, file.name);
+      const up = await fetch(PRODUCTS_API + '/personalisation/artwork', { method: 'POST', body: fd });
+      const upOut = await up.json().catch(() => ({}));
+      if (!up.ok) throw new Error(upOut.error || up.status);
+      const res = await fetch(API + '/orders/' + id + '/personalisations/' + lineId, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artwork_id: upOut.result.artwork_id, artwork_ext: upOut.result.ext })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || res.status);
+      const r = upOut.result;
+      showToast('✓ Print file saved for ' + ref + (r.width ? ' (' + r.width + ' × ' + r.height + ' px)' : ''));
+      if (r.width && r.height && (r.width !== 2410 || r.height !== 1182)) {
+        alert('Saved, but note: this file is ' + r.width + ' × ' + r.height + ' px. The 11oz mug template is 2410 × 1182 px (204 × 100 mm at 300 DPI).');
+      }
+      await loadOrders();
+    } catch (e) { alert('Could not save the print file: ' + e.message); }
+  }
+
+  async function setArtworkStatus(id, lineId, status, ref) {
+    try {
+      const res = await fetch(API + '/orders/' + id + '/personalisations/' + lineId, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artwork_status: status })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || res.status);
+      showToast('✓ ' + ref + ' updated');
+      await loadOrders();
+    } catch (e) { alert('Could not update: ' + e.message); }
+  }
+
+  async function retryPhotoClaim(id, ref) {
+    try {
+      const res = await fetch(API + '/orders/' + id + '/personalisations/claim', { method: 'POST' });
+      const out = await res.json().catch(() => ({}));
+      showToast(res.ok ? '✓ ' + ref + ' photos fetched' : 'Still missing: ' + ((out.claim && out.claim.error) || res.status));
+      await loadOrders();
+    } catch (e) { alert('Could not fetch photos: ' + e.message); }
+  }
+
+  async function erasePhotos(id, ref) {
+    if (!confirm('Delete every customer photo and print file for ' + ref + ' now? This cannot be undone.')) return;
+    try {
+      const res = await fetch(PRODUCTS_API + '/personalisation/orders/' + id + '/erase', { method: 'POST' });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || res.status);
+      showToast('✓ Deleted ' + out.result.deleted + ' file(s) for ' + ref);
+      await loadOrders();
+    } catch (e) { alert('Could not delete: ' + e.message); }
   }
 
   // A mug text colour from the customer goes into a style attribute, so only a plain colour
