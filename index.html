@@ -54,13 +54,43 @@
     }
   }
   </script>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-299D45HZTC"></script>
+  <!-- Google Analytics: loaded only after cookie consent, same choice and same key as the shop
+       (store/index.html). One Accept covers the whole site, so the banner text matches the shop's. -->
   <script>
+  (function() {
+    var CONSENT_KEY = 'cbj_cookie_consent';
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-299D45HZTC');
+    window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
+    function loadAnalytics() {
+      var ga = document.createElement('script');
+      ga.async = true;
+      ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-299D45HZTC';
+      document.head.appendChild(ga);
+      gtag('js', new Date());
+      gtag('config', 'G-299D45HZTC');
+    }
+    function getConsent() { try { return localStorage.getItem(CONSENT_KEY); } catch(e) { return null; } }
+    function setConsent(v) { try { localStorage.setItem(CONSENT_KEY, v); } catch(e) {} }
+    var existing = getConsent();
+    if (existing === 'accepted') {
+      loadAnalytics();
+    } else if (existing !== 'declined') {
+      document.addEventListener('DOMContentLoaded', function() {
+        var banner = document.getElementById('cookieBanner');
+        if (!banner) return;
+        banner.style.display = 'flex';
+        document.getElementById('cookieAccept').addEventListener('click', function() {
+          setConsent('accepted');
+          banner.style.display = 'none';
+          loadAnalytics();
+        });
+        document.getElementById('cookieDecline').addEventListener('click', function() {
+          setConsent('declined');
+          banner.style.display = 'none';
+        });
+      });
+    }
+  })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -603,9 +633,51 @@
       .products-grid { grid-template-columns: 1fr 1fr; }
     }
 
+    .cookie-banner {
+      display: none;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 2000;
+      background: #1a1a2e;
+      color: #fff;
+      padding: 16px 20px;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.25);
+    }
+    .cookie-banner-text { flex: 1 1 320px; max-width: 640px; line-height: 1.5; }
+    .cookie-banner-text a { color: #F5A623; }
+    .cookie-banner-actions { display: flex; gap: 10px; flex-shrink: 0; }
+    .cookie-btn {
+      border: 2px solid #fff;
+      border-radius: 50px;
+      padding: 9px 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: transparent;
+      color: #fff;
+      font-family: inherit;
+    }
+    .cookie-btn-accept { background: #F5A623; color: #1a1a2e; border-color: #1a1a2e; }
+    @media (max-width: 480px) {
+      .cookie-banner { flex-direction: column; text-align: center; padding: 14px 16px; }
+    }
   </style>
 </head>
 <body>
+<div class="cookie-banner" id="cookieBanner" role="dialog" aria-label="Cookie consent">
+  <div class="cookie-banner-text">
+    I use cookies for site analytics (Google Analytics &amp; Microsoft Clarity) and for the Pinterest tag, which shares visit data with Pinterest to measure and support my Pinterest listings and any Pinterest advertising. See my <a href="/privacy.html" target="_blank">Privacy Policy</a>.
+  </div>
+  <div class="cookie-banner-actions">
+    <button class="cookie-btn" id="cookieDecline" type="button">Decline</button>
+    <button class="cookie-btn cookie-btn-accept" id="cookieAccept" type="button">Accept</button>
+  </div>
+</div>
 
   <!-- =============================================
        NAVIGATION
