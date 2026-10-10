@@ -508,7 +508,7 @@
     }
     list.innerHTML = orders.map(o => {
       const itemsSummary = o.items.length
-        ? o.items.map(i => i.name + ' ×' + i.quantity).join(', ')
+        ? o.items.map(i => esc(i.name) + ' ×' + esc(i.quantity)).join(', ')
         : 'No items';
       const isPending = o.status === 'pending';
       return `
@@ -520,28 +520,28 @@
               <span class="order-date">${formatDate(o.created_at)}</span>
             </div>
             <div class="order-meta">
-              <strong>${o.shipping_name || o.customer_name || '—'}</strong>
-              &nbsp;&middot;&nbsp;${o.customer_email || '—'}
+              <strong>${esc(o.shipping_name || o.customer_name || '—')}</strong>
+              &nbsp;&middot;&nbsp;${esc(o.customer_email || '—')}
             </div>
-            <div style="font-size:0.82rem;color:#999;margin:2px 0 4px;">${[o.shipping_line1, o.shipping_line2, o.shipping_city, o.shipping_postal_code].filter(Boolean).join(', ') || 'No shipping address'}</div>
+            <div style="font-size:0.82rem;color:#999;margin:2px 0 4px;">${esc([o.shipping_line1, o.shipping_line2, o.shipping_city, o.shipping_postal_code].filter(Boolean).join(', ') || 'No shipping address')}</div>
             <div class="order-items">${itemsSummary}</div>
             ${o.is_gift ? `<div style="background:#FCE4EC;border:1.5px solid #E91E63;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#AD1457;">&#127873; GIFT ORDER</strong><br>
-              <span style="font-size:0.88rem;color:#333;">${o.gift_message ? o.gift_message : '(no message left)'}</span>
+              <span style="font-size:0.88rem;color:#333;">${o.gift_message ? esc(o.gift_message) : '(no message left)'}</span>
             </div>` : ''}
             ${o.personalisation_notes ? `<div style="background:#FFF3CD;border:1.5px solid #FFC107;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#856404;">&#9999; PERSONALISATION NEEDED</strong><br>
-              <span style="font-size:0.88rem;color:#333;">${o.personalisation_notes}</span>
+              <span style="font-size:0.88rem;color:#333;">${esc(o.personalisation_notes)}</span>
             </div>` : ''}
             ${o.mug_name ? `<div style="background:#FFF3CD;border:1.5px solid #FFC107;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#856404;">☕ MUG PERSONALISATION</strong><br>
-              <span style="font-size:0.88rem;color:#333;display:block;margin-top:4px"><strong>Name:</strong> ${o.mug_name}</span>
-              ${o.mug_message ? `<span style="font-size:0.88rem;color:#333;display:block"><strong>Message:</strong> ${o.mug_message}</span>` : ''}
-              ${o.mug_text_colour ? `<span style="font-size:0.88rem;color:#333;display:flex;align-items:center;gap:6px;margin-top:2px"><strong>Colour:</strong><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${o.mug_text_colour};border:1px solid #ccc;flex-shrink:0"></span>${o.mug_text_colour}</span>` : ''}
+              <span style="font-size:0.88rem;color:#333;display:block;margin-top:4px"><strong>Name:</strong> ${esc(o.mug_name)}</span>
+              ${o.mug_message ? `<span style="font-size:0.88rem;color:#333;display:block"><strong>Message:</strong> ${esc(o.mug_message)}</span>` : ''}
+              ${o.mug_text_colour ? `<span style="font-size:0.88rem;color:#333;display:flex;align-items:center;gap:6px;margin-top:2px"><strong>Colour:</strong><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${safeColour(o.mug_text_colour)};border:1px solid #ccc;flex-shrink:0"></span>${esc(o.mug_text_colour)}</span>` : ''}
             </div>` : ''}
             ${o.custom_order_notes ? `<div style="background:#EDE7F6;border:1.5px solid #7E57C2;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#4527A0;">&#127912; CUSTOM ORDER DETAILS</strong><br>
-              <span style="font-size:0.88rem;color:#333;white-space:pre-wrap;">${o.custom_order_notes}</span>
+              <span style="font-size:0.88rem;color:#333;white-space:pre-wrap;">${esc(o.custom_order_notes)}</span>
             </div>` : ''}
             ${o.pod_fulfilment_status === 'pending_approval' ? `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#1A5FA8;">&#128424; POD FULFILMENT &mdash; READY TO APPROVE</strong><br>
@@ -554,13 +554,13 @@
             ${o.pod_fulfilment_status === 'needs_manual_file' ? `<div style="background:#FFEBEE;border:1.5px solid #E57373;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#C62828;">&#9888; POD FULFILMENT &mdash; NEEDS MANUAL ORDER</strong><br>
               <span style="font-size:0.85rem;color:#333;">No print-ready file on file for this item, so no Gelato draft was created automatically. Place this order manually in the Gelato dashboard.</span><br>
-              <span style="font-size:0.78rem;color:#999;">${o.gelato_fulfilment_note || ''}</span>
+              <span style="font-size:0.78rem;color:#999;">${esc(o.gelato_fulfilment_note || '')}</span>
               <div style="margin-top:8px;font-size:0.82rem;color:#333;">Placed it by hand in Gelato? Paste the Gelato order ID so customer emails work:<br>
                 <input type="text" id="gl-${o.id}" placeholder="Gelato order ID" style="padding:4px 6px;width:290px;max-width:100%;"> <button class="filter-btn" onclick="linkGelato(${o.id}, '${o.order_ref}')">Link</button></div>
             </div>` : ''}
             ${o.pod_fulfilment_status === 'error' ? `<div style="background:#FFEBEE;border:1.5px solid #E57373;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#C62828;">&#9888; POD FULFILMENT &mdash; DRAFT CREATION FAILED</strong><br>
-              <span style="font-size:0.85rem;color:#333;">${o.gelato_fulfilment_note || 'Unknown error'}</span>
+              <span style="font-size:0.85rem;color:#333;">${esc(o.gelato_fulfilment_note || 'Unknown error')}</span>
               <div style="margin-top:8px;font-size:0.82rem;color:#333;">Placed it by hand in Gelato? Paste the Gelato order ID so customer emails work:<br>
                 <input type="text" id="gl-${o.id}" placeholder="Gelato order ID" style="padding:4px 6px;width:290px;max-width:100%;"> <button class="filter-btn" onclick="linkGelato(${o.id}, '${o.order_ref}')">Link</button></div>
             </div>` : ''}
@@ -573,7 +573,7 @@
             ${o.has_inkthreadable_lines ? renderInkBlock(o) : ''}
             ${o.shipping_notes ? `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#1A5FA8;">&#128230; SHIPPING NOTES</strong><br>
-              <span style="font-size:0.88rem;color:#333;white-space:pre-wrap;">${o.shipping_notes}</span>
+              <span style="font-size:0.88rem;color:#333;white-space:pre-wrap;">${esc(o.shipping_notes)}</span>
             </div>` : ''}
             <div class="order-total">${o.amount_total_formatted}</div>
             <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -913,6 +913,13 @@
         (o.items || []).map(i => i.name).join(' ')].filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     }));
+  }
+
+  // A mug text colour from the customer goes into a style attribute, so only a plain colour
+  // name or hex value is allowed through (security fix 10 Oct 2026).
+  function safeColour(c) {
+    const v = String(c || '').trim();
+    return /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{3,20})$/.test(v) ? v : 'transparent';
   }
 
   function esc(s) {
