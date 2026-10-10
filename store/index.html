@@ -1107,6 +1107,7 @@
       .modal-title        { order: 2; }
       .modal-price-row    { order: 3; }
       .mug-personalisation { order: 4; }
+      .photo-pers { order: 4; }
       .modal-variants-label { order: 4; }
       .modal-variants     { order: 4; }
       .modal-actions      { order: 5; margin-top: 10px; padding-top: 0; }
@@ -1280,6 +1281,28 @@
 }
     .lightbox-prev { left: 20px; }
     .lightbox-next { right: 20px; }
+
+    /* ── Photo personalisation (10 Oct 2026) ─────────── */
+    .photo-pers { margin-top: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .photo-pick { display: block; border: 2px dashed #9cc3ec; border-radius: 10px; background: #f4f8ff; padding: 16px; text-align: center; cursor: pointer; color: #1a1a2e; font-size: 0.95rem; }
+    .photo-pick span { font-size: 0.78rem; color: #777; }
+    .photo-pick:hover, .photo-pick:focus-within { border-color: #4A90E2; }
+    .photo-crop { position: relative; width: 100%; max-width: 320px; aspect-ratio: 1 / 1; margin: 0 auto; overflow: hidden; border-radius: 10px; background: #eee; touch-action: none; cursor: grab; box-shadow: inset 0 0 0 2px #4A90E2; }
+    .photo-crop:active { cursor: grabbing; }
+    .photo-crop img { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+    .photo-zoom { display: flex; align-items: center; gap: 10px; max-width: 320px; margin: 8px auto 0; font-weight: 700; color: #4A90E2; }
+    .photo-zoom input { flex: 1; }
+    .photo-hint { font-size: 0.78rem; color: #777; text-align: center; margin-top: 4px; }
+    .photo-change { display: block; margin: 6px auto 0; background: none; border: none; color: #4A90E2; font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
+    .photo-status { font-size: 0.82rem; margin-top: 6px; min-height: 1em; }
+    .photo-status.busy { color: #4a6fa5; }
+    .photo-status.ok { color: #2e7d32; }
+    .photo-status.warn { color: #b45309; }
+    .photo-status.error, .photo-error { color: #c62828; font-size: 0.82rem; }
+    .photo-rights { display: flex; gap: 8px; align-items: flex-start; font-size: 0.85rem; color: #333; cursor: pointer; }
+    .photo-rights input { margin-top: 3px; }
+    .photo-privacy { font-size: 0.75rem; color: #888; line-height: 1.4; }
+    .photo-privacy a { color: #4A90E2; }
 
     /* ── Mug personalisation ─────────────────────────── */
     .mug-personalisation { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -1718,6 +1741,7 @@
 
 <script src="/store/print-picker.js?v=20260930"></script>
 <script src="/store/tote-picker.js?v=20261006"></script>
+<script src="/store/photo-personaliser.js?v=20261010"></script>
 <script>
   const API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api';
 
@@ -1821,6 +1845,7 @@
   let podSelectedImage = null;  // print picker: main picture of the chosen Frame/Size/Text (used for the cart line)
   let printState = null;        // print picker state, null for every other product
   let toteState = null;         // tote picker state (Colour x Text), null for every other product
+  let photoState = null;        // photo personalisation state (photo-personaliser.js), null for every other product
 
   async function load() {
     const main = document.getElementById('main');
@@ -1854,7 +1879,9 @@
         var isPodProduct = !!(p.pod_gallery_images && p.pod_gallery_images !== '{}');
         // Tote bags made by a print partner (6 Oct 2026) have no Stripe price either: each colour and
         // text choice is priced at checkout from its own row.
-        if (!p.stripe_price_id && !isPodProduct && !isToteListing(p)) return false;
+        // Photo personalised products (10 Oct 2026) are also priced at checkout from their option rows.
+        var isPhotoListing = !!(window.CBJPhoto && CBJPhoto.isPhotoProduct(p));
+        if (!p.stripe_price_id && !isPodProduct && !isToteListing(p) && !isPhotoListing) return false;
         var cs = collectionsStatus[p['Collection']];
         if (p['Collection'] && cs === 'archived') return false;
         if (Number(p.design_stock_tracked) === 1 && Number(p.design_stock_qty) <= 0) return false;
@@ -1988,6 +2015,9 @@
         ldScript.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", "itemListElement": ldItems });
         document.head.appendChild(ldScript);
       } catch (e) { /* non-critical */ }
+
+      // A broken saved basket must never stop the shop loading.
+      try { restoreCart(); } catch (e) { try { CBJPhoto.clear(window.localStorage); } catch (e2) {} }
 
       if (window.location.hash) {
         var hashId = window.location.hash.slice(1);
@@ -2406,11 +2436,12 @@
         variants = (p.variants || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean);
       }
       var isPodProduct = !!(p.pod_gallery_images && p.pod_gallery_images !== '{}');
-      var needsVariant = variants.length > 1 || isPodProduct || isToteListing(p);
+      var isPhotoCard = !!(window.CBJPhoto && CBJPhoto.isPhotoProduct(p));
+      var needsVariant = variants.length > 1 || isPodProduct || isToteListing(p) || isPhotoCard;
       var inCart = Object.keys(cart).some(function(k) { return k.startsWith(priceId + '|'); });
       var isPersonalisedNonMug = p.personalised === 1;
       var addBtn = (needsVariant || isPersonalisedNonMug)
-        ? '<button class="btn-add" onclick="event.stopPropagation(); openModal(' + pAttr + ')">Choose Options &rarr;</button>'
+        ? '<button class="btn-add" onclick="event.stopPropagation(); openModal(' + pAttr + ')">' + (isPhotoCard ? 'Add your photo &rarr;' : 'Choose Options &rarr;') + '</button>'
         : '<button class="btn-add' + (inCart ? ' in-cart' : '') + '" onclick="event.stopPropagation(); addToCart(' + pAttr + ', null)">'
           + (inCart ? '&#10003; In Cart' : 'Add to Cart') + '</button>';
       var persBadge = isPersonalisedNonMug ? '<div><span class="pers-badge">&#9998; Personalisation available</span></div>' : '';
@@ -2441,11 +2472,12 @@
       variants = (p.variants || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean);
     }
     var isPodProduct = !!(p.pod_gallery_images && p.pod_gallery_images !== '{}');
-    var needsVariant = variants.length > 1 || isPodProduct || isToteListing(p);
+    var isPhotoCard = !!(window.CBJPhoto && CBJPhoto.isPhotoProduct(p));
+    var needsVariant = variants.length > 1 || isPodProduct || isToteListing(p) || isPhotoCard;
     var inCart = Object.keys(cart).some(function(k) { return k.startsWith(priceId + '|'); });
     var isPersonalisedNonMug = p.personalised === 1;
     var addBtn = (needsVariant || isPersonalisedNonMug)
-      ? '<button class="btn-add" onclick="event.stopPropagation(); openModal(' + pAttr + ')">Choose Options &rarr;</button>'
+      ? '<button class="btn-add" onclick="event.stopPropagation(); openModal(' + pAttr + ')">' + (isPhotoCard ? 'Add your photo &rarr;' : 'Choose Options &rarr;') + '</button>'
       : '<button class="btn-add' + (inCart ? ' in-cart' : '') + '" onclick="event.stopPropagation(); addToCart(' + pAttr + ', null)">'
         + (inCart ? '&#10003; In Cart' : 'Add to Cart') + '</button>';
     var persBadge = isPersonalisedNonMug ? '<div><span class="pers-badge">&#9998; Personalisation available</span></div>' : '';
@@ -2494,6 +2526,7 @@
     podSelectedImage = null;
     printState = null;
     toteState = null;
+    resetPhotoState();
     _podVariants = [];
     podGalleryData = {};
     try { podGalleryData = JSON.parse(p.pod_gallery_images || '{}'); } catch (e) {}
@@ -2650,6 +2683,12 @@
     }
 
     var needsVariantSelection = !isMug && variants.length > 1;
+    var isPhotoProduct = !!(window.CBJPhoto && CBJPhoto.isPhotoProduct(p));
+    if (isPhotoProduct) {
+      photoState = { productId: id, spec: CBJPhoto.spec(p), vars: [], option: null, file: null, objectUrl: null,
+        upload: null, uploading: false, view: null, error: null, rights: false, nameOk: true, token: Math.random() };
+      html += photoPickerHtml(p);
+    }
 
     if (isMug && p.personalised === 1) {
       var mugMessages = [];
@@ -2731,7 +2770,10 @@
     if (isToteProduct) html += totePickerHtml();
 
     html += '<div class="modal-actions">';
-    if (needsVariantSelection) {
+    if (isPhotoProduct) {
+      html += '<button class="btn-add" id="modalAddBtn" disabled onclick="modalAddToCart(' + pAttr + ')">Add to Cart</button>';
+      html += '<div class="modal-variant-hint" id="modalVariantHint">Choose the birthday, add your photo and tick the box to continue</div>';
+    } else if (needsVariantSelection) {
       html += '<button class="btn-add" id="modalAddBtn" disabled onclick="modalAddToCart(' + pAttr + ')">Add to Cart</button>';
       html += '<div class="modal-variant-hint" id="modalVariantHint">Please select a finish before adding to cart</div>';
     } else if (isToteProduct) {
@@ -2758,7 +2800,9 @@
       '"Am thrilled with it! Very high quality and lovely image." - Tina-Merie, real customer'
     ];
     html += '<div class="modal-testimonial">' + modalQuotes[Math.floor(Math.random() * modalQuotes.length)] + '</div>';
-    if ((p.application_method || '').indexOf('Print on Demand') === 0) {
+    if (isPhotoProduct) {
+      html += '<div class="modal-shipping">Made to order with your photo &middot; Ships within 3&ndash;5 working days &middot; Free UK shipping on orders £10+</div>';
+    } else if ((p.application_method || '').indexOf('Print on Demand') === 0) {
       html += '<div class="modal-shipping">Printed to order &middot; Ships within 3&ndash;4 working days &middot; Free UK shipping on orders £10+</div>';
     } else {
       html += '<div class="modal-shipping">Handmade in Deal, Kent &middot; Ships within 1&ndash;2 business days &middot; Free UK shipping on orders £10+</div>';
@@ -2766,6 +2810,7 @@
     html += '</div>';
 
     document.getElementById('modalInner').innerHTML = html;
+    if (isPhotoProduct) loadPhotoOptions(id);
 
     var related = getRelatedProducts(id, p['Collection']);
     var relHtml = '';
@@ -2879,11 +2924,12 @@
         variants = (p.variants || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean);
       }
       var isPodProduct = !!(p.pod_gallery_images && p.pod_gallery_images !== '{}');
-      var needsVariant = variants.length > 1 || isPodProduct || isToteListing(p);
+      var isPhotoCard = !!(window.CBJPhoto && CBJPhoto.isPhotoProduct(p));
+      var needsVariant = variants.length > 1 || isPodProduct || isToteListing(p) || isPhotoCard;
       var inCart = Object.keys(cart).some(function(k) { return k.startsWith(priceId + '|'); });
       var isPersonalisedNonMug = p.personalised === 1;
       var addBtn = (needsVariant || isPersonalisedNonMug)
-        ? '<button class="btn-add" onclick="event.stopPropagation(); openModal(' + pAttr + ')">Choose Options &rarr;</button>'
+        ? '<button class="btn-add" onclick="event.stopPropagation(); openModal(' + pAttr + ')">' + (isPhotoCard ? 'Add your photo &rarr;' : 'Choose Options &rarr;') + '</button>'
         : '<button class="btn-add' + (inCart ? ' in-cart' : '') + '" onclick="event.stopPropagation(); addToCart(' + pAttr + ', null)">'
           + (inCart ? '&#10003; In Cart' : 'Add to Cart') + '</button>';
       html += '<div class="available-card" onclick="openModal(' + pAttr + ')">'
@@ -2923,6 +2969,7 @@
       document.body.style.overflow = '';
     }
     selectedVariant = null;
+    resetPhotoState();
   }
 
   function openAboutModal() {
@@ -3185,6 +3232,269 @@
     }
   }
 
+  // ── Photo personalisation (10 Oct 2026) ─────────────────────────────────────────────────
+  // Logic lives in /store/photo-personaliser.js (CBJPhoto). Only products whose public record has a
+  // personalisation_spec with a photo section use this. The photo goes straight to products-api
+  // (POST /personalisation/upload), which checks it, strips its metadata and keeps it privately; this
+  // page only ever shows the customer their own file from their device. Nothing about the photo or
+  // the name is sent to analytics, and the section is masked from Clarity recordings.
+  function photoPickerHtml(p) {
+    var nf = CBJPhoto.nameField(p);
+    var h = '<hr class="modal-hr"><div class="photo-pers" data-clarity-mask="true">';
+    h += '<div><div class="modal-variants-label" id="photoOptLabel">Birthday</div><div class="modal-variants" id="photoOptRow"><span style="font-size:0.85rem;color:#888">Loading&hellip;</span></div></div>';
+    h += '<div><div class="mug-field-label">Your photo</div>';
+    h += '<label class="photo-pick" id="photoPickLabel" for="photoFile">&#128247; <strong>Choose a photo</strong><br><span>JPEG, PNG or WebP, up to 15 MB. The original from your phone camera prints best.</span></label>';
+    h += '<input type="file" id="photoFile" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="photoPicked(this)">';
+    h += '<div class="photo-status" id="photoStatus" role="status" aria-live="polite"></div>';
+    h += '<div id="photoCropWrap" style="display:none">';
+    h += '<div class="photo-crop" id="photoCrop"><img id="photoCropImg" alt="Your photo" draggable="false"></div>';
+    h += '<div class="photo-zoom"><span aria-hidden="true">&minus;</span><input type="range" id="photoZoom" min="1" max="4" step="0.01" value="1" aria-label="Zoom" oninput="photoZoomed(this.value)"><span aria-hidden="true">+</span></div>';
+    h += '<div class="photo-hint">Drag the photo to move it and use the slider to zoom. The square is the photo side of your mug.</div>';
+    h += '<button type="button" class="photo-change" onclick="document.getElementById(\'photoFile\').click()">Use a different photo</button>';
+    h += '</div></div>';
+    if (nf) {
+      h += '<div><div class="mug-field-label">' + escHtml(nf.label || 'Name') + ' <span style="color:#aaa;font-weight:400">(max ' + (nf.max || 20) + ' characters)</span></div>';
+      h += '<input class="mug-text-input" id="photoName" type="text" maxlength="' + (nf.max || 20) + '" placeholder="e.g. Sophie" autocomplete="off" oninput="photoNameInput(this)">';
+      h += '<div class="mug-char-counter"><span id="photoNameCount">0</span>/' + (nf.max || 20) + '</div>';
+      h += '<div class="photo-error" id="photoNameError"></div></div>';
+    }
+    h += '<label class="photo-rights"><input type="checkbox" id="photoRights" onchange="photoRightsChanged(this)"> I took this photo or have permission to use it</label>';
+    h += '<div class="photo-privacy">Your photo is only used to make your mug. It is kept privately, never shared or posted, and deleted 30 days after your order is posted (or within 48 hours if you do not order). <a href="/privacy.html#customer-photos" target="_blank" rel="noopener">How I look after your photo</a></div>';
+    h += '<div class="mug-lead-time">&#127874; I prepare your design by hand before it is printed, so please allow 3 to 5 working days for it to be posted.</div>';
+    h += '</div>';
+    return h;
+  }
+
+  function resetPhotoState() {
+    if (photoState && photoState.objectUrl) { try { URL.revokeObjectURL(photoState.objectUrl); } catch (e) {} }
+    photoState = null;
+  }
+
+  function loadPhotoOptions(productId) {
+    var st = photoState;
+    fetch(API + '/products/' + encodeURIComponent(productId) + '/public-variants')
+      .then(function(r) { return r.json(); })
+      .catch(function() { return {}; })
+      .then(function(res) {
+        if (photoState !== st) return;
+        st.vars = CBJPhoto.options((res && res.result) || []);
+        var row = document.getElementById('photoOptRow');
+        if (!row) return;
+        if (!st.vars.length) { row.innerHTML = '<span style="font-size:0.85rem;color:#888">Options are not available right now.</span>'; return; }
+        var label = document.getElementById('photoOptLabel');
+        if (label && st.vars[0].option1_name && st.vars[0].option1_name !== 'Age') label.textContent = st.vars[0].option1_name;
+        if (st.vars.length === 1) st.option = st.vars[0];
+        renderPhotoOptions();
+      });
+  }
+
+  function renderPhotoOptions() {
+    var st = photoState;
+    var row = document.getElementById('photoOptRow');
+    if (!st || !row) return;
+    row.innerHTML = st.vars.map(function(v) {
+      var sel = st.option && st.option.id === v.id;
+      return '<button class="modal-variant-btn' + (sel ? ' selected' : '') + '" data-id="' + escAttr(String(v.id)) + '" onclick="photoPickOption(this)">' + escHtml(v.option1_value) + '</button>';
+    }).join('');
+    updatePhotoReady();
+  }
+
+  function photoPickOption(btn) {
+    var st = photoState;
+    if (!st) return;
+    var id = Number(btn.getAttribute('data-id'));
+    st.option = st.vars.filter(function(v) { return v.id === id; })[0] || null;
+    if (st.option) {
+      if (st.option.retail_price_pence != null) document.getElementById('modalPriceVal').textContent = '£' + (st.option.retail_price_pence / 100).toFixed(2);
+      if (st.option.image_url) { var u = buildImageUrl(st.option.image_url); if (u) document.getElementById('modalMainImg').src = u; }
+    }
+    renderPhotoOptions();
+  }
+
+  function setPhotoStatus(msg, kind) {
+    var el = document.getElementById('photoStatus');
+    if (!el) return;
+    el.className = 'photo-status' + (kind ? ' ' + kind : '');
+    el.textContent = msg || '';
+  }
+
+  function photoPicked(input) {
+    var st = photoState;
+    var file = input.files && input.files[0];
+    input.value = '';
+    if (!st || !file) return;
+    var problem = CBJPhoto.checkFile(file);
+    if (problem) { setPhotoStatus(problem, 'error'); return; }
+    if (st.objectUrl) { try { URL.revokeObjectURL(st.objectUrl); } catch (e) {} }
+    st.file = file; st.upload = null; st.view = null; st.objectUrl = URL.createObjectURL(file);
+    var token = st.token = Math.random();
+    var img = document.getElementById('photoCropImg');
+    img.onload = function() {
+      if (photoState !== st || st.token !== token) return;
+      st.view = CBJPhoto.initialView(img.naturalWidth, img.naturalHeight, (st.spec.photo && st.spec.photo.crop_aspect) || 1);
+      document.getElementById('photoCropWrap').style.display = '';
+      document.getElementById('photoPickLabel').style.display = 'none';
+      document.getElementById('photoZoom').value = 1;
+      renderPhotoCrop();
+      bindPhotoCrop();
+    };
+    img.onerror = function() {
+      if (photoState !== st || st.token !== token) return;
+      setPhotoStatus('That photo could not be opened. Please try a different one.', 'error');
+    };
+    img.src = st.objectUrl;
+    st.uploading = true;
+    setPhotoStatus('Uploading your photo…', 'busy');
+    updatePhotoReady();
+    var fd = new FormData();
+    fd.append('product_id', st.productId);
+    fd.append('photo', file, 'photo');
+    fetch(API + '/personalisation/upload', { method: 'POST', body: fd })
+      .then(function(r) { return r.json().catch(function() { return r.status === 413 ? { error: 'That photo is bigger than 15 MB. Please choose a smaller photo.' } : {}; }).then(function(j) { return { ok: r.ok, j: j }; }); })
+      .catch(function() { return { ok: false, j: { error: 'The photo could not be uploaded. Please check your connection and try again.' } }; })
+      .then(function(res) {
+        if (photoState !== st || st.token !== token) return;
+        st.uploading = false;
+        if (!res.ok || !res.j || !res.j.result) {
+          st.upload = null;
+          document.getElementById('photoCropWrap').style.display = 'none';
+          document.getElementById('photoPickLabel').style.display = '';
+          setPhotoStatus((res.j && res.j.error) || 'The photo could not be uploaded. Please try again.', 'error');
+        } else {
+          st.upload = res.j.result;
+          setPhotoStatus(st.upload.low_resolution
+            ? 'Photo added. It is quite small, so it may print a little soft. A larger original will look sharper.'
+            : 'Photo added.', st.upload.low_resolution ? 'warn' : 'ok');
+        }
+        updatePhotoReady();
+      });
+  }
+
+  function renderPhotoCrop() {
+    var st = photoState;
+    var box = document.getElementById('photoCrop');
+    var img = document.getElementById('photoCropImg');
+    if (!st || !st.view || !box || !img) return;
+    var size = box.clientWidth || 280;
+    var l = CBJPhoto.layout(st.view, size);
+    img.style.width = l.width + 'px';
+    img.style.height = l.height + 'px';
+    img.style.transform = 'translate(' + l.left + 'px,' + l.top + 'px)';
+  }
+
+  function bindPhotoCrop() {
+    var box = document.getElementById('photoCrop');
+    if (!box || box.__bound) return;
+    box.__bound = true;
+    var drag = null;
+    box.addEventListener('pointerdown', function(e) {
+      if (!photoState || !photoState.view) return;
+      drag = { x: e.clientX, y: e.clientY };
+      try { box.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+    });
+    box.addEventListener('pointermove', function(e) {
+      if (!drag || !photoState || !photoState.view) return;
+      photoState.view = CBJPhoto.pan(photoState.view, e.clientX - drag.x, e.clientY - drag.y, box.clientWidth || 280);
+      drag = { x: e.clientX, y: e.clientY };
+      renderPhotoCrop();
+    });
+    var end = function() { drag = null; };
+    box.addEventListener('pointerup', end);
+    box.addEventListener('pointercancel', end);
+    window.addEventListener('resize', renderPhotoCrop);
+  }
+
+  function photoZoomed(v) {
+    if (!photoState || !photoState.view) return;
+    photoState.view = CBJPhoto.zoomTo(photoState.view, Number(v));
+    renderPhotoCrop();
+  }
+
+  function photoNameInput(inp) {
+    var st = photoState;
+    if (!st) return;
+    var c = document.getElementById('photoNameCount');
+    if (c) c.textContent = Array.from(inp.value).length;
+    var r = CBJPhoto.checkName(inp.value, CBJPhoto.nameField({ personalisation_spec: st.spec }));
+    st.nameOk = r.ok;
+    var err = document.getElementById('photoNameError');
+    if (err) err.textContent = r.ok ? '' : r.error;
+    updatePhotoReady();
+  }
+
+  function photoRightsChanged(cb) {
+    if (!photoState) return;
+    photoState.rights = !!cb.checked;
+    updatePhotoReady();
+  }
+
+  function updatePhotoReady() {
+    var st = photoState;
+    var addBtn = document.getElementById('modalAddBtn');
+    var hint = document.getElementById('modalVariantHint');
+    if (!st || !addBtn) return;
+    var ready = !!(st.option && st.upload && st.view && !st.uploading && st.rights && st.nameOk);
+    addBtn.disabled = !ready;
+    if (hint) {
+      hint.style.display = ready ? 'none' : '';
+      hint.textContent = !st.option ? 'Choose the birthday to continue'
+        : st.uploading ? 'Waiting for your photo to finish uploading…'
+        : !st.upload ? 'Add your photo to continue'
+        : !st.nameOk ? 'Please check the name'
+        : !st.rights ? 'Tick the box to confirm you can use this photo' : '';
+    }
+  }
+
+  // Everything the basket line needs, or null if something is missing. The small picture shown in
+  // the basket is made here, in the browser, from the customer's own file.
+  function buildPhotoMeta() {
+    var st = photoState;
+    if (!st || !st.option || !st.upload || !st.view || !st.rights || !st.nameOk) return null;
+    var nameInp = document.getElementById('photoName');
+    var name = nameInp ? CBJPhoto.checkName(nameInp.value, CBJPhoto.nameField({ personalisation_spec: st.spec })).value || '' : '';
+    var thumb = null;
+    try {
+      var img = document.getElementById('photoCropImg');
+      var c = document.createElement('canvas');
+      c.width = 160; c.height = 160;
+      var v = st.view;
+      c.getContext('2d').drawImage(img, v.cx - v.w / 2, v.cy - v.h / 2, v.w, v.h, 0, 0, 160, 160);
+      thumb = c.toDataURL('image/jpeg', 0.7);
+    } catch (e) { thumb = null; }
+    return {
+      variant_id: st.option.id,
+      label: st.option.option1_value,
+      price_pence: st.option.retail_price_pence != null ? st.option.retail_price_pence : null,
+      upload_id: st.upload.upload_id,
+      crop: CBJPhoto.cropOf(st.view),
+      name: name,
+      thumb: thumb
+    };
+  }
+
+  // Puts back the basket saved in this browser (refresh, or coming back from Stripe without paying).
+  function restoreCart() {
+    if (!window.CBJPhoto) return;
+    var data = CBJPhoto.load(window.localStorage);
+    if (!data) return;
+    var previewId = new URLSearchParams(window.location.search).get('preview');
+    var byId = function(id) {
+      return allProducts.find(function(p) { return p['Product ID'] === id; })
+        || (previewId && previewId === id ? allProductsRaw.find(function(p) { return p['Product ID'] === id; }) : null)
+        || null;
+    };
+    var r = CBJPhoto.fromStored(data, byId, Date.now());
+    Object.keys(r.cart).forEach(function(k) { if (!cart[k]) cart[k] = r.cart[k]; });
+    updateCartUI();
+    var expired = r.dropped.filter(function(d) { return d.reason === 'photo_expired'; });
+    if (expired.length) {
+      setTimeout(function() {
+        alert('Your photo for "' + (expired[0].title || 'your personalised item') + '" was only kept for 48 hours, so it has been taken out of your basket. Please add it again with your photo.');
+      }, 300);
+    }
+  }
+
   function selectPodColour(colour, btn) {
     podSelectedColour = colour;
     podSelectedSize = null;
@@ -3387,10 +3697,17 @@
       }
     }
     if (isToteListing(p) && !toteMeta) return;  // button is disabled until a full choice is made
-    addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta, toteMeta);
+    var photoMeta = null;
+    if (window.CBJPhoto && CBJPhoto.isPhotoProduct(p)) {
+      photoMeta = buildPhotoMeta();
+      if (!photoMeta) return;  // button is disabled until option, photo and the rights box are done
+      mugName = null; mugMessage = null; mugTextColour = null;
+    }
+    addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta, toteMeta, photoMeta);
+    if (photoMeta) resetPhotoState();
   }
 
-  function addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta, toteMeta) {
+  function addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta, toteMeta, photoMeta) {
     trackEvent('add_to_basket', p['Product ID']);
     mugName = mugName || null;
     mugMessage = mugMessage || null;
@@ -3413,6 +3730,7 @@
     // the flat product price entirely - it's not a surcharge on top, it IS the price.
     if (podMeta && podMeta.price_pence != null) basePrice = podMeta.price_pence / 100;
     if (toteMeta) { variant = toteMeta.label; if (toteMeta.price_pence != null) basePrice = toteMeta.price_pence / 100; }
+    if (photoMeta) { variant = photoMeta.label; if (photoMeta.price_pence != null) basePrice = photoMeta.price_pence / 100; }
     var itemPrice = persText && p.personalised === 1 ? basePrice + 1.50 : basePrice;
     gtag('event', 'add_to_cart', {
       currency: 'GBP',
@@ -3420,7 +3738,9 @@
       items: [{ item_id: p['Product ID'], item_name: p['Title'], item_category: p['Collection'] || '', item_variant: variant || '', price: itemPrice, quantity: 1 }]
     });
     var priceId = p.stripe_price_id;
-    var cartKey = toteMeta
+    var cartKey = photoMeta
+      ? CBJPhoto.cartKey(p['Product ID'], photoMeta.variant_id, photoMeta.upload_id, photoMeta.name)
+      : toteMeta
       ? (p['Product ID'] + '|sv:' + toteMeta.variant_id)
       : podMeta
       ? (p['Product ID'] + '|pod:' + podMeta.gelato_variant_id)
@@ -3440,6 +3760,7 @@
     }
     if (podMeta && podMeta.image_url) imageUrl = podMeta.image_url;
     if (toteMeta && toteMeta.image_url) imageUrl = toteMeta.image_url;
+    if (photoMeta && photoMeta.thumb) imageUrl = photoMeta.thumb;
     if (cart[cartKey]) {
       cart[cartKey].qty++;
     } else {
@@ -3450,8 +3771,13 @@
                         pod_size: podMeta ? podMeta.size : null,
                         gelato_variant_id: podMeta ? podMeta.gelato_variant_id : null,
                         gelato_product_uid: podMeta ? podMeta.gelato_product_uid : null,
-                        variant_id: toteMeta ? toteMeta.variant_id : null,
-                        price: itemPrice };
+                        variant_id: toteMeta ? toteMeta.variant_id : (photoMeta ? photoMeta.variant_id : null),
+                        photo: photoMeta ? { upload_id: photoMeta.upload_id, crop: photoMeta.crop, name: photoMeta.name } : null,
+                        added: Date.now(),
+                        // The +£1.50 personalisation uplift is added on top of this wherever a price is
+                        // shown (basket) or charged (server), so the stored price is the base price.
+                        // Storing itemPrice here showed £6.50 for a £5.00 item (fixed 10 Oct 2026).
+                        price: basePrice };
     }
     updateCartUI();
     renderGrid();
@@ -3538,6 +3864,7 @@
 
   function updateCartUI() {
     syncGiftOption();
+    if (window.CBJPhoto) { try { CBJPhoto.save(window.localStorage, cart, Date.now()); } catch (e) {} }
     var entries = Object.entries(cart);
     var totalItems = entries.reduce(function(s, e) { return s + e[1].qty; }, 0);
     var totalPence = entries.reduce(function(s, e) {
@@ -3595,12 +3922,13 @@
       var linePriceNum = (data.personalisation_text && p.personalised === 1) ? basePriceNum + 1.50 : basePriceNum;
       var unitPrice = '£' + linePriceNum.toFixed(2);
       return '<div class="cart-item">'
-        + '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(p['Title']) + '">'
+        + '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(p['Title']) + '"' + (data.photo ? ' data-clarity-mask="true"' : '') + '>'
         + '<div class="cart-item-info">'
         + '<div class="cart-item-title">' + escHtml(p['Title']) + '</div>'
         + (data.gelato_variant_id ? '<div class="cart-item-variant">' + escHtml([data.pod_colour, data.pod_size].filter(Boolean).join(' / ')) + '</div>' : '')
         + (!data.gelato_variant_id && variant ? '<div class="cart-item-variant">' + (data.variant_id ? '' : 'Finish: ') + escHtml(variant) + '</div>' : '')
         + (data.mug_name ? '<div class="cart-item-variant">Name: ' + escHtml(data.mug_name) + '</div>' : '')
+        + (data.photo ? '<div class="cart-item-variant">&#128247; Your photo added' + (data.photo.name ? ', name: ' + escHtml(data.photo.name) : '') + '</div>' : '')
         + (data.personalisation_text ? '<div class="cart-item-variant">Personalised: ' + escHtml(data.personalisation_text) + '</div>' : '')
         + (data.mug_message ? '<div class="cart-item-variant">Message: ' + escHtml(data.mug_message) + '</div>' : '')
         + (data.mug_text_colour ? '<div class="cart-item-variant" style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;background:' + escHtml(data.mug_text_colour) + ';border-radius:50%;border:1px solid #ccc"></span>' + escHtml(data.mug_text_colour) + '</div>' : '')
@@ -3670,7 +3998,8 @@
         title: data.product['Title'] || '',
         variant: data.variant || null,
         price: resolvedPrice,
-        image_url: data.image_url || '',
+        // A photo line's picture is the customer's own photo, which must not leave the browser.
+        image_url: data.photo ? '' : (data.image_url || ''),
         personalised: data.product.personalised === 1,
         personalisation_text: data.personalisation_text || '',
         name: data.product['Title'] || '',
@@ -3681,6 +4010,7 @@
         gelato_variant_id: data.gelato_variant_id || null,
         gelato_product_uid: data.gelato_product_uid || null,
         variant_id: data.variant_id || null,
+        personalisation: data.photo ? { upload_id: data.photo.upload_id, crop: data.photo.crop, fields: { name: data.photo.name || '' } } : undefined,
         pod_colour: data.pod_colour || null,
         pod_size: data.pod_size || null
       };
