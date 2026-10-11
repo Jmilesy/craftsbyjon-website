@@ -2989,6 +2989,7 @@
             </div>
           </div>` : ''}
           ${fieldDropdown('Collection', p['Collection'] || '', 'Collection', ['', ...collectionsOptions])}
+          <div class="field-row"><div class="field-label"></div><div class="field-value"><a href="/staff/collections.html#product=${encodeURIComponent(p['Product ID'] || '')}" target="_blank" rel="noopener">Other collections and themes for this product →</a></div></div>
           <div class="field-row" id="row-price">
             <div class="field-label">Price</div>
             <div class="field-value" id="val-price">£${parseFloat(p.price || 3.50).toFixed(2)}</div>
