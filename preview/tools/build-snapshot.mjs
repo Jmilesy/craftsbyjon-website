@@ -38,7 +38,7 @@ function urlsIn(v) {
 function listOf(v) {
   if (!v) return [];
   try { const a = JSON.parse(v); if (Array.isArray(a)) return a.map(String); } catch {}
-  return String(v).split('|').map(x => x.trim()).filter(Boolean);
+  return String(v).split(/[|,]/).map(x => x.trim()).filter(Boolean);
 }
 
 const details = {};
@@ -54,6 +54,16 @@ for (const p of catalogue) {
     if (!name || val == null) continue;
     (options[name] ||= []).includes(val) || options[name].push(val);
   }
+  // Older acrylic listings keep their finish choice (Clear, Black) in products.variants, not product_variants.
+  const legacy = listOf(r.variants);
+  if (legacy.length > 1) options.Finish = legacy;
+  const legacyImages = {};
+  const vi = (() => { try { return JSON.parse(r.variant_images || '{}'); } catch { return {}; } })();
+  for (const [k, v] of Object.entries(vi || {})) if (typeof v === 'string' && v) legacyImages[k.toLowerCase()] = v.startsWith('https://') ? v : 'https://images.craftsbyjon.co.uk/products/' + v.split('/').pop();
+  // Same rule as the live store's card button (needsVariant || personalised): only these can be added from a card.
+  const pod = !!(r.pod_gallery_images && r.pod_gallery_images !== '{}');
+  const tote = !!r.supplier && String(r.product_type || '').toLowerCase() === 'tote bag';
+  const quickAdd = !(legacy.length > 1 || pod || tote || p.photo || Number(r.personalised) === 1);
   const prices = variants.map(v => v.retail_price_pence).filter(Number.isFinite);
   details[p.id] = {
     description: r.full_description || '',
@@ -62,7 +72,9 @@ for (const p of catalogue) {
     images: [...new Set(images)].slice(0, 8),
     options,
     priceFrom: prices.length ? Math.min(...prices) / 100 : null,
-    mugMessages: p.personalisable ? listOf(r.mug_messages).slice(0, 6) : []
+    mugMessages: p.personalisable ? listOf(r.mug_messages).slice(0, 6) : [],
+    variantImages: legacyImages,
+    quickAdd
   };
 }
 
