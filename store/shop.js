@@ -103,6 +103,10 @@
   let printState = null;        // print picker state, null for every other product
   let toteState = null;         // tote picker state (Colour x Text), null for every other product
   let photoState = null;        // photo personalisation state (photo-personaliser.js), null for every other product
+  // Pictures follow the chosen options (store/variant-images.js rules, 11 Oct 2026). When there is no exact
+  // picture for a choice the popup says so under the picture instead of showing another option's photo.
+  let modalDefaultImages = [];  // the product's own pictures, the fallback when an option has none
+  let modalVariantNames = [];   // Clear/Black style variants of the open product
 
   // Product page mode (/products/{id}, 11 Oct 2026). The server-rendered product page sets
   // window.CBJ_PAGE = { mode: 'product', id: '...' } and loads this same file, so the popup's pickers,
@@ -854,6 +858,8 @@
       : [];
     if (isPod && podDefaultShots.length > 0) mainImgUrl = podDefaultShots[0];
     currentModalImages = podDefaultShots.length > 0 ? podDefaultShots : (mugAllImgs.length > 0 ? mugAllImgs : (mainImgUrl ? [mainImgUrl] : []));
+    var ownMain = buildImageUrl(p['Image URL']) || buildImageUrl(id.toLowerCase());
+    modalDefaultImages = (mugAllImgs.length > 0 ? mugAllImgs : (ownMain ? [ownMain] : [])).slice();
     var basePrice = parseFloat(p.price || 3.50);
     var displayPrice = '£' + basePrice.toFixed(2);
 
@@ -873,6 +879,7 @@
 
 
     var firstKey = variants.length > 0 ? variants[0].toLowerCase() : '';
+    modalVariantNames = variants.slice();
     // Generic per-variant image lookup (any variant name, not just "black") -
     // matches variant_images keys case-insensitively, e.g. {"Natural Raw": "...jpg"}.
     function variantImageUrl(name) {
@@ -904,6 +911,7 @@
 
     html += '<div class="modal-img-col">';
     html += '<img class="modal-img-main" id="modalMainImg" src="' + escHtml(mainImgUrl) + '" alt="' + escHtml(p['Title']) + '" onclick="openLightbox(this.src, this.alt, currentModalImages)">';
+    html += '<p class="modal-img-note" id="modalImgNote" role="status" aria-live="polite" hidden></p>';
     if (persImgUrl) {
       html += '<div class="modal-thumbs">';
       html += '<img class="modal-thumb active" src="' + escHtml(mainImgUrl) + '" alt="Standard" onclick="swapModalImg(\'' + escAttr(mainImgUrl) + '\', this)" title="Standard">';
@@ -1401,12 +1409,48 @@
     }
   }
 
+  // The note under the main picture: shown only when the picture isn't exactly the chosen option.
+  function showModalImgNote(note) {
+    var el = document.getElementById('modalImgNote');
+    if (!el) return;
+    el.textContent = note || '';
+    el.hidden = !note;
+  }
+  // Main picture + thumbnails for a set of pictures (same markup the pickers already used).
+  function showModalPictures(urls, alt) {
+    if (!urls.length) return;
+    document.getElementById('modalMainImg').src = urls[0];
+    currentModalImages = urls;
+    var thumbsHtml = urls.length > 1 ? urls.map(function(u, i) {
+      return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(u) + '" alt="' + escHtml(alt) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
+    }).join('') : '';
+    var existing = document.querySelector('.modal-img-col .modal-thumbs');
+    if (existing) {
+      existing.innerHTML = thumbsHtml;
+    } else if (thumbsHtml) {
+      var wrap = document.createElement('div');
+      wrap.className = 'modal-thumbs';
+      wrap.innerHTML = thumbsHtml;
+      document.getElementById('modalImgNote').insertAdjacentElement('afterend', wrap);
+    }
+  }
+  function variantPictureNote(input, sel) {
+    var V = window.CBJVariantImages;
+    if (!V) return null;
+    try { var r = V.imagesFor(input, sel); return r.exact ? null : r.note; } catch (e) { return null; }
+  }
+
   // Pictures follow Frame, Size and Text (see CBJPrint.galleryFor for the fallback order).
   function refreshPrintGallery() {
     var st = printState;
     if (!st) return;
     var g = CBJPrint.galleryFor(st.gallery, st.vars, st.frame, st.size, st.text);
-    if (!g.urls.length || g.key === st.shownKey) return;
+    showModalImgNote(variantPictureNote({ kind: 'print', vars: st.vars, printGallery: st.gallery, defaults: modalDefaultImages }, { Frame: st.frame, Size: st.size, Text: st.text }));
+    if (!g.urls.length) {
+      if (st.shownKey !== 'own:' + st.frame) { st.shownKey = 'own:' + st.frame; showModalPictures(modalDefaultImages, 'Print'); }
+      return;
+    }
+    if (g.key === st.shownKey) return;
     st.shownKey = g.key;
     var alt = CBJPrint.frameLabel(st.frame) + ' print';
     document.getElementById('modalMainImg').src = g.urls[0];
@@ -1506,7 +1550,12 @@
     var raw = CBJTote.imagesFor(st.vars, st.colour, st.text);
     var urls = raw.map(buildImageUrl).filter(Boolean);
     var key = st.colour + '|' + st.text;
-    if (!urls.length || key === st.shownKey) return;
+    showModalImgNote(variantPictureNote({ kind: 'tote', vars: st.vars, defaults: modalDefaultImages }, { Colour: st.colour, Text: st.text }));
+    if (!urls.length) {
+      if (st.shownKey !== 'own:' + st.colour) { st.shownKey = 'own:' + st.colour; showModalPictures(modalDefaultImages, 'Tote bag'); }
+      return;
+    }
+    if (key === st.shownKey) return;
     st.shownKey = key;
     document.getElementById('modalMainImg').src = urls[0];
     currentModalImages = urls;
@@ -1803,6 +1852,8 @@
                  gallery.lifestyle_male, gallery.lifestyle_living_room, gallery.lifestyle_bedroom,
                  gallery.size_chart]
       .map(buildImageUrl).filter(Boolean);
+    showModalImgNote(shots.length ? null : (variantPictureNote({ kind: 'apparel', vars: _podVariants, podGallery: podGalleryData, defaults: modalDefaultImages }, { Colour: colour }) || ('No photo of ' + colour + ' yet, so this shows another colour.')));
+    if (!shots.length) showModalPictures(modalDefaultImages, colour);
     if (shots.length > 0) {
       document.getElementById('modalMainImg').src = shots[0];
       currentModalImages = shots;
@@ -1910,6 +1961,14 @@
 
   function selectVariant(v, btn) {
     selectedVariant = v;
+    // Each finish button carries its picture (or the main picture when it has none of its own): say so when
+    // the chosen finish has none, rather than showing the other finish as if it were this one.
+    var ownImgs = {};
+    Array.prototype.forEach.call(btn.parentNode.querySelectorAll('.modal-variant-btn'), function(b) {
+      var u = b.dataset.imgUrl;
+      if (u && modalDefaultImages.indexOf(u) === -1) ownImgs[b.textContent.trim().toLowerCase()] = u;
+    });
+    showModalImgNote(variantPictureNote({ kind: 'finish', finishes: modalVariantNames, finishImages: ownImgs, defaults: modalDefaultImages }, { Finish: v }));
     document.querySelectorAll('.modal-variant-btn').forEach(function(b) { b.classList.remove('selected'); });
     btn.classList.add('selected');
     var addBtn = document.getElementById('modalAddBtn');
@@ -1932,20 +1991,8 @@
     document.getElementById('modalMainImg').src = url;
     document.querySelectorAll('.modal-thumb').forEach(function(t) { t.classList.remove('active'); });
     thumbEl.classList.add('active');
-    var key = thumbEl.dataset.variantKey;
-    if (key) {
-      document.querySelectorAll('.modal-variant-btn').forEach(function(b) {
-        var match = b.textContent.trim().toLowerCase() === key;
-        b.classList.toggle('selected', match);
-        if (match) {
-          selectedVariant = b.textContent.trim();
-          var addBtn = document.getElementById('modalAddBtn');
-          if (addBtn) addBtn.disabled = false;
-          var hint = document.getElementById('modalVariantHint');
-          if (hint) hint.style.display = 'none';
-        }
-      });
-    }
+    // Looking at a picture never changes a choice (11 Oct 2026): tapping the Black thumbnail used to select
+    // Black. The finish is chosen with its own button, which also swaps the picture.
   }
 
   function modalAddToCart(p) {

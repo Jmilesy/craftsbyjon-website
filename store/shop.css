@@ -1454,3 +1454,6 @@
       .grid, .collection-section-grid { grid-template-columns: repeat(5, 1fr); }
 
     }
+/* Note under the product picture when it isn't exactly the chosen option (11 Oct 2026). */
+.modal-img-note { margin: 8px 0 0; padding: 8px 12px; border-radius: 8px; background: #fff1d6; color: #6b4700; font-size: 0.82rem; line-height: 1.35; }
+.modal-img-note[hidden] { display: none; }

@@ -53,6 +53,8 @@ html.pp-failed .pp-static .pp-loading, html.pp-unavailable .pp-static .pp-loadin
 .pp .modal-img-col { padding: 0; border: 0; }
 .pp .modal-img-main { width: 100%; height: min(76vw, 42vh); object-fit: contain; border-radius: 0; background: #f1ece3; cursor: zoom-in; }
 .pp .modal-img-main:hover { transform: none; box-shadow: none; }
+.pp .modal-img-note { margin: 8px var(--pp-gutter) 0; border-radius: 10px; font-size: 13.5px; }
+@media (min-width: 900px) { .pp .modal-img-note { margin: 10px 0 0; } }
 .pp .modal-thumbs { padding: 0 var(--pp-gutter); gap: 8px; margin-top: 10px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
 .pp .modal-thumb { width: 58px; height: 58px; border-radius: 10px; border: 2px solid transparent; flex: none; background: #eee; }
 .pp .modal-thumb.active { border-color: var(--pp-ink); }
