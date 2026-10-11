@@ -124,6 +124,7 @@ const B = 'http://localhost:8786';
     await wait(page, 800);
     ok(!(await page.$('#modalAddBtn')), 'buying controls shown for a sold-out design');
     ok(/can't be bought right now/.test(await page.textContent('#main')), 'note missing');
+    ok(!(await page.isVisible('#pp-static a.buy')), '"View & buy in the shop" still offered for a sold-out design');
     ok(await page.isVisible('#pp-static h1'), 'summary removed');
     await ctx.close();
   }
@@ -200,7 +201,7 @@ const B = 'http://localhost:8786';
     for (const id of ids) {
       if (soldOut.has(id)) {
         errs.length = 0; await page.goto(B + '/products/' + id); await wait(page, 700);
-        const fine = !(await page.$('#modalAddBtn')) && /can't be bought right now/.test(await page.textContent('#main')) && !errs.length;
+        const fine = !(await page.$('#modalAddBtn')) && /can't be bought right now/.test(await page.textContent('#main')) && !(await page.isVisible('#pp-static a.buy')) && !errs.length;
         if (fine) okCount++; else cur.fail.push(id + ': sold-out page wrong');
         continue;
       }
