@@ -42,7 +42,6 @@ async function wire(ctx) {
   ctx.on('dialog', d => d.accept());
   const page = await ctx.newPage(); const errs = [];
   page.on('pageerror', e => errs.push(e.message));
-  page.on('dialog', d => d.accept());
   const shot = async name => { if (OUT) await page.screenshot({ path: path.join(OUT, name + '.png'), fullPage: false }); };
 
   if (PHASE === 'legacy') {
@@ -173,12 +172,12 @@ async function wire(ctx) {
   const auto = (await json('/staff-collections')).result.auto;
   const under = auto.find(a => a.preset === 'price_under');
   await page.click(`#list-auto .item[data-key="${under.key}"]`);
-  await page.fill('#f-max', '9');
+  await page.fill('#f-max', '12');
   await page.click('#ed-save');
   await page.waitForFunction(() => /Draft saved/.test(document.getElementById('ed-msg').textContent));
   const pvAuto = await get(`/staff-collections/preview/auto/${under.key}`);
   const liveAuto = await get(`/collection-page/${under.slug}`);
-  check(cardIds(pvAuto.text).length > cardIds(liveAuto.text).length, `automatic "${under.name}": draft limit £9 previews more products than the live page (${cardIds(pvAuto.text).length} vs ${cardIds(liveAuto.text).length})`);
+  check(cardIds(pvAuto.text).length > cardIds(liveAuto.text).length, `automatic "${under.name}": draft limit £12 previews more products than the live page (${cardIds(pvAuto.text).length} vs ${cardIds(liveAuto.text).length})`);
   await page.click('#ed-discard');
   await page.waitForFunction(() => /discarded/.test(document.getElementById('ed-msg').textContent));
   await page.click('#ed-close');
