@@ -35,6 +35,13 @@ function startServer(port, overrides) {
       if (!fs.existsSync(pf)) { res.writeHead(404, { 'Content-Type': 'text/html' }); return res.end('<h1>Product not found</h1>'); }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(pf).pipe(res);
     }
+    // /collections/{slug}: the page products-api would send (rendered by preview/tools/build-collection-pages.mjs).
+    const cm = u.match(/^\/collections\/([a-z0-9-]+)$/i);
+    if (cm) {
+      const cf = path.join(ROOT, 'tests/fixtures/collection-pages', cm[1] + '.html');
+      if (!fs.existsSync(cf)) { res.writeHead(404, { 'Content-Type': 'text/html' }); return res.end('<h1>Collection not found</h1>'); }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(cf).pipe(res);
+    }
     const f = path.join(ROOT, u);
     if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('not found'); }
     res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
