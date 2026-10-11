@@ -201,12 +201,14 @@ async function wire(ctx) {
   await shop.close();
 
   // 11. Archive it, then check the store's own collection data for everything else is untouched.
+  await page.click('#ed-close');
   await page.click(`#list-collections .item[data-key="${mrow.id}"]`);
   await page.selectOption('#f-status', 'archived');
   await page.click('#ed-publish');
   await page.waitForFunction(() => /Published/.test(document.getElementById('ed-msg').textContent));
   const storeColsAfter = (await json('/collections')).result.filter(c => c.name !== 'Motorcycling').map(c => c.name + ':' + c.status).join('|');
   check(storeColsAfter === storeColsBefore, 'every other collection unchanged in the store data');
+  if (OUT) { await page.click('#ed-close'); await page.screenshot({ path: path.join(OUT, 'staff-collections-final.png') }); }
   check(!errs.length, 'no page errors', errs.join(' | '));
   await browser.close(); srv.close();
   console.log(`${checks} checks, ${fails} failed`);
