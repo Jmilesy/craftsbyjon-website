@@ -17,7 +17,8 @@ const rows = db.prepare('SELECT * FROM products ORDER BY COALESCE(sort_order, 99
 const collections = db.prepare('SELECT id, name, status, sort_order, banner_image, valid_months FROM collections ORDER BY sort_order').all();
 const catalogue = buildCatalogue(rows, collections);
 const byId = new Map(rows.map(r => [r.product_id, r]));
-const variantStmt = db.prepare('SELECT option1_name, option1_value, option2_name, option2_value, option3_name, option3_value, image_url, retail_price_pence FROM product_variants WHERE product_id = ? AND active = 1 ORDER BY id');
+// Same columns the public /products/:id/public-variants route already returns, nothing more.
+const variantStmt = db.prepare('SELECT id, gelato_variant_id, gelato_product_uid, option1_name, option1_value, option2_name, option2_value, option3_name, option3_value, image_url, retail_price_pence FROM product_variants WHERE product_id = ? AND active = 1 ORDER BY id');
 
 const IMG_RE = /https:\/\/images\.craftsbyjon\.co\.uk\/products\/[A-Za-z0-9_.-]+\.(?:jpe?g|png|webp)|^[A-Za-z0-9_.-]+\.(?:jpe?g|png|webp)$/gi;
 function urlsIn(v) {
@@ -35,6 +36,15 @@ function urlsIn(v) {
   return out.map(u => u.startsWith('https://') ? u : 'https://images.craftsbyjon.co.uk/products/' + u.split('/').pop());
 }
 
+function parseObj(v) { try { const o = JSON.parse(v || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+function absolutise(o) {
+  const out = {};
+  for (const [k, v] of Object.entries(o)) {
+    if (typeof v === 'string') out[k] = v.startsWith('https://') ? v : 'https://images.craftsbyjon.co.uk/products/' + v.split('/').pop();
+    else if (v && typeof v === 'object') out[k] = absolutise(v);
+  }
+  return out;
+}
 function listOf(v) {
   if (!v) return [];
   try { const a = JSON.parse(v); if (Array.isArray(a)) return a.map(String); } catch {}
@@ -74,7 +84,14 @@ for (const p of catalogue) {
     priceFrom: prices.length ? Math.min(...prices) / 100 : null,
     mugMessages: p.personalisable ? listOf(r.mug_messages).slice(0, 6) : [],
     variantImages: legacyImages,
-    quickAdd
+    quickAdd,
+    // Raw picture data for store/variant-images.js (same shapes the live modal reads):
+    vars: variants.map(v => ({ ...v, image_url: v.image_url ? (v.image_url.startsWith('https://') ? v.image_url : 'https://images.craftsbyjon.co.uk/products/' + v.image_url.split('/').pop()) : null })),
+    podGallery: absolutise(parseObj(r.pod_gallery_images)),
+    printGallery: absolutise(parseObj(r.pod_variant_gallery)),
+    finishes: legacy.length > 1 ? legacy : [],
+    // The product's own pictures without the per-colour ones, shown before a choice is made.
+    defaults: [...new Set([p.image, ...urlsIn(r.mug_image_front), ...urlsIn(r.mug_image_scene1), ...urlsIn(r.mug_image_scene2), ...urlsIn(r.mug_image_wrap), ...urlsIn(r.gallery_images)].filter(Boolean))]
   };
 }
 
