@@ -28,6 +28,13 @@ function startServer(port, overrides) {
     let u = decodeURIComponent(req.url.split('?')[0]);
     if (u.endsWith('/')) u += 'index.html';
     if (overrides[u] != null) { res.writeHead(200, { 'Content-Type': TYPES[path.extname(u)] || 'text/html' }); return res.end(overrides[u]); }
+    // /products/{id}: the page products-api would send (rendered by preview/tools/build-product-pages.mjs).
+    const pm = u.match(/^\/products\/([a-z0-9-]+)$/i);
+    if (pm) {
+      const pf = path.join(ROOT, 'tests/fixtures/product-pages', pm[1] + '.html');
+      if (!fs.existsSync(pf)) { res.writeHead(404, { 'Content-Type': 'text/html' }); return res.end('<h1>Product not found</h1>'); }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); return fs.createReadStream(pf).pipe(res);
+    }
     const f = path.join(ROOT, u);
     if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('not found'); }
     res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });

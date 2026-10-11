@@ -12,7 +12,9 @@ body.pp { margin: 0; background: var(--pp-paper); color: var(--pp-ink); font-fam
 .pp a { color: inherit; }
 .pp :focus-visible { outline: 3px solid var(--pp-sea); outline-offset: 2px; }
 
-/* Header and strip */
+/* Header and strip (shop.css styles every <header> as the store's blue banner: undo that here) */
+.pp header.pp-hdr { background: rgba(251,247,241,.97); color: var(--pp-ink); padding: 0; text-align: left; border-bottom: 1px solid var(--pp-line); }
+.pp header.pp-hdr a { color: var(--pp-ink); }
 .pp-hdr { position: sticky; top: 0; z-index: 300; background: rgba(251,247,241,.97); border-bottom: 1px solid var(--pp-line); }
 .pp-hdr-in { max-width: 1180px; margin: 0 auto; padding: 0 var(--pp-gutter); height: 58px; display: flex; align-items: center; gap: 12px; }
 .pp-logo { font-family: var(--pp-head); font-weight: 800; font-size: 21px; text-decoration: none; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
@@ -20,11 +22,16 @@ body.pp { margin: 0; background: var(--pp-paper); color: var(--pp-ink); font-fam
 .pp-hdr nav { display: flex; gap: 4px; margin-left: auto; align-items: center; }
 .pp-hdr nav a { text-decoration: none; font-weight: 700; padding: 10px 12px; border-radius: 10px; }
 .pp-hdr nav a:hover { background: rgba(26,26,46,.06); }
-#pp-cart-slot .cart-btn { position: static; box-shadow: none; transform: none; border: 2px solid var(--pp-ink); background: var(--pp-ink); color: #fff; border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 800; animation: none; }
+/* The shop's basket button, moved into the header (shop.js shows it once the basket has something in it). */
+#pp-cart-slot .cart-btn { position: relative; top: auto; right: auto; bottom: auto; left: auto; width: auto; height: 40px; box-shadow: none; transform: none; border: 2px solid var(--pp-ink); background: var(--pp-ink); color: #fff; border-radius: 999px; padding: 0 14px; font-size: 14px; font-weight: 800; animation: none; align-items: center; gap: 2px; }
+#pp-cart-slot .cart-btn[style*="block"] { display: inline-flex !important; }
 #pp-cart-slot .cart-btn:hover { transform: none; box-shadow: none; opacity: .9; }
+#pp-cart-slot .cart-btn-label { display: inline; }
+#pp-cart-slot #cartCount { position: static; background: none; color: inherit; font-size: inherit; min-width: 0; height: auto; padding: 0; border-radius: 0; display: inline; }
 @media (max-width: 480px) { .pp-hdr nav a.pp-hide-sm { display: none; } }
 .pp .bundle-banner { position: static; margin: 0; border-radius: 0; box-shadow: none; border: 0; border-bottom: 1px solid #f2dfb5; background: var(--pp-sun-soft); color: var(--pp-ink); font-size: 13.5px; text-align: center; padding: 7px var(--pp-gutter); }
 .pp .bundle-banner a { color: inherit !important; }
+@media (max-width: 640px) { .pp .bundle-banner .banner-static, .pp .bundle-banner .banner-sep { display: none; } }
 
 /* Server-rendered summary: shown until the buying controls are ready, and kept if they fail to load. */
 .pp-static { max-width: 640px; margin: 0 auto; padding: 20px var(--pp-gutter); }
@@ -65,7 +72,7 @@ html.pp-failed .pp-static .pp-loading, html.pp-unavailable .pp-static .pp-loadin
 .pp .modal-collection { display: none; }
 .pp .modal-title { order: 1; font-family: var(--pp-head); font-size: clamp(26px, 6.8vw, 38px); font-weight: 800; line-height: 1.1; letter-spacing: -.01em; margin: 0; color: var(--pp-ink); }
 .pp .modal-price-row { order: 2; margin: 8px 0 2px; }
-.pp .modal-price-row .price { font-family: var(--pp-head); font-size: 28px; font-weight: 800; color: var(--pp-ink); }
+.pp .modal-price-row .price { font-family: var(--pp-head); font-size: 28px; font-weight: 800; color: var(--pp-ink); background: none; border: 0; border-radius: 0; padding: 0; margin: 0; box-shadow: none; }
 .pp .stock-note { order: 2; }
 .pp .photo-pers, .pp .mug-personalisation, .pp .modal-variants-label, .pp .modal-variants, .pp #printFrameNote { order: 3; }
 .pp .modal-actions { order: 4; margin-top: 14px; padding-top: 0; }
