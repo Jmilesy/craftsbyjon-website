@@ -48,14 +48,28 @@
         var banner = document.getElementById('cookieBanner');
         if (!banner) return;
         banner.style.display = 'flex';
+        // While the banner is up, the page keeps its height free (--cbj-consent-h) so it never sits on top of
+        // Add to Cart, the basket's Checkout button or the sticky bar (11 Oct 2026).
+        var root = document.documentElement;
+        function reserve() { root.style.setProperty('--cbj-consent-h', banner.offsetHeight + 'px'); }
+        reserve();
+        root.classList.add('cbj-consent-open');
+        var ro = window.ResizeObserver ? new ResizeObserver(reserve) : null;
+        if (ro) ro.observe(banner); else window.addEventListener('resize', reserve);
+        function hide() {
+          banner.style.display = 'none';
+          root.classList.remove('cbj-consent-open');
+          root.style.removeProperty('--cbj-consent-h');
+          if (ro) ro.disconnect(); else window.removeEventListener('resize', reserve);
+        }
         document.getElementById('cookieAccept').addEventListener('click', function() {
           setConsent('accepted');
-          banner.style.display = 'none';
+          hide();
           loadAnalytics();
         });
         document.getElementById('cookieDecline').addEventListener('click', function() {
           setConsent('declined');
-          banner.style.display = 'none';
+          hide();
         });
       });
     }

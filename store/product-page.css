@@ -124,8 +124,12 @@ html.pp-failed .pp-static .pp-loading, html.pp-unavailable .pp-static .pp-loadin
 .pp-sticky .btn-add { width: auto; min-height: 46px; padding: 0 20px; }
 html.pp-sticky-on { scroll-padding-bottom: 96px; }
 html.pp-sticky-on body.pp { padding-bottom: 80px; }
+/* Cookie banner still unanswered: the sticky bar sits just above it, and the page keeps room for both. */
+html.cbj-consent-open .pp-sticky { bottom: var(--cbj-consent-h, 0px); }
+html.cbj-consent-open.pp-sticky-on body.pp { padding-bottom: calc(80px + var(--cbj-consent-h, 0px)); }
 @media (min-width: 900px) { .pp-sticky { display: none; } }
 
 .pp-foot { margin-top: 40px; background: var(--pp-ink); color: #d9d9e3; padding: 28px var(--pp-gutter) calc(30px + env(safe-area-inset-bottom)); font-size: 14px; text-align: center; }
 .pp-foot a { color: #fff; }
 @media (prefers-reduced-motion: reduce) { .pp * { transition: none !important; animation: none !important; } }
+.pp .cookie-banner-text a { color: #F5A623; }

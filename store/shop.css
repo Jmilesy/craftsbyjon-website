@@ -1361,8 +1361,20 @@
 }
     .cookie-btn-accept { background: #F5A623; color: #1a1a2e; border-color: #1a1a2e; }
     @media (max-width: 480px) {
-      .cookie-banner { flex-direction: column; text-align: center; padding: 14px 16px; }
+      .cookie-banner { flex-direction: column; text-align: center; padding: 14px 16px; gap: 12px; }
+      /* In a column, the desktop flex-basis (320px) became a minimum height: the banner covered ~60% of a
+         small phone. Size the text to its content instead (11 Oct 2026). */
+      .cookie-banner-text { flex: 0 1 auto; }
     }
+    /* While the cookie banner is showing, everything that sits at the bottom of the screen stays above it
+       (consent.js sets --cbj-consent-h to the banner's height). */
+    html.cbj-consent-open body { padding-bottom: var(--cbj-consent-h, 0px); }
+    html.cbj-consent-open .cart-panel,
+    html.cbj-consent-open .modal-wrap { bottom: var(--cbj-consent-h, 0px); }
+    html.cbj-consent-open .cart-btn { bottom: calc(var(--cbj-consent-h, 0px) + 16px); }
+    /* Small phones: with less height, the basket scrolls as a whole so Checkout can always be reached. */
+    html.cbj-consent-open .cart-panel { overflow-y: auto; }
+    html.cbj-consent-open .cart-items { flex: 1 0 auto; }
 
     /* ── Header / banner: single-line desktop layout ── */
     .header-inner { display: flex; flex-direction: column; align-items: center; text-align: center; }
