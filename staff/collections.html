@@ -339,6 +339,24 @@
     .imgbox input { font-size: 0.72rem; width: 100%; min-width: 0; }
     .section { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 16px; }
     .section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+    /* Editor groups (collapsible) */
+    details.grp { border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 12px; background: #fff; }
+    details.grp > summary { cursor: pointer; padding: 12px 14px; font-weight: 600; font-size: 0.98rem; list-style: none; display: flex; gap: 10px; align-items: baseline; }
+    details.grp > summary::-webkit-details-marker { display: none; }
+    details.grp > summary::before { content: '▸'; color: var(--teal); transition: transform .15s; display: inline-block; }
+    details.grp[open] > summary::before { transform: rotate(90deg); }
+    details.grp > summary .hint { font-weight: 400; font-size: 0.8rem; color: var(--text-soft); }
+    details.grp > .grp-body { padding: 0 14px 12px; }
+    details.grp .section { border-top: 0; margin-top: 0; padding-top: 0; }
+    /* Replacement main collection dialog */
+    .mainpick-wrap { position: fixed; inset: 0; background: rgba(30,40,40,0.45); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .mainpick-wrap[hidden] { display: none; }
+    .mainpick { background: #fff; border-radius: 12px; width: min(620px, 100%); max-height: 90vh; overflow-y: auto; padding: 20px 22px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+    .mainpick h2 { font-family: 'Cormorant Garamond', serif; color: var(--teal); font-size: 1.4rem; margin-bottom: 6px; }
+    .mainpick .mp-row { border-top: 1px solid var(--border); padding: 10px 0; }
+    .mainpick .mp-row b { display: block; font-size: 0.9rem; }
+    .mainpick select { width: 100%; margin-top: 6px; padding: 8px; border-radius: 8px; border: 1.5px solid var(--border); font: inherit; }
+    .mainpick .mp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
     .members, .picker { list-style: none; max-height: 340px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
     .members li, .picker li { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-bottom: 1px solid var(--bg-muted); font-size: 0.86rem; }
     .members li img, .picker li img { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; background: var(--bg-muted); }
@@ -420,6 +438,7 @@
     <div class="state" id="ed-state"></div>
     <div id="ed-fields"></div>
     <div id="ed-products"></div>
+    <div id="ed-seo"></div>
   </div>
   <div class="actions">
     <button class="btn btn-teal" id="ed-save">Save draft</button>
@@ -428,6 +447,15 @@
     <button class="btn btn-danger" id="ed-discard">Discard changes</button>
     <button class="btn btn-ghost" id="ed-close">Close</button>
     <div class="msg" id="ed-msg"></div>
+  </div>
+</div>
+
+<div class="mainpick-wrap" id="mainpick" hidden>
+  <div class="mainpick" role="dialog" aria-modal="true" aria-labelledby="mp-title">
+    <h2 id="mp-title">Choose a new main collection</h2>
+    <p class="help" id="mp-help"></p>
+    <div id="mp-rows"></div>
+    <div class="mp-actions"><button class="btn btn-ghost" id="mp-cancel">Cancel (nothing published)</button><button class="btn btn-accent" id="mp-ok">Publish</button></div>
   </div>
 </div>
 
@@ -541,7 +569,7 @@ function openEditor(source, key) {
   const statuses = source === 'collection' ? ['live', 'available', 'hidden', 'archived'] : ['live', 'hidden'];
   const curStatus = val(row, 'status');
   const months = (val(row, 'season_months') || '').split(',').filter(Boolean).map(Number);
-  const f = [];
+  const f = [], g2 = [], g3 = [];
   f.push(`<div class="field"><label for="f-name">Name</label><input type="text" id="f-name" maxlength="80" value="${escHtml(val(row, 'name'))}"></div>`);
   if (source === 'collection') f.push(`<div class="field"><label for="f-slug">Web address</label><input type="text" id="f-slug" maxlength="60" value="${escHtml(val(row, 'slug') || '')}" ${row.published_at ? 'disabled' : ''}><div class="count">${row.published_at ? 'Fixed once published, so links keep working.' : 'craftsbyjon.co.uk/collections/…'}</div></div>`);
   f.push(`<div class="row2"><div class="field"><label for="f-status">Status</label><select id="f-status">${curStatus === 'draft' ? '<option value="" selected>Draft: published as Live</option>' : ''}${statuses.map(s => `<option value="${s}" ${s === curStatus ? 'selected' : ''}>${STATUS_LABEL[s]}</option>`).join('')}</select></div>`
@@ -549,25 +577,40 @@ function openEditor(source, key) {
   f.push(`<div class="field"><label for="f-desc">Description</label><textarea id="f-desc" maxlength="600">${escHtml(val(row, 'description') || '')}</textarea></div>`);
   if (source === 'auto' && row.preset === 'price_under') f.push(`<div class="field"><label for="f-max">Price limit (£)</label><input type="number" id="f-max" min="1" max="500" step="0.5" value="${escHtml((val(row, 'params') || {}).max)}"></div>`);
   if (source === 'auto' && row.preset === 'new_in') f.push(`<div class="field"><label for="f-days">Counts as new for (days)</label><input type="number" id="f-days" min="1" max="365" value="${escHtml((val(row, 'params') || {}).days)}"><div class="count">Only products with a real publication date (published from now on).</div></div>`);
-  f.push(`<div class="field"><span class="label">Pictures</span><div class="imgs">${['card_image', 'banner_image', 'banner_image_mobile'].map(k => {
+  g2.push(`<div class="field"><span class="label">Pictures</span><div class="imgs">${['card_image', 'banner_image', 'banner_image_mobile'].map(k => {
     const u = val(row, k); const lbl = { card_image: 'Card (homepage, menus)', banner_image: 'Banner (desktop)', banner_image_mobile: 'Banner (phone)' }[k];
     return `<div class="imgbox" data-img="${k}">${u ? `<img src="${escHtml(u)}" alt="">` : ''}<div>${lbl}</div><input type="file" accept="image/jpeg,image/png,image/webp" data-upload="${k}">${u ? `<button class="banner-clear" data-clear="${k}">Remove</button>` : ''}</div>`; }).join('')}</div></div>`);
-  f.push(`<div class="row2"><div class="field"><label><input type="checkbox" id="f-home" ${val(row, 'show_on_homepage') ? 'checked' : ''}> Show on the homepage</label></div><div class="field"><label for="f-homeorder">Homepage position</label><input type="number" id="f-homeorder" min="1" max="99" value="${escHtml(val(row, 'homepage_order') ?? '')}"></div></div>`);
+  g2.push(`<div class="row2"><div class="field"><label><input type="checkbox" id="f-home" ${val(row, 'show_on_homepage') ? 'checked' : ''}> Show on the homepage</label></div><div class="field"><label for="f-homeorder">Homepage position</label><input type="number" id="f-homeorder" min="1" max="99" value="${escHtml(val(row, 'homepage_order') ?? '')}"></div></div>`);
   f.push(`<div class="field"><span class="label">Season: only show in these months (none ticked = all year)</span><div class="months">${MONTHS.map((m, i) => `<label><input type="checkbox" class="f-month" value="${i + 1}" ${months.includes(i + 1) ? 'checked' : ''}>${m}</label>`).join('')}</div>${source === 'auto' && row.preset === 'christmas_gifts' ? '<div class="count">Left empty, this page shows from 1 Oct to 25 Dec.</div>' : ''}</div>`);
-  f.push(`<div class="field"><label for="f-seot">Search title (optional)</label><input type="text" id="f-seot" maxlength="70" value="${escHtml(val(row, 'seo_title') || '')}"></div>`);
-  f.push(`<div class="field"><label for="f-seod">Search description (optional)</label><textarea id="f-seod" maxlength="160">${escHtml(val(row, 'seo_description') || '')}</textarea></div>`);
-  document.getElementById('ed-fields').innerHTML = f.join('');
+  g3.push(`<div class="field"><label for="f-seot">Search title (optional)</label><input type="text" id="f-seot" maxlength="70" value="${escHtml(val(row, 'seo_title') || '')}"></div>`);
+  g3.push(`<div class="field"><label for="f-seod">Search description (optional)</label><textarea id="f-seod" maxlength="160">${escHtml(val(row, 'seo_description') || '')}</textarea></div>`);
+  const pics = ['card_image', 'banner_image', 'banner_image_mobile'].filter(k => val(row, k)).length;
+  const hint2 = [val(row, 'show_on_homepage') ? 'on the homepage' + (val(row, 'homepage_order') ? ' (position ' + val(row, 'homepage_order') + ')' : '') : 'not on the homepage', pics + ' of 3 pictures'].join(' · ');
+  const hint3 = val(row, 'seo_title') || val(row, 'seo_description') ? 'set' : 'not set (the name and description are used)';
+  document.getElementById('ed-fields').innerHTML = grp('details', 'Details', 'name, status, description' + (source === 'auto' ? ', rule' : '') + ', season', f.join(''))
+    + grp('pictures', 'Pictures & homepage', hint2, g2.join(''));
+  document.getElementById('ed-seo').innerHTML = grp('seo', 'Search (SEO)', hint3, g3.join(''));
   document.querySelectorAll('[data-upload]').forEach(inp => inp.addEventListener('change', () => uploadImage(inp.dataset.upload, inp.files[0])));
   document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', () => saveFields({ [b.dataset.clear]: null })));
-  document.getElementById('ed-products').innerHTML = source === 'collection' ? productsSection() : `<div class="section"><h3>Products</h3><p class="help">${source === 'auto' ? 'Filled automatically: ' + escHtml(ruleText(row, val(row, 'params') || {})) + '.' : 'Every product whose type is ' + escHtml(row.product_type) + '.'} ${row.count} showing now${row.draft && row.countWithDraft !== row.count ? `, <b>${row.countWithDraft} after publish</b>` : ''}.</p></div>`;
+  document.getElementById('ed-products').innerHTML = source === 'collection' ? productsSection() : grp('products', 'Products', row.count + ' showing now', `<div class="section"><p class="help">${source === 'auto' ? 'Filled automatically: ' + escHtml(ruleText(row, val(row, 'params') || {})) + '.' : 'Every product whose type is ' + escHtml(row.product_type) + '.'} ${row.count} showing now${row.draft && row.countWithDraft !== row.count ? `, <b>${row.countWithDraft} after publish</b>` : ''}.</p></div>`);
   if (source === 'collection') wireProducts();
   document.getElementById('ed-discard').disabled = !row.draft;
   document.getElementById('editor-wrap').hidden = false;
   document.getElementById('f-name').focus();
 }
+// Collapsible groups in the editor. Which ones are open is remembered while the page is open (saving re-draws the editor).
+const grpOpen = { details: true, pictures: false, seo: false, products: true };
+function grp(id, title, hint, body) {
+  return `<details class="grp" data-grp="${id}" ${grpOpen[id] ? 'open' : ''}><summary>${escHtml(title)} <span class="hint">${escHtml(hint)}</span></summary><div class="grp-body">${body}</div></details>`;
+}
+document.getElementById('editor-wrap').addEventListener('toggle', e => { if (e.target.matches && e.target.matches('details.grp')) grpOpen[e.target.dataset.grp] = e.target.open; }, true);
 function closeEditor() { document.getElementById('editor-wrap').hidden = true; current = null; }
 document.getElementById('ed-close').addEventListener('click', closeEditor);
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && current) closeEditor(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!document.getElementById('mainpick').hidden) return document.getElementById('mp-cancel').click();
+  if (current) closeEditor();
+});
 
 function collectFields() {
   const g = id => document.getElementById(id);
@@ -615,11 +658,41 @@ document.getElementById('ed-publish').addEventListener('click', async () => {
     await refresh();
     const row = rowFor(current.source, current.key);
     const removingMain = current.source === 'collection' && (((row.draft || {}).members || {}).remove || []).filter(id => (products.find(p => p.id === id) || {}).mainCollectionId === row.id);
-    if (removingMain && removingMain.length && !confirm(`${removingMain.length} product(s) have "${row.name}" as their main collection (${removingMain.join(', ')}). Removing them also takes them out of this collection in the shop's filters. Publish anyway?`)) return;
-    const s = await api(`/staff-collections/${current.source}/${encodeURIComponent(current.key)}/publish`, { method: 'POST' });
-    await reopen(`Published.${s.added ? ' ' + s.added + ' product(s) added.' : ''}${s.removed ? ' ' + s.removed + ' removed.' : ''}`);
+    let replaceMain = {};
+    if (removingMain && removingMain.length) {
+      replaceMain = await chooseMains(row, removingMain); // safeguard: nothing is published unless confirmed here
+      if (!replaceMain) return showMsg('ed-msg', 'Not published. Your draft is unchanged.', 'ok');
+    }
+    const s = await api(`/staff-collections/${current.source}/${encodeURIComponent(current.key)}/publish`, { method: 'POST', body: JSON.stringify({ replaceMain }) });
+    await reopen(`Published.${s.added ? ' ' + s.added + ' product(s) added.' : ''}${s.removed ? ' ' + s.removed + ' removed.' : ''}${(s.mainReplaced || []).length ? ' New main collection for ' + s.mainReplaced.map(r => r.id + ' → ' + r.to).join(', ') + '.' : ''}${(s.mainCleared || []).length ? ' No main collection now: ' + s.mainCleared.join(', ') + '.' : ''}`);
   } catch (e) { showMsg('ed-msg', e.message, 'error'); }
 });
+// Products leaving their MAIN collection: pick a new main for each (its other collections first), or none.
+// Resolves to { productId: collectionId | null }, or null if cancelled.
+function chooseMains(row, ids) {
+  const wrap = document.getElementById('mainpick');
+  const others = data.collections.filter(c => c.id !== row.id && c.status !== 'archived');
+  document.getElementById('mp-help').textContent = `${ids.length === 1 ? 'This product has' : 'These products have'} "${row.name}" as their main collection: the one the shop's filters, n8n and the auto-poster use. Choose where each one goes. "No main collection" keeps it on sale but in no collection filter.`;
+  document.getElementById('mp-rows').innerHTML = ids.map(id => {
+    const p = products.find(x => x.id === id) || { id, title: id, extraCollectionIds: [] };
+    const mine = others.filter(c => p.extraCollectionIds.includes(c.id)), rest = others.filter(c => !p.extraCollectionIds.includes(c.id));
+    return `<div class="mp-row"><b>${escHtml(p.title)}</b><span class="meta">${escHtml(id)}</span>
+      <select data-mp="${escHtml(id)}" aria-label="New main collection for ${escHtml(p.title)}">
+        ${mine.length ? `<optgroup label="Collections it is already in">${mine.map((c, i) => `<option value="${c.id}" ${i === 0 ? 'selected' : ''}>${escHtml(c.name)}</option>`).join('')}</optgroup>` : ''}
+        <option value="" ${mine.length ? '' : 'selected'}>No main collection</option>
+        <optgroup label="Other collections">${rest.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('')}</optgroup>
+      </select></div>`;
+  }).join('');
+  wrap.hidden = false;
+  return new Promise(resolve => {
+    const done = v => { wrap.hidden = true; ok.removeEventListener('click', onOk); cancel.removeEventListener('click', onCancel); resolve(v); };
+    const ok = document.getElementById('mp-ok'), cancel = document.getElementById('mp-cancel');
+    const onOk = () => done(Object.fromEntries([...document.querySelectorAll('[data-mp]')].map(s => [s.dataset.mp, s.value ? Number(s.value) : null])));
+    const onCancel = () => done(null);
+    ok.addEventListener('click', onOk); cancel.addEventListener('click', onCancel);
+    ok.focus();
+  });
+}
 document.getElementById('ed-discard').addEventListener('click', async () => {
   if (!confirm('Throw away the unpublished changes?')) return;
   try { await api(`/staff-collections/${current.source}/${encodeURIComponent(current.key)}/discard`, { method: 'POST' }); await reopen('Changes discarded.'); }
@@ -651,14 +724,14 @@ function productsSection() {
   const types = [...new Set(products.map(p => p.type).filter(Boolean))].sort();
   const cols = data.collections.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
   const n = membersOf(row).filter(m => m.state !== 'remove').length;
-  return `<div class="section"><h3>Products in this collection (${n}${row.draft && (row.draft.members || {}).add ? ' incl. unpublished' : ''})</h3>
+  return grp('products', 'Products', `${n} in this collection${row.draft && (row.draft.members || {}).add ? ' (incl. unpublished)' : ''}`, `<div class="section">
     <p class="help">Drag to set the order. Tick and remove in bulk. <span class="tag">main</span> = this is the product's main collection (the one the shop's filters, n8n and the auto-poster use).</p>
     <div class="tools"><button class="btn btn-ghost" id="m-all">Tick all</button><button class="btn btn-danger" id="m-remove">Remove ticked</button><button class="btn btn-ghost" id="m-order">Save this order</button></div>
     <ul class="members" id="m-list">${membersOf(row).map(({ p, state, main }) => `<li data-id="${escHtml(p.id)}" class="${state ? 'pending-' + state : ''}"><span class="drag-handle">⠿</span><input type="checkbox" class="m-tick" value="${escHtml(p.id)}"><img src="${escHtml(imgUrl(p.image))}" alt="" loading="lazy"><span class="t">${escHtml(p.title)}<br><span class="meta">${escHtml(p.id)} · ${escHtml(p.type)}${!main && p.mainCollection ? ' · main: ' + escHtml(p.mainCollection) : ''}${p.extraCollectionIds.filter(id => id !== row.id).length ? ' · +' + p.extraCollectionIds.filter(id => id !== row.id).length + ' more' : ''}</span></span>${main ? '<span class="tag">main</span>' : ''}${!p.sellable ? '<span class="tag warn">not on sale now</span>' : ''}${state === 'add' ? '<span class="tag">to add</span>' : state === 'remove' ? '<span class="tag warn">to remove</span>' : ''}</li>`).join('') || '<li>No products yet.</li>'}</ul>
     <h3 style="margin-top:16px">Add products</h3>
     <div class="tools"><input type="search" id="p-q" placeholder="Search…"><select id="p-type"><option value="">All types</option>${types.map(t => `<option>${escHtml(t)}</option>`).join('')}</select><select id="p-col"><option value="">From any collection</option>${cols}</select></div>
     <div class="tools"><button class="btn btn-ghost" id="p-all">Tick all shown</button><button class="btn btn-teal" id="p-add">Add ticked</button><span class="meta" id="p-count"></span></div>
-    <ul class="picker" id="p-list"></ul></div>`;
+    <ul class="picker" id="p-list"></ul></div>`);
 }
 function wireProducts() {
   const row = current.row;

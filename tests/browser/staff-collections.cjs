@@ -105,6 +105,10 @@ async function wire(ctx) {
 
   // 3. Description, homepage, then Preview (opens the draft page; the shop is unchanged).
   await page.fill('#f-desc', 'Gifts for bikers and anyone who loves the open road.');
+  // The editor is grouped; Pictures & homepage and Search start closed.
+  const groups = await page.$$eval('#editor-wrap details.grp', d => d.map(x => x.dataset.grp + ':' + (x.open ? 'open' : 'closed')));
+  check(groups.join() === 'details:open,pictures:closed,products:open,seo:closed', 'editor grouped: Details, Pictures & homepage, Products, Search (SEO)', groups.join());
+  await page.click('details.grp[data-grp="pictures"] > summary');
   await page.check('#f-home');
   await page.fill('#f-homeorder', '3');
   const [popup] = await Promise.all([page.waitForEvent('popup'), page.click('#ed-preview')]);
@@ -149,6 +153,29 @@ async function wire(ctx) {
   await page.waitForFunction(() => /Published/.test(document.getElementById('ed-msg').textContent));
   const afterRemove = cardIds((await get('/collection-page/motorcycling')).text);
   check(afterRemove.length === want.length - 1 && !afterRemove.includes(newOrder[0]), 'bulk remove published');
+
+  // 6b. Removing a product from its MAIN collection: the safeguard dialog. Cancel publishes nothing; then publish with
+  //     a replacement main collection chosen.
+  await page.click('#ed-close');
+  const retroRow = (await json('/staff-collections')).result.collections.find(c => c.name === 'Retro Deal');
+  await page.click(`#list-collections .item[data-key="${retroRow.id}"]`);
+  const mover = await page.$eval('#m-list li[data-id] .tag', t => t.closest('li').dataset.id); // first product whose main is Retro Deal
+  await page.check(`.m-tick[value="${mover}"]`);
+  await page.click('#m-remove'); await page.waitForSelector('#m-list li.pending-remove');
+  await page.click('#ed-publish'); await page.waitForSelector('#mainpick:not([hidden])');
+  const dlg = await page.evaluate(id => ({ def: document.querySelector(`[data-mp="${id}"]`).value, n: document.querySelectorAll('[data-mp]').length }), mover);
+  await page.click('#mp-cancel');
+  const prodAfterCancel = (await json('/staff-collections/products')).result.find(p => p.id === mover);
+  check(dlg.n === 1 && prodAfterCancel.mainCollection === 'Retro Deal' && (await json('/staff-collections')).result.collections.find(c => c.id === retroRow.id).draft,
+    'removing a product from its main collection asks first; Cancel publishes nothing and keeps the draft', JSON.stringify(dlg));
+  await page.click('#ed-publish'); await page.waitForSelector('#mainpick:not([hidden])');
+  await page.selectOption(`[data-mp="${mover}"]`, String(mrow.id));
+  await page.click('#mp-ok');
+  await page.waitForFunction(() => /Published/.test(document.getElementById('ed-msg').textContent));
+  const moved = (await json('/staff-collections/products')).result.find(p => p.id === mover);
+  const motoIds = await get('/collection-page/motorcycling').then(r => cardIds(r.text)), retroIds = await get('/collection-page/retro-deal').then(r => cardIds(r.text));
+  check(moved.mainCollection === 'Motorcycling' && moved.mainCollectionId === mrow.id && motoIds.includes(mover) && !retroIds.includes(mover),
+    `replacement main collection: ${mover} moved from Retro Deal to Motorcycling (store filter, n8n and auto-poster follow it)`, JSON.stringify(moved));
 
   // 7. A product in several collections, from the product side (#product=ID, as linked from Listings).
   const pid = afterRemove[0];
