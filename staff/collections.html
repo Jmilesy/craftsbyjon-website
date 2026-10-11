@@ -457,9 +457,14 @@ async function start() {
   products = await api('/staff-collections/products');
   document.getElementById('new-group').innerHTML = data.navGroups.map(g => `<option>${escHtml(g)}</option>`).join('');
   renderLists();
-  const m = location.hash.match(/^#product=(.+)$/);
-  if (m) { switchTab('lookup'); openProduct(decodeURIComponent(m[1])); }
+  openFromHash();
 }
+// #product=ID (the link from Listings) opens that product's collections, also when the page is already open.
+function openFromHash() {
+  const m = location.hash.match(/^#product=(.+)$/);
+  if (m && data) { switchTab('lookup'); openProduct(decodeURIComponent(m[1])); }
+}
+window.addEventListener('hashchange', openFromHash);
 async function refresh() { data = await api('/staff-collections'); products = await api('/staff-collections/products'); renderLists(); }
 
 function switchTab(name) {
