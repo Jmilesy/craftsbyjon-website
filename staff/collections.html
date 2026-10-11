@@ -310,6 +310,10 @@
     .item:hover { border-color: var(--teal-hover); }
     .item .col-name { flex: 1 1 200px; }
     .item .meta { font-size: 0.78rem; color: var(--text-soft); }
+    .qty { display: inline-flex; flex-direction: column; align-items: flex-end; min-width: 92px; line-height: 1.15; font-size: 0.8rem; color: var(--text-soft); }
+    .qty b { font-size: 1.15rem; color: var(--text); }
+    .qty .next { color: #b9770e; font-weight: 600; }
+    @media (max-width: 560px) { .item { padding: 12px 14px; } .item .col-name { flex-basis: 60%; } .item .meta { flex-basis: 100%; order: 3; } .qty { align-items: flex-start; } }
     .badge-hidden { background: #eceff1; color: #546e7a; }
     .badge-draft { background: #ede7f6; color: #5e35b1; }
     .badge-changes { background: #fff3cd; color: #8a6100; }
@@ -476,11 +480,16 @@ function itemHTML(row, source) {
   const key = source === 'collection' ? row.id : row.key;
   const season = row.season_months ? ' · ' + row.season_months.split(',').map(m => MONTHS[m - 1]).join(' ') : '';
   const extra = source === 'collection' ? ` · ${row.mainProducts} main + ${row.extraProducts} extra` : source === 'auto' ? ` · rule: ${escHtml(ruleText(row))}` : '';
+  // Number of products: everything assigned (collections) and how many the shop is showing now.
+  const total = source === 'collection' ? row.mainProducts + row.extraProducts : row.count;
+  const next = row.draft && row.countWithDraft !== row.count ? `<span class="next">${row.countWithDraft} after publish</span>` : '';
+  const qty = `<span class="qty" title="${source === 'collection' ? 'Products assigned to this collection, and how many the shop shows now (Ready to Go, on sale, not sold out)' : 'Products the shop shows on this page now'}"><span><b>${total}</b> product${total === 1 ? '' : 's'}</span>${source === 'collection' && total !== row.count ? `<span>${row.count} on sale now</span>` : ''}${next}</span>`;
   return `<div class="item" data-source="${source}" data-key="${escHtml(key)}">
     ${source === 'collection' ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : ''}
     <span class="col-name">${escHtml(row.name)}</span>
-    <span class="meta">/collections/${escHtml(row.slug || '')} · ${row.count} shown${extra}${season}${source === 'collection' ? ' · ' + escHtml(row.nav_group || '') : ''}</span>
+    <span class="meta">/collections/${escHtml(row.slug || '')}${extra}${season}${source === 'collection' ? ' · ' + escHtml(row.nav_group || '') : ''}</span>
     <span>${badges(row)}</span>
+    ${qty}
   </div>`;
 }
 function ruleText(row) {
@@ -637,7 +646,8 @@ function productsSection() {
   const row = current.row;
   const types = [...new Set(products.map(p => p.type).filter(Boolean))].sort();
   const cols = data.collections.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
-  return `<div class="section"><h3>Products in this collection</h3>
+  const n = membersOf(row).filter(m => m.state !== 'remove').length;
+  return `<div class="section"><h3>Products in this collection (${n}${row.draft && (row.draft.members || {}).add ? ' incl. unpublished' : ''})</h3>
     <p class="help">Drag to set the order. Tick and remove in bulk. <span class="tag">main</span> = this is the product's main collection (the one the shop's filters, n8n and the auto-poster use).</p>
     <div class="tools"><button class="btn btn-ghost" id="m-all">Tick all</button><button class="btn btn-danger" id="m-remove">Remove ticked</button><button class="btn btn-ghost" id="m-order">Save this order</button></div>
     <ul class="members" id="m-list">${membersOf(row).map(({ p, state, main }) => `<li data-id="${escHtml(p.id)}" class="${state ? 'pending-' + state : ''}"><span class="drag-handle">⠿</span><input type="checkbox" class="m-tick" value="${escHtml(p.id)}"><img src="${escHtml(imgUrl(p.image))}" alt="" loading="lazy"><span class="t">${escHtml(p.title)}<br><span class="meta">${escHtml(p.id)} · ${escHtml(p.type)}</span></span>${main ? '<span class="tag">main</span>' : ''}${!p.sellable ? '<span class="tag warn">not on sale now</span>' : ''}${state === 'add' ? '<span class="tag">to add</span>' : state === 'remove' ? '<span class="tag warn">to remove</span>' : ''}</li>`).join('') || '<li>No products yet.</li>'}</ul>

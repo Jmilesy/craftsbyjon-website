@@ -125,6 +125,13 @@ async function wire(ctx) {
   const mrow = (await json('/staff-collections')).result.collections.find(c => c.name === 'Motorcycling');
   check(mrow.status === 'live' && !mrow.draft && mrow.published_at, 'published as Live, no draft left', JSON.stringify({ s: mrow.status, d: !!mrow.draft }));
 
+  // 4b. The list shows how many products each collection has (assigned, and on sale now).
+  await page.waitForFunction(id => document.querySelector(`#list-collections .item[data-key="${id}"] .qty b`), mrow.id);
+  const qtys = await page.$$eval('#list-collections .item', l => l.map(i => ({ key: i.dataset.key, n: Number((i.querySelector('.qty b') || {}).textContent) })));
+  const ovNow = (await json('/staff-collections')).result.collections;
+  check(qtys.length === ovNow.length && qtys.every(q => { const r = ovNow.find(c => String(c.id) === q.key); return r && q.n === r.mainProducts + r.extraProducts; }) && qtys.find(q => q.key === String(mrow.id)).n === want.length,
+    'product count shown on every collection (Motorcycling: ' + want.length + ')', JSON.stringify(qtys));
+
   // 5. Reorder products: move the last to the top, Save this order, Publish.
   await page.evaluate(() => { const ul = document.getElementById('m-list'); ul.insertBefore(ul.lastElementChild, ul.firstElementChild); });
   const newOrder = await page.$$eval('#m-list li[data-id]', l => l.map(x => x.dataset.id));
