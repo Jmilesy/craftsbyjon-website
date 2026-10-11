@@ -598,7 +598,7 @@ document.getElementById('ed-publish').addEventListener('click', async () => {
   const f = collectFields();
   try {
     if (Object.keys(f).length) await api(`/staff-collections/${current.source}/${encodeURIComponent(current.key)}/draft`, { method: 'PATCH', body: JSON.stringify({ fields: f }) });
-    const d = (await api('/staff-collections')).collections.concat(data.auto, data.types);
+    await refresh();
     const row = rowFor(current.source, current.key);
     const removingMain = current.source === 'collection' && (((row.draft || {}).members || {}).remove || []).filter(id => (products.find(p => p.id === id) || {}).mainCollectionId === row.id);
     if (removingMain && removingMain.length && !confirm(`${removingMain.length} product(s) have "${row.name}" as their main collection (${removingMain.join(', ')}). Removing them also takes them out of this collection in the shop's filters. Publish anyway?`)) return;
