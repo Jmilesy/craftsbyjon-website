@@ -1,0 +1,1 @@
+../../store/collection-page.js
