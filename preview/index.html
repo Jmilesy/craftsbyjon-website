@@ -9,13 +9,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/preview.css?v=2">
+  <link rel="stylesheet" href="assets/preview.css?v=3">
 </head>
 <body>
 <div class="pv-ribbon">Design preview for Jon. Not the live shop. Nothing here can be bought, and nothing here is tracked.</div>
 <main class="wrap rv">
   <h1>Storefront mockups</h1>
   <p style="font-size:17px;color:var(--ink-2);max-width:62ch;margin:0">Clickable mockups of the three main pages, built on a read-only copy of the real catalogue (91 live products, real photos, real prices). Open them on your phone first: that's where most visitors are.</p>
+
+  <div class="rv-note" style="background:var(--sea-soft)">
+    <h3>Round 3: pictures follow the options (11 Oct)</h3>
+    <p style="margin:0 0 8px">Try: <a class="link" href="product.html?id=pod-t-shirt-pier">Pier t-shirt</a> (colours), <a class="link" href="product.html?id=totebag002">Deal Castle tote</a> (colour and text), <a class="link" href="product.html?id=pod-print-deal-castle">Deal Castle print</a> (frame, size, text), <a class="link" href="product.html?id=keyring-001">Bee keyring</a> (Clear/Black), and the "Options" button on any card in <a class="link" href="collection.html?c=retro-deal">Retro Deal</a> for the quick view.</p>
+    <ul style="margin:0;padding-left:18px">
+      <li><b>Nothing rebuilt.</b> Prints use the live <code>print-picker.js</code> (your 30 Sep fallback order), totes the live <code>tote-picker.js</code>. The t-shirt colour gallery and the Clear/Black photo rules, which lived only inside the live modal, moved into one small shared file, <code>store/variant-images.js</code>, with 11 tests. The full page and the quick view both use it.</li>
+      <li><b>Existing photos only:</b> the Gelato per-colour galleries (<code>pod_gallery_images</code>), the print galleries (<code>pod_variant_gallery</code>), the tote option photos (<code>product_variants.image_url</code>) and the Black acrylic photos (<code>variant_images</code>). Coverage is very good: all 5 colours on all 8 tees, all 80 tote options, 364 of 368 print options, 9 of 10 Black keyrings.</li>
+      <li><b>Never a misleading photo.</b> Where there's no exact photo, a short yellow note under the picture says what's shown instead. That happens in exactly two places today: four prints, white frame, 30 cm, without text ("No photo of this one without the DEAL · KENT text yet, so this shows it with the text"), and <a class="link" href="product.html?id=keyring-009">keyring-009</a> in Black. The live shop shows those silently.</li>
+      <li><b>Instant, no reload,</b> and it stays on the same kind of shot: look at "worn by a man" in navy, switch to sand, and you're looking at "worn by a man" in sand.</li>
+      <li><b>Looking at pictures never changes a choice.</b> Swiping, dots and thumbnails only move the picture. (In the live modal, tapping a Clear/Black thumbnail changes the finish.)</li>
+      <li><b>Only real combinations.</b> Sizes follow the frame (a 25 cm print only comes unframed), texts follow the tote colour. A size the new frame doesn't come in is cleared, not kept.</li>
+      <li><b>The basket gets the exact variant</b>: the variant row (and its Gelato id) for the chosen options, its own price (prints by size), and the photo of what was chosen on the basket line.</li>
+      <li><b>Fails safe:</b> if the picker files can't load, products with choices show "Options are not available right now" instead of letting someone add an unspecified item, as the live modal does.</li>
+      <li><b>Personalisation:</b> the photo-mug preview (<code>photo-personaliser.js</code>) is untouched. Name and message fields for acrylics and teacher mugs work as before.</li>
+    </ul>
+    <p style="margin:10px 0 0"><b>The live shop's product modal</b> (today's quick view) is not changed: nothing is deployed. When we build, it should switch to <code>store/variant-images.js</code> so it gets the notes and stops a thumbnail tap changing the Clear/Black choice. That's four small swaps in <code>store/index.html</code> (<code>selectPodColour</code>, <code>refreshPrintGallery</code>, <code>refreshToteGallery</code>, <code>selectVariant</code>/<code>swapModalImg</code>) and needs your OK as its own change.</p>
+  </div>
 
   <div class="rv-note" style="background:var(--leaf-soft)">
     <h3>Round 2: product page changes (11 Oct)</h3>

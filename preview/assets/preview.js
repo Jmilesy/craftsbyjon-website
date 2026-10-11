@@ -172,7 +172,8 @@
 
   // ---------- card ----------
   function card(p) {
-    var plus = !canQuickAdd(p) ? '' :
+    var plus = !canQuickAdd(p)
+      ? '<button class="qv-btn" type="button" data-quickview="' + esc(p.id) + '" aria-label="Choose options for ' + esc(name(p)) + '">Options</button>' :
       '<button class="icon-btn" style="position:absolute;right:8px;top:8px;background:#fff;width:38px;height:38px;box-shadow:var(--shadow)" aria-label="Add ' + esc(name(p)) + ' to basket" data-quickadd="' + esc(p.id) + '">' + ICON.plus + '</button>';
     var low = p.stockLeft != null && p.stockLeft < 2 ? '<span class="low">' + p.stockLeft + ' left</span>' : '';
     return '<div class="card"><a class="card-a" href="product.html?id=' + encodeURIComponent(p.id) + '">'
@@ -234,6 +235,7 @@
       + '<div class="sheet search-sheet" id="sh-search" role="dialog" aria-label="Search"><div class="search-bar"><input id="q" type="search" placeholder="Search mugs, Deal, teacher, bee..." autocomplete="off" aria-label="Search the shop"><button class="icon-btn" data-close aria-label="Close search">' + ICON.close + '</button></div><div class="search-results" id="sr"></div></div>'
       // basket
       + '<aside class="sheet sheet-right" id="sh-basket" aria-label="Basket"><div class="sheet-head"><h2>Your basket</h2><button class="icon-btn" data-close aria-label="Close">' + ICON.close + '</button></div><div class="sheet-body" id="bk"></div></aside>'
+      + '<div class="sheet sheet-bottom qv-sheet" id="sh-quick" role="dialog" aria-modal="true" aria-label="Quick view"><div class="sheet-head"><span class="eyebrow" style="margin:0">Quick view</span><button class="icon-btn" data-close aria-label="Close quick view">' + ICON.close + '</button></div><div class="sheet-body" id="qvBody"></div></div>'
       + '<div class="added" id="added" role="status"></div>'
     );
 
@@ -246,9 +248,18 @@
       + '</div></footer>');
 
     var scrim = $('#scrim');
-    function closeAll() { document.querySelectorAll('.sheet.on').forEach(function (s) { s.classList.remove('on'); }); scrim.classList.remove('on'); document.body.style.overflow = ''; }
+    var opener = null;
+    function closeAll() {
+      var was = document.querySelector('.sheet.on');
+      document.querySelectorAll('.sheet.on').forEach(function (s) { s.classList.remove('on'); }); scrim.classList.remove('on'); document.body.style.overflow = '';
+      if (was && was.id === 'sh-quick') setTimeout(function () { $('#qvBody').innerHTML = ''; }, 250);
+      if (was && opener && document.contains(opener)) opener.focus({ preventScroll: true });
+      opener = null;
+    }
     function open(name) {
+      var from = document.activeElement;
       closeAll();
+      opener = from;
       var s = $('#sh-' + name); if (!s) return;
       s.classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden';
       if (name === 'search') { renderSearch(''); setTimeout(function () { $('#q').focus(); }, 60); }
@@ -258,6 +269,8 @@
     document.addEventListener('click', function (e) {
       var o = e.target.closest('[data-open]'); if (o) { e.preventDefault(); open(o.getAttribute('data-open')); return; }
       if (e.target.closest('[data-close]') || e.target === scrim) { closeAll(); return; }
+      var qv = e.target.closest('[data-quickview]');
+      if (qv) { e.preventDefault(); e.stopPropagation(); openQuickView(byId[qv.getAttribute('data-quickview')]); return; }
       var qa = e.target.closest('[data-quickadd]');
       if (qa) {
         e.preventDefault(); e.stopPropagation();
@@ -335,7 +348,7 @@
       sub += l.unit * l.qty;
       if (p.made === 'handmade' && !l.pers) acrylic += l.qty;
       var o = Object.keys(l.opts).filter(function (k) { return k.indexOf('__') !== 0; }).map(function (k) { return esc(l.opts[k]); }).join(', ');
-      return '<div class="bk-line">' + img(p.image, 400, '') + '<div><div class="t">' + esc(name(p)) + '</div><div class="o">' + (o || '') + (l.pers ? (o ? ' · ' : '') + '"' + esc(l.pers) + '"' : '') + '</div>'
+      return '<div class="bk-line">' + img(l.opts.__image || p.image, 400, '') + '<div><div class="t">' + esc(name(p)) + '</div><div class="o">' + (o || '') + (l.pers ? (o ? ' · ' : '') + '"' + esc(l.pers) + '"' : '') + '</div>'
         + '<div class="qty"><button data-q="' + i + '" data-d="-1" aria-label="One fewer">−</button><span>' + l.qty + '</span><button data-q="' + i + '" data-d="1" aria-label="One more">+</button></div></div><div style="font-weight:800">' + money(l.unit * l.qty) + '</div></div>';
     }).join('');
     var bundle = Math.floor(acrylic / 3) * (3 * 3.5 - 10);
@@ -525,158 +538,226 @@
     }[t.type] || '';
   }
 
-  function productPage() {
-    var id = q('id') || 'mug-005';
-    var p = byId[id];
-    var m = $('#main');
-    if (!p) {
-      m.innerHTML = '<div class="wrap empty"><h1 style="font-size:28px;margin:30px 0 10px">That one isn\'t in the shop any more.</h1><p>It might be sold out or retired. Here are some similar things.</p><div class="grid" style="margin-top:18px">' + PICKS.slice(0, 4).map(function (x) { return card(byId[x]); }).join('') + '</div></div>';
-      return;
+  // ---------- product: one component for the full page and the quick view ----------
+  // Pictures and the exact variant come from store/variant-images.js (which uses the live print and tote pickers),
+  // so both places follow the same rules. Browsing the pictures never changes a choice; changing a choice swaps the
+  // pictures straight away and stays on the same kind of shot (e.g. "worn by a man") when the new set has one.
+  var uid = 0;
+  function optionModel(p, d) {
+    var V = window.CBJVariantImages, input = { vars: d.vars || [], podGallery: d.podGallery, printGallery: d.printGallery, finishes: d.finishes, finishImages: d.variantImages, defaults: (d.defaults && d.defaults.length ? d.defaults : [p.image]) };
+    // If the picker scripts didn't load, a product with choices must not fall back to "no options".
+    var hasChoices = (input.vars || []).length > 1 || (input.finishes || []).length > 1;
+    var kind = V && window.CBJPrint && window.CBJTote ? V.kindOf(input) : (hasChoices ? 'unavailable' : 'single');
+    input.kind = kind;
+    var vs = input.vars, groups = [], choice = {};
+    function vals(n, name) { var seen = []; vs.forEach(function (v) { if (v['option' + n + '_name'] === name && seen.indexOf(v['option' + n + '_value']) === -1) seen.push(v['option' + n + '_value']); }); return seen; }
+    if (kind === 'print') {
+      groups = [{ k: 'Frame', values: function () { return CBJPrint.frames(vs); }, label: CBJPrint.frameLabel },
+                { k: 'Size', values: function (c) { return CBJPrint.sizes(vs, c.Frame); } },
+                { k: 'Text', values: function () { return CBJPrint.texts(vs); }, label: CBJPrint.textLabel }];
+      var fr = CBJPrint.frames(vs), tx = CBJPrint.texts(vs);
+      choice.Frame = fr.indexOf('None') >= 0 ? 'None' : fr[0]; choice.Text = tx.indexOf('Yes') >= 0 ? 'Yes' : tx[0];
+    } else if (kind === 'tote') {
+      groups = [{ k: 'Colour', values: function () { return CBJTote.colours(vs); } },
+                { k: 'Text', values: function (c) { return CBJTote.texts(vs, c.Colour); }, label: CBJTote.textLabel }];
+      var cs = CBJTote.colours(vs); choice.Colour = cs.indexOf('Natural Raw') >= 0 ? 'Natural Raw' : cs[0];
+      var ts = CBJTote.texts(vs, choice.Colour); choice.Text = ts.indexOf('No') >= 0 ? 'No' : ts[0];
+    } else if (kind === 'apparel') {
+      var withSize = vs.some(function (v) { return v.option2_name === 'Size'; });
+      groups = [{ k: 'Colour', values: function () { return vals(1, 'Colour'); } }];
+      if (withSize) groups.push({ k: 'Size', values: function (c) {
+        return vs.filter(function (v) { return v.option1_value === c.Colour; }).map(function (v) { return v.option2_value; })
+          .sort(function (a, b) { return SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b); });
+      } });
+      choice.Colour = vals(1, 'Colour')[0];
+    } else if (kind === 'finish') {
+      groups = [{ k: 'Finish', values: function () { return d.finishes; } }];
     }
-    var d = data.details[id] || { images: [p.image], options: {}, bullets: [], description: '', variantImages: {} };
-    var col = primaryCollectionOf(p), typ = typeOf(p);
-    var images = d.images.length ? d.images.slice() : [p.image];
-    // The page <title>, meta description and Product JSON-LD keep the original catalogue title (server-rendered in the
-    // real build); only the visible heading uses the shorter display name.
-    document.title = p.title + ' | Crafts by Jon (preview)';
-    var choice = {};
-    var optNames = Object.keys(d.options).filter(function (k) { return d.options[k].length > 1; });
-    optNames.forEach(function (k) { if (k === 'Size' && p.type === 'T-Shirt') d.options[k].sort(function (a, b) { return SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b); }); });
-    // As in the live pickers: colour, frame and text start on their first choice; size and the Clear/Black finish
-    // are left for the customer to pick.
-    optNames.forEach(function (k) { if (k !== 'Size' && k !== 'Finish') choice[k] = d.options[k][0]; });
+    return { input: input, kind: kind, groups: groups, choice: choice };
+  }
+
+  function mountProduct(root, p, mode) {
+    var page = mode === 'page', V = window.CBJVariantImages, n = ++uid;
+    var d = data.details[p.id] || { options: {}, bullets: [], description: '', vars: [], defaults: [p.image] };
+    var mdl = optionModel(p, d), choice = mdl.choice;
     var isMugPers = p.type === 'Mug' && p.personalisable;
     var isAcrylicPers = p.made === 'handmade' && p.personalisable;
-
-    var siblings = data.catalogue.filter(function (x) { return p.designKey && x.designKey === p.designKey && x.id !== p.id; });
-    var seenTypes = {}; siblings = siblings.filter(function (x) { if (seenTypes[x.type]) return false; seenTypes[x.type] = 1; return true; });
-    var related = data.catalogue.filter(function (x) { return x.id !== p.id && x.collection === p.collection && siblings.indexOf(x) === -1; });
-    related = related.sort(function (a, b) { return (b.type === p.type) - (a.type === p.type); }).slice(0, 8);
-
-    // One place for how it's made and when it ships (was badge + box + delivery line, all saying the same thing).
+    var col = primaryCollectionOf(p), typ = typeOf(p);
     var fulfil = p.made === 'handmade'
       ? '<div class="fulfil hand">' + ICON.hand + '<div><b>Handmade by Jon in Deal</b><span>Ships within 1 to 2 business days, posted by me. Free UK postage over £10.</span></div></div>'
         + '<div class="fulfil-sub">Any 3 bookmarks or keyrings for £10, mix and match.</div>'
       : '<div class="fulfil print">' + ICON.van + '<div><b>Printed to order</b><span>Ships within 3 to 4 working days, straight from my print partner. Free UK postage over £10.</span></div></div>';
-    var made = p.made === 'handmade'
-      ? 'I apply the design to the acrylic, then cut, finish and pack it by hand at home in Deal, Kent.'
-      : 'My design, printed for you when you order and posted straight to you, so it doesn\'t pass through my hands.';
 
-    m.innerHTML = '<div class="wrap"><div class="pdp">'
-      + '<div><div class="gal"><div class="gal-main" id="galMain">' + images.map(function (u, i) {
-          return img(u, 800, altFor(p, u), i ? '' : ' fetchpriority="high"').replace(' loading="lazy"', i ? ' loading="lazy"' : '');
-        }).join('') + '</div>'
-      + (images.length > 1 ? '<div class="gal-dots" id="galDots" aria-hidden="true">' + images.map(function (u, i) { return '<i class="' + (i ? '' : 'on') + '"></i>'; }).join('') + '</div>'
-        + '<div class="gal-thumbs">' + images.map(function (u, i) { return '<button data-g="' + i + '" class="' + (i ? '' : 'on') + '" aria-label="Show picture ' + (i + 1) + ' of ' + images.length + ': ' + esc(altFor(p, u)) + '">' + img(u, 400, '') + '</button>'; }).join('') + '</div>' : '')
-      + '</div></div>'
-      + '<div class="pdp-info"><div id="buyZone">'
-      + '<nav class="crumbs" aria-label="Breadcrumb"><a href="home.html">Home</a>' + (col ? ' › <a href="' + collectionLink(col) + '">' + esc(col.name) + '</a>' : '') + (typ ? ' › <a href="' + typeLink(typ) + '">' + typ.name + '</a>' : '') + '</nav>'
-      + '<h1>' + esc(name(p)) + '</h1>'
-      + '<div class="price-row"><span class="price-big" id="price">' + money(d.priceFrom || p.price) + '</span>' + (p.stockLeft != null && p.stockLeft < 2 ? '<span class="low">' + p.stockLeft + ' left of this design</span>' : '') + '</div>'
-      + optNames.map(function (k) {
-          var vals = d.options[k];
-          var sw = k === 'Colour' && vals.every(function (v) { return SWATCH[v]; });
-          return '<div class="opt" data-opt="' + esc(k) + '" role="group" aria-labelledby="opt-' + esc(k) + '"><div class="opt-h" id="opt-' + esc(k) + '">' + esc(k) + ' <span data-sel>' + esc(choice[k] || 'Choose') + '</span></div><div class="opts">'
-            + vals.map(function (v) {
-                var on = choice[k] === v;
-                return sw ? '<button class="swatch' + (on ? ' on' : '') + '" style="background:' + SWATCH[v] + '" data-v="' + esc(v) + '" aria-label="' + esc(v) + '" aria-pressed="' + on + '"></button>'
-                  : '<button class="opt-btn' + (on ? ' on' : '') + '" data-v="' + esc(v) + '" aria-pressed="' + on + '">' + esc(k === 'Text' ? (v === 'Yes' ? 'With place name' : 'Design only') : v) + '</button>';
-              }).join('') + '</div>' + (k === 'Size' && p.type === 'T-Shirt' ? '<div class="field-note"><a class="link" href="#details">Size guide</a></div>' : '') + '</div>';
-        }).join('')
-      + (isAcrylicPers ? '<div class="opt"><label class="opt-h" for="pers">Add a name or message <span>optional, +£1.50</span></label><input class="field" id="pers" maxlength="30" placeholder="e.g. Miss Smith" aria-describedby="persN"><div class="field-note" id="persN">Up to 30 characters</div></div>' : '')
-      + (isMugPers ? '<div class="opt"><label class="opt-h" for="mugName">Name on the mug <span>up to 20 characters</span></label><input class="field" id="mugName" maxlength="20" placeholder="e.g. Miss Smith"></div>'
-          + '<div class="opt"><label class="opt-h" for="mugMsg">Message</label><select class="field" id="mugMsg">' + d.mugMessages.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select><div class="field-note">Text colour choice stays as it is in the live shop.</div></div>' : '')
-      + '<div class="buy"><button class="btn block" id="addBtn"></button></div>'
-      + fulfil
-      + '</div>'
-      + (col ? '<div class="fb-hint"><span>More from <b>' + esc(col.name) + '</b></span><a class="link" href="' + collectionLink(col) + '">See all ' + productsFor(col).length + '</a></div>' : '')
-      + (siblings.length ? '<div class="opt"><div class="opt-h">Love this design? Also on</div><div class="also">' + siblings.map(function (x) { return '<a href="product.html?id=' + encodeURIComponent(x.id) + '">' + img(x.image, 400, name(x)) + '<span>' + esc((typeOf(x) || {}).name || x.type) + '</span></a>'; }).join('') + '</div></div>' : '')
-      + '<details class="acc" open><summary>Description</summary><div class="in">' + esc(d.description || p.short).replace(/\n+/g, '<br><br>') + '</div></details>'
-      + '<details class="acc" id="details"><summary>Details</summary><div class="in"><ul>' + d.bullets.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + (d.material ? '<li>Material: ' + esc(d.material) + '</li>' : '') + '<li>' + made + '</li>' + (p.original ? '<li>Original design by Jon.</li>' : '') + '</ul></div></details>'
-      + '<details class="acc"><summary>Delivery & returns</summary><div class="in"><p style="margin-top:0">Royal Mail 2nd Class £1.55, 1st Class £3.30, free 2nd Class over £10. UK only.</p><p style="margin-bottom:0">You can change your mind within 14 days of receiving your order, except for personalised items. Faulty? I\'ll replace it or refund you in full. <a class="link" href="/terms.html#returns">Full terms</a></p></div></details>'
-      + '</div></div>'
-      + (related.length ? '<section class="sec"><div class="sec-h"><div><h2>You might also like</h2></div>' + (col ? '<a class="link" href="' + collectionLink(col) + '">See all</a>' : '') + '</div><div class="rail">' + related.map(card).join('') + '</div></section>' : '')
-      + '</div>'
-      + '<div class="sticky-buy" id="stickyBuy" role="region" aria-label="Quick add to basket" inert><div class="t"><b>' + esc(name(p)) + '</b><span id="stickyPrice"></span></div><button class="btn" id="stickyBtn" style="min-height:46px">Add to basket</button></div>';
+    var galHtml = '<div class="gal"><div class="gal-main" data-r="galMain"></div><div class="gal-dots" data-r="dots" aria-hidden="true"></div>'
+      + '<p class="gal-note" data-r="note" role="status" aria-live="polite" hidden></p><div class="gal-thumbs" data-r="thumbs"></div></div>';
+    var buyHtml = (page ? '<nav class="crumbs" aria-label="Breadcrumb"><a href="home.html">Home</a>' + (col ? ' › <a href="' + collectionLink(col) + '">' + esc(col.name) + '</a>' : '') + (typ ? ' › <a href="' + typeLink(typ) + '">' + typ.name + '</a>' : '') + '</nav>' : '')
+      + (page ? '<h1>' + esc(name(p)) + '</h1>' : '<h2 class="qv-title" id="qvt' + n + '">' + esc(name(p)) + '</h2>')
+      + '<div class="price-row"><span class="price-big" data-r="price"></span>' + (p.stockLeft != null && p.stockLeft < 2 ? '<span class="low">' + p.stockLeft + ' left of this design</span>' : '') + '</div>'
+      + '<div data-r="opts"></div>'
+      + (isAcrylicPers ? '<div class="opt"><label class="opt-h" for="pers' + n + '">Add a name or message <span>optional, +£1.50</span></label><input class="field" id="pers' + n + '" data-r="pers" maxlength="30" placeholder="e.g. Miss Smith" aria-describedby="persN' + n + '"><div class="field-note" id="persN' + n + '" data-r="persN">Up to 30 characters</div></div>' : '')
+      + (isMugPers ? '<div class="opt"><label class="opt-h" for="mugName' + n + '">Name on the mug <span>up to 20 characters</span></label><input class="field" id="mugName' + n + '" data-r="mugName" maxlength="20" placeholder="e.g. Miss Smith"></div>'
+          + '<div class="opt"><label class="opt-h" for="mugMsg' + n + '">Message</label><select class="field" id="mugMsg' + n + '" data-r="mugMsg">' + (d.mugMessages || []).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select><div class="field-note">Text colour choice stays as it is in the live shop.</div></div>' : '')
+      + '<div class="buy"><button class="btn block" data-r="add"></button></div>' + fulfil;
 
-    function price() {
-      var unit = d.priceFrom || p.price;
-      var pers = $('#pers') && $('#pers').value.trim();
-      if (pers) unit += PERS_UPLIFT;
-      return unit;
+    if (page) {
+      var siblings = data.catalogue.filter(function (x) { return p.designKey && x.designKey === p.designKey && x.id !== p.id; });
+      var seenTypes = {}; siblings = siblings.filter(function (x) { if (seenTypes[x.type]) return false; seenTypes[x.type] = 1; return true; });
+      var related = data.catalogue.filter(function (x) { return x.id !== p.id && x.collection === p.collection && siblings.indexOf(x) === -1; })
+        .sort(function (a, b) { return (b.type === p.type) - (a.type === p.type); }).slice(0, 8);
+      var made = p.made === 'handmade'
+        ? 'I apply the design to the acrylic, then cut, finish and pack it by hand at home in Deal, Kent.'
+        : 'My design, printed for you when you order and posted straight to you, so it doesn\'t pass through my hands.';
+      root.innerHTML = '<div class="wrap"><div class="pdp"><div>' + galHtml + '</div><div class="pdp-info"><div data-r="buyZone">' + buyHtml + '</div>'
+        + (col ? '<div class="fb-hint"><span>More from <b>' + esc(col.name) + '</b></span><a class="link" href="' + collectionLink(col) + '">See all ' + productsFor(col).length + '</a></div>' : '')
+        + (siblings.length ? '<div class="opt"><div class="opt-h">Love this design? Also on</div><div class="also">' + siblings.map(function (x) { return '<a href="product.html?id=' + encodeURIComponent(x.id) + '">' + img(x.image, 400, name(x)) + '<span>' + esc((typeOf(x) || {}).name || x.type) + '</span></a>'; }).join('') + '</div></div>' : '')
+        + '<details class="acc" open><summary>Description</summary><div class="in">' + esc(d.description || p.short).replace(/\n+/g, '<br><br>') + '</div></details>'
+        + '<details class="acc" id="details"><summary>Details</summary><div class="in"><ul>' + (d.bullets || []).map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + (d.material ? '<li>Material: ' + esc(d.material) + '</li>' : '') + '<li>' + made + '</li>' + (p.original ? '<li>Original design by Jon.</li>' : '') + '</ul></div></details>'
+        + '<details class="acc"><summary>Delivery & returns</summary><div class="in"><p style="margin-top:0">Royal Mail 2nd Class £1.55, 1st Class £3.30, free 2nd Class over £10. UK only.</p><p style="margin-bottom:0">You can change your mind within 14 days of receiving your order, except for personalised items. Faulty? I\'ll replace it or refund you in full. <a class="link" href="/terms.html#returns">Full terms</a></p></div></details>'
+        + '</div></div>'
+        + (related.length ? '<section class="sec"><div class="sec-h"><div><h2>You might also like</h2></div>' + (col ? '<a class="link" href="' + collectionLink(col) + '">See all</a>' : '') + '</div><div class="rail">' + related.map(card).join('') + '</div></section>' : '')
+        + '</div>'
+        + '<div class="sticky-buy" data-r="sticky" role="region" aria-label="Quick add to basket" inert><div class="t"><b>' + esc(name(p)) + '</b><span data-r="stickyPrice"></span></div><button class="btn" data-r="stickyBtn" style="min-height:46px">Add to basket</button></div>';
+    } else {
+      root.innerHTML = '<div class="qv-grid">' + galHtml + '<div>' + buyHtml + '<p class="qv-more"><a class="link" href="product.html?id=' + encodeURIComponent(p.id) + '">See full details</a></p></div></div>';
+      root.setAttribute('aria-labelledby', 'qvt' + n);
     }
-    function missing() { return optNames.filter(function (k) { return !choice[k]; })[0]; }
+    function R(k) { return root.querySelector('[data-r="' + k + '"]'); }
+    var gm = R('galMain'), shown = [], shot = null, idx = 0;
+
+    // ----- pictures -----
+    function renderGallery(urls, note) {
+      var keepShot = shot;
+      shown = urls.slice(0, 8);
+      gm.innerHTML = shown.map(function (u, i) { return img(u, 800, altFor(p, u), i ? '' : ' fetchpriority="high"').replace(' loading="lazy"', i ? ' loading="lazy"' : ''); }).join('');
+      R('dots').innerHTML = shown.length > 1 ? shown.map(function (u, i) { return '<i class="' + (i ? '' : 'on') + '"></i>'; }).join('') : '';
+      R('thumbs').innerHTML = shown.length > 1 ? shown.map(function (u, i) { return '<button type="button" data-g="' + i + '" class="' + (i ? '' : 'on') + '" aria-label="Show picture ' + (i + 1) + ' of ' + shown.length + ': ' + esc(altFor(p, u)) + '">' + img(u, 400, '') + '</button>'; }).join('') : '';
+      var nt = R('note'); nt.textContent = note || ''; nt.hidden = !note;
+      R('thumbs').querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { go(+b.getAttribute('data-g'), true); }; });
+      var same = keepShot && V ? shown.map(V.shotOf).indexOf(keepShot) : -1;
+      go(same > 0 ? same : 0, false);
+    }
+    function go(i, smooth) {
+      idx = i;
+      gm.scrollTo({ left: gm.clientWidth * i, behavior: smooth ? 'smooth' : 'auto' });
+      mark(i);
+    }
+    function mark(i) {
+      shot = V && shown[i] ? V.shotOf(shown[i]) : null;
+      R('dots').querySelectorAll('i').forEach(function (x, j) { x.classList.toggle('on', i === j); });
+      R('thumbs').querySelectorAll('button').forEach(function (x, j) { x.classList.toggle('on', i === j); x.setAttribute('aria-current', i === j); });
+    }
+    gm.addEventListener('scroll', function () { var i = Math.round(gm.scrollLeft / Math.max(1, gm.clientWidth)); if (i !== idx) { idx = i; mark(i); } }, { passive: true });
+    var lastKey = null;
+    function refreshPictures() {
+      var r = V ? V.imagesFor(mdl.input, choice) : { urls: mdl.input.defaults, exact: true, note: null };
+      var key = r.urls.join('|') + '#' + (r.note || '');
+      if (key === lastKey) return;  // same pictures: leave the gallery (and the picture being looked at) alone
+      lastKey = key;
+      renderGallery(r.urls.length ? r.urls : mdl.input.defaults, r.note);
+    }
+
+    // ----- options -----
+    function renderOptions() {
+      R('opts').innerHTML = mdl.groups.map(function (g) {
+        var vals = g.values(choice) || [];
+        if (vals.length < 2 && !(mdl.kind === 'print' && g.k === 'Size')) { if (vals.length === 1) choice[g.k] = vals[0]; return ''; }
+        if (choice[g.k] && vals.indexOf(choice[g.k]) === -1) delete choice[g.k];  // e.g. a size the new frame doesn't come in
+        var sw = g.k === 'Colour' && vals.every(function (v) { return SWATCH[v]; });
+        var lab = function (v) { return g.label ? g.label(v) : v; };
+        return '<div class="opt" data-opt="' + esc(g.k) + '" role="group" aria-labelledby="opt' + n + g.k + '"><div class="opt-h" id="opt' + n + g.k + '">' + esc(g.k) + ' <span data-sel>' + esc(choice[g.k] ? lab(choice[g.k]) : 'Choose') + '</span></div><div class="opts">'
+          + vals.map(function (v) {
+              var on = choice[g.k] === v;
+              return sw ? '<button type="button" class="swatch' + (on ? ' on' : '') + '" style="background:' + SWATCH[v] + '" data-v="' + esc(v) + '" aria-label="' + esc(v) + '" aria-pressed="' + on + '"></button>'
+                : '<button type="button" class="opt-btn' + (on ? ' on' : '') + '" data-v="' + esc(v) + '" aria-pressed="' + on + '">' + esc(lab(v)) + '</button>';
+            }).join('') + '</div>' + (g.k === 'Size' && p.type === 'T-Shirt' ? '<div class="field-note">The size chart is in the pictures.</div>' : '') + '</div>';
+      }).join('');
+      R('opts').querySelectorAll('[data-opt]').forEach(function (grp) {
+        var k = grp.getAttribute('data-opt');
+        grp.querySelectorAll('[data-v]').forEach(function (b) {
+          b.onclick = function () {
+            choice[k] = b.getAttribute('data-v');
+            var focusKey = k, focusVal = choice[k];
+            renderOptions();  // later groups can depend on this one (sizes per frame, texts per colour)
+            var again = R('opts').querySelector('[data-opt="' + focusKey + '"] [data-v="' + CSS.escape(focusVal) + '"]'); if (again) again.focus({ preventScroll: true });
+            refreshPictures(); sync();
+          };
+        });
+      });
+    }
+    function missing() { return mdl.groups.filter(function (g) { return (g.values(choice) || []).length > 0 && !choice[g.k]; }).map(function (g) { return g.k; })[0]; }
+    function variant() { return mdl.kind === 'unavailable' ? null : (V ? V.variantFor(mdl.input, choice) : {}); }
+    function unitPrice() {
+      var v = variant(), unit = v && v.retail_price_pence != null ? v.retail_price_pence / 100 : (d.priceFrom || p.price);
+      var pers = R('pers') && R('pers').value.trim();
+      return unit + (pers ? PERS_UPLIFT : 0);
+    }
     function sync() {
-      var miss = missing(), btn = $('#addBtn');
-      btn.textContent = miss ? 'Choose a ' + miss.toLowerCase() : 'Add to basket · ' + money(price());
+      var miss = missing(), btn = R('add');
+      var fromPrice = mdl.kind === 'print' && !variant();
+      if (mdl.kind === 'unavailable') { btn.textContent = 'Options are not available right now'; btn.disabled = true; R('opts').innerHTML = '<p class="field-note">Options are not available right now. Please try again in a moment.</p>'; return; }
+      btn.textContent = miss ? 'Choose a ' + miss.toLowerCase() : 'Add to basket · ' + money(unitPrice());
       btn.classList.toggle('alt', !!miss);
-      $('#price').textContent = money(price());
-      $('#stickyPrice').textContent = money(price());
-      $('#stickyBtn').textContent = miss ? 'Choose ' + miss.toLowerCase() : 'Add to basket';
+      R('price').innerHTML = (fromPrice ? '<small style="font-size:15px;font-weight:700">from</small> ' : '') + money(unitPrice());
+      if (R('stickyPrice')) { R('stickyPrice').textContent = money(unitPrice()); R('stickyBtn').textContent = miss ? 'Choose ' + miss.toLowerCase() : 'Add to basket'; }
     }
     function add() {
       var miss = missing();
       if (miss) {
-        var el = document.querySelector('[data-opt="' + miss + '"]');
+        var el = R('opts').querySelector('[data-opt="' + miss + '"]');
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.querySelector('.opt-h').style.color = 'var(--coral-ink)';
         var first = el.querySelector('[data-v]'); if (first) first.focus({ preventScroll: true });
         return;
       }
-      var opts = {}; optNames.forEach(function (k) { opts[k] = choice[k]; });
-      if (isMugPers) { var nm = $('#mugName').value.trim(); if (nm) opts.Name = nm; opts.Message = $('#mugMsg').value; }
-      addToBasket(p, opts, $('#pers') ? $('#pers').value.trim() : '');
+      var v = variant();
+      if (!v) return;  // never add something that doesn't match a real variant
+      var opts = {};
+      mdl.groups.forEach(function (g) { if (choice[g.k]) opts[g.k] = g.label ? g.label(choice[g.k]) : choice[g.k]; });
+      if (isMugPers) { var nm = R('mugName').value.trim(); if (nm) opts.Name = nm; opts.Message = R('mugMsg').value; }
+      if (v.retail_price_pence != null) opts.__price = v.retail_price_pence / 100;
+      opts.__variant = v.id != null ? { id: v.id, gelato_variant_id: v.gelato_variant_id || null } : (v.finish ? { finish: v.finish } : null);
+      opts.__image = shown[0] || p.image;  // the basket line shows the picture of what was chosen
+      addToBasket(p, opts, R('pers') ? R('pers').value.trim() : '');
     }
-    var gm = $('#galMain');
-    function showPicture(i) { if (gm) gm.scrollTo({ left: gm.clientWidth * i, behavior: 'smooth' }); }
-    document.querySelectorAll('[data-opt]').forEach(function (g) {
-      var k = g.getAttribute('data-opt');
-      g.querySelectorAll('[data-v]').forEach(function (b) {
-        b.onclick = function () {
-          choice[k] = b.getAttribute('data-v');
-          g.querySelectorAll('[data-v]').forEach(function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
-          g.querySelector('[data-sel]').textContent = choice[k];
-          g.querySelector('.opt-h').style.color = '';
-          // Clear/Black finish: show its own picture when there is one (as the live modal does).
-          if (k === 'Finish') {
-            var vurl = d.variantImages && d.variantImages[choice[k].toLowerCase()];
-            var first = gm && gm.querySelector('img');
-            if (first) { var u = vurl || images[0]; first.src = thumbUrl(u, 800); first.dataset.fallback = u; first.alt = altFor(p, u) + (vurl ? '' : ', ' + choice[k].toLowerCase() + ' finish'); showPicture(0); }
-          }
-          sync();
-        };
-      });
-    });
-    if ($('#pers')) $('#pers').addEventListener('input', function () { $('#persN').textContent = (30 - this.value.length) + ' characters left'; sync(); });
-    $('#addBtn').onclick = add; $('#stickyBtn').onclick = add;
-    sync();
+    if (R('pers')) R('pers').addEventListener('input', function () { R('persN').textContent = (30 - this.value.length) + ' characters left'; sync(); });
+    R('add').onclick = add;
+    renderOptions(); refreshPictures(); sync();
 
-    if (gm && images.length > 1) {
-      gm.addEventListener('scroll', function () {
-        var i = Math.round(gm.scrollLeft / gm.clientWidth);
-        document.querySelectorAll('#galDots i').forEach(function (x, j) { x.classList.toggle('on', i === j); });
-        document.querySelectorAll('.gal-thumbs button').forEach(function (x, j) { x.classList.toggle('on', i === j); });
-      }, { passive: true });
-      document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { showPicture(+b.getAttribute('data-g')); }; });
-    }
-
-    // Sticky bar: only while every buying control (price, options, personalisation, the Add button and the
-    // delivery line) is completely off screen, above or below. It can never sit on top of them. While hidden it
-    // is inert, so it can't take keyboard focus or be read out; while shown, the page reserves room under it.
-    var sb = $('#stickyBuy');
+    if (!page) return;
+    R('stickyBtn').onclick = add;
+    var sb = R('sticky');
+    // Sticky bar: only while every buying control is completely off screen. Inert while hidden.
     function setSticky(on) {
       if (window.matchMedia('(min-width: 900px)').matches) on = false;
       sb.classList.toggle('on', on);
       if (on) sb.removeAttribute('inert'); else sb.setAttribute('inert', '');
       document.documentElement.classList.toggle('sticky-on', on);
     }
-    new IntersectionObserver(function (es) { setSticky(!es[0].isIntersecting); }).observe($('#buyZone'));
-    // If keyboard focus lands on something under the bar, scroll it clear.
+    new IntersectionObserver(function (es) { setSticky(!es[0].isIntersecting); }).observe(R('buyZone'));
     document.addEventListener('focusin', function (e) {
       if (!sb.classList.contains('on') || sb.contains(e.target)) return;
       var r = e.target.getBoundingClientRect(), barTop = sb.getBoundingClientRect().top;
       if (r.bottom > barTop - 8) window.scrollBy(0, r.bottom - barTop + 16);
     });
+  }
+
+  function productPage() {
+    var p = byId[q('id') || 'mug-005'], m = $('#main');
+    if (!p) {
+      m.innerHTML = '<div class="wrap empty"><h1 style="font-size:28px;margin:30px 0 10px">That one isn\'t in the shop any more.</h1><p>It might be sold out or retired. Here are some similar things.</p><div class="grid" style="margin-top:18px">' + PICKS.slice(0, 4).map(function (x) { return card(byId[x]); }).join('') + '</div></div>';
+      return;
+    }
+    // The page <title>, meta description and Product JSON-LD keep the original catalogue title (server-rendered in
+    // the real build); only the visible heading uses the shorter display name.
+    document.title = p.title + ' | Crafts by Jon (preview)';
+    mountProduct(m, p, 'page');
+  }
+
+  function openQuickView(p) {
+    var body = $('#qvBody');
+    window.CBJPV.open('quick');
+    mountProduct(body, p, 'quick');
+    var t = body.querySelector('.qv-title'); if (t) { t.setAttribute('tabindex', '-1'); t.focus(); }
   }
 
   // ---------- boot ----------

@@ -346,3 +346,28 @@ table.rv-t { width: 100%; border-collapse: collapse; font-size: 14.5px; backgrou
 @media (max-width: 899px) { .pdp { gap: 10px; } .pdp h1 { font-size: 26px; } .price-row { margin: 6px 0 0; } .price-big { font-size: 24px; } .opt { margin: 14px 0; } .buy { margin: 14px 0 6px; } }
 .strip .long { display: none; }
 @media (min-width: 640px) { .strip .long { display: inline; } .strip .short { display: none; } }
+
+/* Picture note when there is no exact photo for the chosen option */
+.gal-note { margin: 8px 0 0; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--sun-soft); color: #6b4700; font-size: 13.5px; line-height: 1.35; }
+.gal-note[hidden] { display: none; }
+@media (max-width: 899px) { .gal-note { margin: 8px var(--gutter) 0; } }
+.gal-thumbs button[aria-current="true"] { border-color: var(--ink); }
+
+/* Card button that opens the quick view (products with choices to make) */
+.qv-btn { position: absolute; right: 8px; top: 8px; min-height: 38px; padding: 0 12px; border-radius: 999px; border: 0; background: #fff; box-shadow: var(--shadow); font-weight: 800; font-size: 13px; cursor: pointer; }
+.qv-btn:hover { background: var(--sun-soft); }
+
+/* Quick view: bottom sheet on phones, centred dialog on desktop */
+.qv-sheet { max-height: 92vh; }
+.qv-sheet .sheet-body { padding-top: 0; }
+.qv-sheet .gal { margin: 0 calc(var(--gutter) * -1); }
+.qv-title { font-size: 24px; font-weight: 800; margin-top: 12px; }
+.qv-more { margin: 14px 0 4px; text-align: center; }
+@media (min-width: 900px) {
+  .qv-sheet { left: 50%; right: auto; bottom: auto; top: 50%; width: min(940px, 92vw); max-height: 88vh; border-radius: 18px; transform: translate(-50%, -46%); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+  .qv-sheet.on { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
+  .qv-sheet .sheet-body { padding: 0 24px 24px; }
+  .qv-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 28px; align-items: start; }
+  .qv-sheet .gal { margin: 0; }
+  .qv-sheet .gal-main { border-radius: 14px; }
+}
