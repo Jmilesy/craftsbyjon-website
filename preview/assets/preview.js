@@ -107,19 +107,14 @@
     if (!url) return '<img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">';
     return '<img src="' + esc(thumbUrl(url, w)) + '" data-fallback="' + esc(url) + '" alt="' + esc(alt || '') + '" loading="lazy" decoding="async" onerror="if(this.dataset.fallback&&this.src!==this.dataset.fallback){this.src=this.dataset.fallback}"' + (extra || '') + '>';
   }
-  function cleanTitle(t) { return String(t || '').split(/\s[|–]\s|,\s(?=\d{4}s|Vintage|Retro|Historic|Kent|Clear)/)[0]; }
   function priceLabel(p) {
     var d = data.details[p.id] || {};
     if (d.priceFrom && d.options && (d.options.Size || d.options.Frame) && p.type === 'Print') return '<small>from</small> ' + money(d.priceFrom);
     return money(d.priceFrom || p.price);
   }
   function madeBadge(p) {
-    return p.made === 'handmade' ? '<span class="badge hand">Handmade</span>' : '<span class="badge print">Printed to order</span>';
-  }
-  function needsChoice(p) {
-    var d = data.details[p.id] || {};
-    var multi = Object.keys(d.options || {}).some(function (k) { return d.options[k].length > 1; });
-    return multi || p.personalisable;
+    // Cards only flag the handmade pieces. Printed items say "Printed to order" once, on their own page.
+    return p.made === 'handmade' ? '<span class="badge hand">Handmade</span>' : '';
   }
   function collectionLink(c) { return 'collection.html?c=' + c.slug; }
   function typeLink(t) { return 'collection.html?t=' + t.slug; }
@@ -134,15 +129,56 @@
   }
   function typeOf(p) { return TYPES.filter(function (t) { return t.type === p.type; })[0] || null; }
 
+  // Shorter display names. The original catalogue title stays the product's title for SEO (page <title>, meta,
+  // JSON-LD) and in the database; in the real build Jon can override this per product (a display_title field).
+  var NOUN = /\b(mug|bookmark|keyring|print|t-shirt|tote bag|coaster set)\b/i;
+  var SEP = /\s+[|–—]\s+|,\s+/;
+  var DROP = /^(clear or black|crafts by jon|deal, kent)$/i;
+  function nameParts(t) {
+    return String(t || '').replace(/\s+by Crafts by Jon$/i, '').split(SEP).map(function (x) { return x.trim(); }).filter(function (x) { return x && !DROP.test(x); });
+  }
+  function shortName(t) {
+    var parts = nameParts(t), out = [];
+    for (var i = 0; i < parts.length; i++) { out.push(parts[i]); if (NOUN.test(out.join(', '))) break; }
+    return out.join(', ');
+  }
+  var names = {};
+  function buildNames() {
+    var count = {};
+    data.catalogue.forEach(function (p) { var s = shortName(p.title).toLowerCase(); count[s] = (count[s] || 0) + 1; });
+    // Where two products would share a short name, show the whole title minus the filler instead.
+    data.catalogue.forEach(function (p) { var s = shortName(p.title); names[p.id] = count[s.toLowerCase()] > 1 ? nameParts(p.title).join(', ') : s; });
+  }
+  function name(p) { return names[p.id] || p.title; }
+
+  // Descriptive alt text from what the picture file is (front, worn, on a wall...). Never guesses beyond that.
+  var VIEWS = [[/lifestyle_living_room/, 'on a living room wall'], [/lifestyle_bedroom/, 'on a bedroom wall'], [/lifestyle_male/, 'worn by a man'],
+    [/lifestyle_female/, 'worn by a woman'], [/front_alt/, 'front, close up'], [/front/, 'front view'], [/-right\b/, 'side view'], [/wrap/, 'full wraparound design'],
+    [/scene0?1/, 'in use'], [/scene0?2/, 'in use, second photo'], [/size-chart/, 'size chart'], [/-flat\b/, 'the artwork'], [/(\d)bl$|-black/, 'black finish'], [/colours/, 'all five colours']];
+  var COLOURS = { 'navy': 'navy', 'french-navy': 'French navy', 'sand': 'sand', 'white': 'white', 'natural-raw': 'natural', 'natural': 'natural', 'rs-sport-grey': 'grey', 'anthracite': 'anthracite', 'black': 'black' };
+  function altFor(p, url) {
+    var k = keyOf(url).toLowerCase(), bits = [name(p)];
+    if (/size-chart/.test(k)) return 'T-shirt size chart';
+    var colour = Object.keys(COLOURS).filter(function (c) { return k.indexOf('-' + c + '-') !== -1; }).sort(function (a, b) { return b.length - a.length; })[0];
+    if (colour && p.type !== 'Print') bits.push(COLOURS[colour]);
+    var v = VIEWS.filter(function (x) { return x[0].test(k); })[0];
+    if (v && !(v[1] === 'black finish' && colour === 'black')) bits.push(v[1]);
+    return bits.join(', ');
+  }
+
+  // A card's quick "+" only for products the live store also adds straight from a card (no finish, colour, size,
+  // text, photo or personalisation to choose). Everything else opens the product page.
+  function canQuickAdd(p) { var d = data.details[p.id]; return !!(d && d.quickAdd) && !p.personalisable; }
+
   // ---------- card ----------
   function card(p) {
-    var plus = needsChoice(p) ? '' :
-      '<button class="icon-btn" style="position:absolute;right:8px;top:8px;background:#fff;width:38px;height:38px;box-shadow:var(--shadow)" aria-label="Add ' + esc(cleanTitle(p.title)) + ' to basket" data-quickadd="' + esc(p.id) + '">' + ICON.plus + '</button>';
+    var plus = !canQuickAdd(p) ? '' :
+      '<button class="icon-btn" style="position:absolute;right:8px;top:8px;background:#fff;width:38px;height:38px;box-shadow:var(--shadow)" aria-label="Add ' + esc(name(p)) + ' to basket" data-quickadd="' + esc(p.id) + '">' + ICON.plus + '</button>';
     var low = p.stockLeft != null && p.stockLeft < 2 ? '<span class="low">' + p.stockLeft + ' left</span>' : '';
     return '<div class="card"><a class="card-a" href="product.html?id=' + encodeURIComponent(p.id) + '">'
-      + '<div class="ph">' + img(p.image, 400, '') + '</div>'
+      + '<div class="ph">' + img(p.image, 400, altFor(p, p.image)) + '</div>'
       + '<div class="bd">' + madeBadge(p)
-      + '<div class="tt">' + esc(cleanTitle(p.title)) + '</div>'
+      + '<div class="tt">' + esc(name(p)) + '</div>'
       + (p.personalisable ? '<span class="badge pers">Personalise it</span>' : '') + low
       + '<div class="pr">' + priceLabel(p) + '</div></div></a>' + plus + '</div>';
   }
@@ -183,7 +219,7 @@
       + '<button class="icon-btn search-mob" data-open="search" aria-label="Search">' + ICON.search + '</button>'
       + '<button class="icon-btn" data-open="basket" aria-label="Basket">' + ICON.bag + '<span class="count" id="bkCount" hidden>0</span></button>'
       + '</div></header>'
-      + '<div class="strip"><b>Free UK postage over £10</b> · Any 3 bookmarks or keyrings for £10</div>'
+      + '<div class="strip"><b>Free UK postage over £10</b> · <span class="long">Any 3 bookmarks or keyrings for £10</span><span class="short">3 for £10 acrylics</span></div>'
       + '<div class="scrim" id="scrim"></div>'
       // menu
       + '<aside class="sheet sheet-left" id="sh-menu" aria-label="Menu"><div class="sheet-head"><h2>Shop</h2><button class="icon-btn" data-close aria-label="Close">' + ICON.close + '</button></div><div class="sheet-body">'
@@ -223,7 +259,13 @@
       var o = e.target.closest('[data-open]'); if (o) { e.preventDefault(); open(o.getAttribute('data-open')); return; }
       if (e.target.closest('[data-close]') || e.target === scrim) { closeAll(); return; }
       var qa = e.target.closest('[data-quickadd]');
-      if (qa) { e.preventDefault(); e.stopPropagation(); var p = byId[qa.getAttribute('data-quickadd')]; addToBasket(p, {}, ''); }
+      if (qa) {
+        e.preventDefault(); e.stopPropagation();
+        var p = byId[qa.getAttribute('data-quickadd')];
+        // Second guard: never add something that needs a choice; send the shopper to choose instead.
+        if (!canQuickAdd(p)) { location.href = 'product.html?id=' + encodeURIComponent(p.id); return; }
+        addToBasket(p, {}, '');
+      }
     });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(); });
     $('#q').addEventListener('input', function () { renderSearch(this.value); });
@@ -258,7 +300,7 @@
     out += '<div class="sr-head">' + (hits.length ? 'Products' : 'No products match "' + esc(term) + '"') + '</div>';
     out += hits.map(function (h) {
       var p = h.p;
-      return '<a class="sr-row" href="product.html?id=' + encodeURIComponent(p.id) + '">' + img(p.image, 400, '') + '<div><div class="t">' + esc(cleanTitle(p.title)) + '</div><div class="m">' + esc(p.type) + ' · ' + priceLabel(p).replace(/<[^>]+>/g, '') + '</div></div></a>';
+      return '<a class="sr-row" href="product.html?id=' + encodeURIComponent(p.id) + '">' + img(p.image, 400, '') + '<div><div class="t">' + esc(name(p)) + '</div><div class="m">' + esc(p.type) + ' · ' + priceLabel(p).replace(/<[^>]+>/g, '') + '</div></div></a>';
     }).join('');
     if (!hits.length) out += '<p style="color:var(--ink-2)">Try "mug", "Deal" or "bee", or <a class="link" href="collection.html?c=all">browse everything</a>. Looking for something I don\'t make yet? <a class="link" href="/custom-orders.html">Ask about a custom order</a>.</p>';
     $('#sr').innerHTML = out; bindTerms();
@@ -293,7 +335,7 @@
       sub += l.unit * l.qty;
       if (p.made === 'handmade' && !l.pers) acrylic += l.qty;
       var o = Object.keys(l.opts).filter(function (k) { return k.indexOf('__') !== 0; }).map(function (k) { return esc(l.opts[k]); }).join(', ');
-      return '<div class="bk-line">' + img(p.image, 400, '') + '<div><div class="t">' + esc(cleanTitle(p.title)) + '</div><div class="o">' + (o || '') + (l.pers ? (o ? ' · ' : '') + '"' + esc(l.pers) + '"' : '') + '</div>'
+      return '<div class="bk-line">' + img(p.image, 400, '') + '<div><div class="t">' + esc(name(p)) + '</div><div class="o">' + (o || '') + (l.pers ? (o ? ' · ' : '') + '"' + esc(l.pers) + '"' : '') + '</div>'
         + '<div class="qty"><button data-q="' + i + '" data-d="-1" aria-label="One fewer">−</button><span>' + l.qty + '</span><button data-q="' + i + '" data-d="1" aria-label="One more">+</button></div></div><div style="font-weight:800">' + money(l.unit * l.qty) + '</div></div>';
     }).join('');
     var bundle = Math.floor(acrylic / 3) * (3 * 3.5 - 10);
@@ -491,15 +533,18 @@
       m.innerHTML = '<div class="wrap empty"><h1 style="font-size:28px;margin:30px 0 10px">That one isn\'t in the shop any more.</h1><p>It might be sold out or retired. Here are some similar things.</p><div class="grid" style="margin-top:18px">' + PICKS.slice(0, 4).map(function (x) { return card(byId[x]); }).join('') + '</div></div>';
       return;
     }
-    var d = data.details[id] || { images: [p.image], options: {}, bullets: [], description: '' };
+    var d = data.details[id] || { images: [p.image], options: {}, bullets: [], description: '', variantImages: {} };
     var col = primaryCollectionOf(p), typ = typeOf(p);
-    var images = d.images.length ? d.images : [p.image];
-    document.title = cleanTitle(p.title) + ' | Crafts by Jon (preview)';
+    var images = d.images.length ? d.images.slice() : [p.image];
+    // The page <title>, meta description and Product JSON-LD keep the original catalogue title (server-rendered in the
+    // real build); only the visible heading uses the shorter display name.
+    document.title = p.title + ' | Crafts by Jon (preview)';
     var choice = {};
     var optNames = Object.keys(d.options).filter(function (k) { return d.options[k].length > 1; });
     optNames.forEach(function (k) { if (k === 'Size' && p.type === 'T-Shirt') d.options[k].sort(function (a, b) { return SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b); }); });
-    // Defaults the live pickers use: first colour and "No" text are preselected; size is left for the customer.
-    optNames.forEach(function (k) { if (k !== 'Size') choice[k] = d.options[k][0]; });
+    // As in the live pickers: colour, frame and text start on their first choice; size and the Clear/Black finish
+    // are left for the customer to pick.
+    optNames.forEach(function (k) { if (k !== 'Size' && k !== 'Finish') choice[k] = d.options[k][0]; });
     var isMugPers = p.type === 'Mug' && p.personalisable;
     var isAcrylicPers = p.made === 'handmade' && p.personalisable;
 
@@ -508,47 +553,51 @@
     var related = data.catalogue.filter(function (x) { return x.id !== p.id && x.collection === p.collection && siblings.indexOf(x) === -1; });
     related = related.sort(function (a, b) { return (b.type === p.type) - (a.type === p.type); }).slice(0, 8);
 
-    var madeBox = p.made === 'handmade'
-      ? '<div class="made-box hand"><b>Handmade by Jon in Deal</b>I apply the design to the acrylic, then cut, finish and pack it by hand at home in Deal, Kent.' + (p.original ? ' Original design by me.' : '') + '</div>'
-      : '<div class="made-box print"><b>Printed to order</b>My design, printed for you by my print partner when you order, and posted straight to you.' + (p.original ? '' : '') + '</div>';
-    var ship = p.made === 'handmade'
-      ? 'Ships within <b>1 to 2 business days</b>, posted by me. Free UK postage over £10.'
-      : 'Printed to order, ships within <b>3 to 4 working days</b>. Free UK postage over £10.';
+    // One place for how it's made and when it ships (was badge + box + delivery line, all saying the same thing).
+    var fulfil = p.made === 'handmade'
+      ? '<div class="fulfil hand">' + ICON.hand + '<div><b>Handmade by Jon in Deal</b><span>Ships within 1 to 2 business days, posted by me. Free UK postage over £10.</span></div></div>'
+        + '<div class="fulfil-sub">Any 3 bookmarks or keyrings for £10, mix and match.</div>'
+      : '<div class="fulfil print">' + ICON.van + '<div><b>Printed to order</b><span>Ships within 3 to 4 working days, straight from my print partner. Free UK postage over £10.</span></div></div>';
+    var made = p.made === 'handmade'
+      ? 'I apply the design to the acrylic, then cut, finish and pack it by hand at home in Deal, Kent.'
+      : 'My design, printed for you when you order and posted straight to you, so it doesn\'t pass through my hands.';
 
     m.innerHTML = '<div class="wrap"><div class="pdp">'
-      + '<div><div class="gal"><div class="gal-main" id="galMain">' + images.map(function (u, i) { return img(u, 800, cleanTitle(p.title) + ' picture ' + (i + 1), i ? '' : ' fetchpriority="high"').replace(' loading="lazy"', i ? ' loading="lazy"' : ''); }).join('') + '</div>'
-      + (images.length > 1 ? '<div class="gal-dots" id="galDots">' + images.map(function (u, i) { return '<i class="' + (i ? '' : 'on') + '"></i>'; }).join('') + '</div><div class="gal-thumbs">' + images.map(function (u, i) { return '<button data-g="' + i + '" class="' + (i ? '' : 'on') + '" aria-label="Picture ' + (i + 1) + '">' + img(u, 400, '') + '</button>'; }).join('') + '</div>' : '')
+      + '<div><div class="gal"><div class="gal-main" id="galMain">' + images.map(function (u, i) {
+          return img(u, 800, altFor(p, u), i ? '' : ' fetchpriority="high"').replace(' loading="lazy"', i ? ' loading="lazy"' : '');
+        }).join('') + '</div>'
+      + (images.length > 1 ? '<div class="gal-dots" id="galDots" aria-hidden="true">' + images.map(function (u, i) { return '<i class="' + (i ? '' : 'on') + '"></i>'; }).join('') + '</div>'
+        + '<div class="gal-thumbs">' + images.map(function (u, i) { return '<button data-g="' + i + '" class="' + (i ? '' : 'on') + '" aria-label="Show picture ' + (i + 1) + ' of ' + images.length + ': ' + esc(altFor(p, u)) + '">' + img(u, 400, '') + '</button>'; }).join('') + '</div>' : '')
       + '</div></div>'
-      + '<div class="pdp-info">'
-      + '<div class="crumbs"><a href="home.html">Home</a>' + (col ? ' › <a href="' + collectionLink(col) + '">' + esc(col.name) + '</a>' : '') + (typ ? ' › <a href="' + typeLink(typ) + '">' + typ.name + '</a>' : '') + '</div>'
-      + '<h1>' + esc(p.title) + '</h1>'
-      + '<div class="price-row"><span class="price-big" id="price">' + money(d.priceFrom || p.price) + '</span>' + madeBadge(p) + (p.stockLeft != null && p.stockLeft < 2 ? '<span class="low">' + p.stockLeft + ' left of this design</span>' : '') + '</div>'
-      + madeBox
+      + '<div class="pdp-info"><div id="buyZone">'
+      + '<nav class="crumbs" aria-label="Breadcrumb"><a href="home.html">Home</a>' + (col ? ' › <a href="' + collectionLink(col) + '">' + esc(col.name) + '</a>' : '') + (typ ? ' › <a href="' + typeLink(typ) + '">' + typ.name + '</a>' : '') + '</nav>'
+      + '<h1>' + esc(name(p)) + '</h1>'
+      + '<div class="price-row"><span class="price-big" id="price">' + money(d.priceFrom || p.price) + '</span>' + (p.stockLeft != null && p.stockLeft < 2 ? '<span class="low">' + p.stockLeft + ' left of this design</span>' : '') + '</div>'
       + optNames.map(function (k) {
           var vals = d.options[k];
           var sw = k === 'Colour' && vals.every(function (v) { return SWATCH[v]; });
-          return '<div class="opt" data-opt="' + esc(k) + '"><div class="opt-h">' + esc(k) + ' <span data-sel>' + esc(choice[k] || 'Choose') + '</span></div><div class="opts">'
+          return '<div class="opt" data-opt="' + esc(k) + '" role="group" aria-labelledby="opt-' + esc(k) + '"><div class="opt-h" id="opt-' + esc(k) + '">' + esc(k) + ' <span data-sel>' + esc(choice[k] || 'Choose') + '</span></div><div class="opts">'
             + vals.map(function (v) {
-                var on = choice[k] === v ? ' on' : '';
-                return sw ? '<button class="swatch' + on + '" style="background:' + SWATCH[v] + '" data-v="' + esc(v) + '" aria-label="' + esc(v) + '"></button>'
-                  : '<button class="opt-btn' + on + '" data-v="' + esc(v) + '">' + esc(k === 'Text' ? (v === 'Yes' ? 'With place name' : 'Design only') : v) + '</button>';
+                var on = choice[k] === v;
+                return sw ? '<button class="swatch' + (on ? ' on' : '') + '" style="background:' + SWATCH[v] + '" data-v="' + esc(v) + '" aria-label="' + esc(v) + '" aria-pressed="' + on + '"></button>'
+                  : '<button class="opt-btn' + (on ? ' on' : '') + '" data-v="' + esc(v) + '" aria-pressed="' + on + '">' + esc(k === 'Text' ? (v === 'Yes' ? 'With place name' : 'Design only') : v) + '</button>';
               }).join('') + '</div>' + (k === 'Size' && p.type === 'T-Shirt' ? '<div class="field-note"><a class="link" href="#details">Size guide</a></div>' : '') + '</div>';
         }).join('')
-      + (isAcrylicPers ? '<div class="opt"><label class="opt-h" for="pers">Add a name or message <span>optional, +£1.50</span></label><input class="field" id="pers" maxlength="30" placeholder="e.g. Miss Smith"><div class="field-note" id="persN">Up to 30 characters</div></div>' : '')
+      + (isAcrylicPers ? '<div class="opt"><label class="opt-h" for="pers">Add a name or message <span>optional, +£1.50</span></label><input class="field" id="pers" maxlength="30" placeholder="e.g. Miss Smith" aria-describedby="persN"><div class="field-note" id="persN">Up to 30 characters</div></div>' : '')
       + (isMugPers ? '<div class="opt"><label class="opt-h" for="mugName">Name on the mug <span>up to 20 characters</span></label><input class="field" id="mugName" maxlength="20" placeholder="e.g. Miss Smith"></div>'
           + '<div class="opt"><label class="opt-h" for="mugMsg">Message</label><select class="field" id="mugMsg">' + d.mugMessages.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select><div class="field-note">Text colour choice stays as it is in the live shop.</div></div>' : '')
       + '<div class="buy"><button class="btn block" id="addBtn"></button></div>'
-      + '<div class="ship-line">' + ICON.van + '<span>' + ship + '</span></div>'
-      + (p.made === 'handmade' ? '<div class="ship-line">' + ICON.hand + '<span>Any 3 bookmarks or keyrings for £10, mix and match.</span></div>' : '')
+      + fulfil
+      + '</div>'
       + (col ? '<div class="fb-hint"><span>More from <b>' + esc(col.name) + '</b></span><a class="link" href="' + collectionLink(col) + '">See all ' + productsFor(col).length + '</a></div>' : '')
-      + (siblings.length ? '<div class="opt"><div class="opt-h">Love this design? Also on</div><div class="also">' + siblings.map(function (x) { return '<a href="product.html?id=' + encodeURIComponent(x.id) + '">' + img(x.image, 400, '') + '<span>' + esc((typeOf(x) || {}).name || x.type) + '</span></a>'; }).join('') + '</div></div>' : '')
+      + (siblings.length ? '<div class="opt"><div class="opt-h">Love this design? Also on</div><div class="also">' + siblings.map(function (x) { return '<a href="product.html?id=' + encodeURIComponent(x.id) + '">' + img(x.image, 400, name(x)) + '<span>' + esc((typeOf(x) || {}).name || x.type) + '</span></a>'; }).join('') + '</div></div>' : '')
       + '<details class="acc" open><summary>Description</summary><div class="in">' + esc(d.description || p.short).replace(/\n+/g, '<br><br>') + '</div></details>'
-      + '<details class="acc" id="details"><summary>Details</summary><div class="in"><ul>' + d.bullets.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + (d.material ? '<li>Material: ' + esc(d.material) + '</li>' : '') + '</ul></div></details>'
-      + '<details class="acc"><summary>Delivery & returns</summary><div class="in"><p style="margin-top:0">Royal Mail 2nd Class £1.55, 1st Class £3.30, free 2nd Class over £10. UK only.</p><p>' + (p.made === 'handmade' ? 'Handmade items are dispatched by me within 1 to 2 business days.' : 'Printed items are made when you order and dispatched within 3 to 4 working days, straight from my print partner.') + '</p><p style="margin-bottom:0">You can change your mind within 14 days of receiving your order, except for personalised items. Faulty? I\'ll replace it or refund you in full. <a class="link" href="/terms.html#returns">Full terms</a></p></div></details>'
+      + '<details class="acc" id="details"><summary>Details</summary><div class="in"><ul>' + d.bullets.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('') + (d.material ? '<li>Material: ' + esc(d.material) + '</li>' : '') + '<li>' + made + '</li>' + (p.original ? '<li>Original design by Jon.</li>' : '') + '</ul></div></details>'
+      + '<details class="acc"><summary>Delivery & returns</summary><div class="in"><p style="margin-top:0">Royal Mail 2nd Class £1.55, 1st Class £3.30, free 2nd Class over £10. UK only.</p><p style="margin-bottom:0">You can change your mind within 14 days of receiving your order, except for personalised items. Faulty? I\'ll replace it or refund you in full. <a class="link" href="/terms.html#returns">Full terms</a></p></div></details>'
       + '</div></div>'
       + (related.length ? '<section class="sec"><div class="sec-h"><div><h2>You might also like</h2></div>' + (col ? '<a class="link" href="' + collectionLink(col) + '">See all</a>' : '') + '</div><div class="rail">' + related.map(card).join('') + '</div></section>' : '')
       + '</div>'
-      + '<div class="sticky-buy" id="stickyBuy"><div class="t"><b>' + esc(cleanTitle(p.title)) + '</b><span id="stickyPrice"></span></div><button class="btn" id="stickyBtn" style="min-height:46px">Add to basket</button></div>';
+      + '<div class="sticky-buy" id="stickyBuy" role="region" aria-label="Quick add to basket" inert><div class="t"><b>' + esc(name(p)) + '</b><span id="stickyPrice"></span></div><button class="btn" id="stickyBtn" style="min-height:46px">Add to basket</button></div>';
 
     function price() {
       var unit = d.priceFrom || p.price;
@@ -567,19 +616,33 @@
     }
     function add() {
       var miss = missing();
-      if (miss) { var el = document.querySelector('[data-opt="' + miss + '"]'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.querySelector('.opt-h').style.color = 'var(--coral-ink)'; return; }
+      if (miss) {
+        var el = document.querySelector('[data-opt="' + miss + '"]');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.querySelector('.opt-h').style.color = 'var(--coral-ink)';
+        var first = el.querySelector('[data-v]'); if (first) first.focus({ preventScroll: true });
+        return;
+      }
       var opts = {}; optNames.forEach(function (k) { opts[k] = choice[k]; });
       if (isMugPers) { var nm = $('#mugName').value.trim(); if (nm) opts.Name = nm; opts.Message = $('#mugMsg').value; }
       addToBasket(p, opts, $('#pers') ? $('#pers').value.trim() : '');
     }
+    var gm = $('#galMain');
+    function showPicture(i) { if (gm) gm.scrollTo({ left: gm.clientWidth * i, behavior: 'smooth' }); }
     document.querySelectorAll('[data-opt]').forEach(function (g) {
       var k = g.getAttribute('data-opt');
       g.querySelectorAll('[data-v]').forEach(function (b) {
         b.onclick = function () {
           choice[k] = b.getAttribute('data-v');
-          g.querySelectorAll('[data-v]').forEach(function (x) { x.classList.toggle('on', x === b); });
+          g.querySelectorAll('[data-v]').forEach(function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
           g.querySelector('[data-sel]').textContent = choice[k];
           g.querySelector('.opt-h').style.color = '';
+          // Clear/Black finish: show its own picture when there is one (as the live modal does).
+          if (k === 'Finish') {
+            var vurl = d.variantImages && d.variantImages[choice[k].toLowerCase()];
+            var first = gm && gm.querySelector('img');
+            if (first) { var u = vurl || images[0]; first.src = thumbUrl(u, 800); first.dataset.fallback = u; first.alt = altFor(p, u) + (vurl ? '' : ', ' + choice[k].toLowerCase() + ' finish'); showPicture(0); }
+          }
           sync();
         };
       });
@@ -588,18 +651,32 @@
     $('#addBtn').onclick = add; $('#stickyBtn').onclick = add;
     sync();
 
-    var gm = $('#galMain');
     if (gm && images.length > 1) {
       gm.addEventListener('scroll', function () {
         var i = Math.round(gm.scrollLeft / gm.clientWidth);
         document.querySelectorAll('#galDots i').forEach(function (x, j) { x.classList.toggle('on', i === j); });
         document.querySelectorAll('.gal-thumbs button').forEach(function (x, j) { x.classList.toggle('on', i === j); });
       }, { passive: true });
-      document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { gm.scrollTo({ left: gm.clientWidth * +b.getAttribute('data-g'), behavior: 'smooth' }); }; });
+      document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () { showPicture(+b.getAttribute('data-g')); }; });
     }
+
+    // Sticky bar: only while every buying control (price, options, personalisation, the Add button and the
+    // delivery line) is completely off screen, above or below. It can never sit on top of them. While hidden it
+    // is inert, so it can't take keyboard focus or be read out; while shown, the page reserves room under it.
     var sb = $('#stickyBuy');
-    // On a phone the Add button is usually below the first screen, so the bar shows whenever the button is off screen.
-    new IntersectionObserver(function (es) { sb.classList.toggle('on', !es[0].isIntersecting); }).observe($('#addBtn'));
+    function setSticky(on) {
+      if (window.matchMedia('(min-width: 900px)').matches) on = false;
+      sb.classList.toggle('on', on);
+      if (on) sb.removeAttribute('inert'); else sb.setAttribute('inert', '');
+      document.documentElement.classList.toggle('sticky-on', on);
+    }
+    new IntersectionObserver(function (es) { setSticky(!es[0].isIntersecting); }).observe($('#buyZone'));
+    // If keyboard focus lands on something under the bar, scroll it clear.
+    document.addEventListener('focusin', function (e) {
+      if (!sb.classList.contains('on') || sb.contains(e.target)) return;
+      var r = e.target.getBoundingClientRect(), barTop = sb.getBoundingClientRect().top;
+      if (r.bottom > barTop - 8) window.scrollBy(0, r.bottom - barTop + 16);
+    });
   }
 
   // ---------- boot ----------
@@ -607,6 +684,7 @@
     data = j;
     j.catalogue.forEach(function (p) { byId[p.id] = p; });
     j.collections.forEach(function (c) { monthsByCol[c.name] = c.months; });
+    buildNames();
     chrome();
     var page = document.body.getAttribute('data-page');
     if (page === 'home') homePage();

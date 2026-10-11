@@ -9,13 +9,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/preview.css?v=1">
+  <link rel="stylesheet" href="assets/preview.css?v=2">
 </head>
 <body>
 <div class="pv-ribbon">Design preview for Jon. Not the live shop. Nothing here can be bought, and nothing here is tracked.</div>
 <main class="wrap rv">
   <h1>Storefront mockups</h1>
   <p style="font-size:17px;color:var(--ink-2);max-width:62ch;margin:0">Clickable mockups of the three main pages, built on a read-only copy of the real catalogue (91 live products, real photos, real prices). Open them on your phone first: that's where most visitors are.</p>
+
+  <div class="rv-note" style="background:var(--leaf-soft)">
+    <h3>Round 2: product page changes (11 Oct)</h3>
+    <ol style="margin:0;padding-left:20px">
+      <li><b>Sticky Add to basket bar</b> only shows when the whole buying area (price, options, personalisation, the Add button and the delivery line) is off screen, above or below. Checked by scrolling 9 products at three phone sizes: it never appeared over a buying control.</li>
+      <li><b>Shorter picture area on phones</b> (about 300 px tall, whole photo shown). On the Retro Deal Castle Mug the Add button now ends at 616 px on a 750 px phone screen, so title, price and Add are all in the first screen. Products with options (tees, prints) show the price and the first options in the first screen.</li>
+      <li><b>Shorter names on screen</b>, e.g. "Retro Deal Castle Mug" instead of "Retro Deal Castle Mug, Historic Deal Souvenir". Worked out from the existing title (drops "| Crafts by Jon", "Clear or Black", trailing descriptions). The original title stays untouched in the database and stays the page title, meta description and Product data Google reads. Where two products would end up with the same name, the full title is shown. In the real build you'd be able to override any name on the Listings page.</li>
+      <li><b>Alt text.</b> Product photos describe what they show from the picture itself, e.g. "Pier T-Shirt, navy, worn by a man", "Pier Art Print, on a living room wall". 153 of 181 pictures across the pages now have a description. The other 28 are deliberately blank (alt=""), because the words are already there: gallery thumbnails sit in buttons labelled "Show picture 2 of 4: ...", collection tiles carry the collection name, and two pictures are decoration. Every picture has an alt attribute.</li>
+      <li><b>Quick-add "+"</b> only appears on products the live shop already lets you add from a card (no finish, colour, size, text, photo or personalisation to choose). That's 46 products; the other 45 open their page. Found and fixed on the way: ten Bee keyrings keep their Clear/Black choice in an older field the first mockup didn't read, so they could have been quick-added without a finish. They now need a finish chosen, and choosing Black shows the black photo. A second check stops the add even if a "+" were wrongly shown.</li>
+      <li><b>"Printed to order" said once</b>: one line under the Add button with dispatch time and postage. The badge, the box above the options and the repeat in Delivery &amp; returns are gone, and printed cards in lists no longer carry a badge (handmade ones still say Handmade).</li>
+      <li><b>Controls with the bar showing.</b> While hidden the bar can't be focused or read out. While showing, the page keeps room under it, and anything you tab to is scrolled clear of it (checked by tabbing through every control on each test page). All buying buttons are at least 44 px.</li>
+    </ol>
+    <p style="margin:10px 0 0">Spotted in the data, not changed: <code>mug-001</code> and <code>mug-002</code> have word-for-word identical titles ("Personalised KS2 Teacher Mug, Teal, Coral and Gold Design"), so they look the same in any list. Worth renaming one on the Listings page.</p>
+  </div>
 
   <div class="rv-cards">
     <div class="rv-card">
@@ -79,9 +93,9 @@
   <h2 style="font-size:26px;margin:34px 0 10px">Handmade and printed: proposed wording</h2>
   <div class="tbl-wrap"><table class="rv-t">
     <tr><th>Where</th><th>Handmade (bookmarks, keyrings)</th><th>Printed (mugs, tees, prints, totes, coasters)</th></tr>
-    <tr><td>Card badge</td><td>Handmade</td><td>Printed to order</td></tr>
-    <tr><td>Product page box</td><td><b>Handmade by Jon in Deal.</b> I apply the design to the acrylic, then cut, finish and pack it by hand at home in Deal, Kent. <i>Original design by me.</i>*</td><td><b>Printed to order.</b> My design, printed for you by my print partner when you order, and posted straight to you.</td></tr>
-    <tr><td>Delivery line</td><td>Ships within 1 to 2 business days, posted by me.</td><td>Printed to order, ships within 3 to 4 working days.</td></tr>
+    <tr><td>Card badge</td><td>Handmade</td><td>None (said once, on the product page)</td></tr>
+    <tr><td>Product page, under Add to basket (the only mention)</td><td><b>Handmade by Jon in Deal.</b> Ships within 1 to 2 business days, posted by me. Free UK postage over £10.</td><td><b>Printed to order.</b> Ships within 3 to 4 working days, straight from my print partner. Free UK postage over £10.</td></tr>
+    <tr><td>Product page, Details section</td><td>I apply the design to the acrylic, then cut, finish and pack it by hand at home in Deal, Kent. <i>Original design by Jon.</i>*</td><td>My design, printed for you when you order and posted straight to you, so it doesn't pass through my hands. <i>Original design by Jon.</i></td></tr>
     <tr><td>Shop-wide line</td><td colspan="2">Acrylic bookmarks and keyrings I make by hand, plus mugs, tees, prints and totes with my designs, printed to order.</td></tr>
   </table></div>
   <p style="font-size:14px;color:var(--ink-3);max-width:72ch">Why this wording: the transfers are printed by your UV DTF supplier and you apply, cut and finish them, so "I apply the design... cut, finish and pack" is accurate where "I print" wouldn't be. *Nine Summer keyrings are marked as not original designs (licensed artwork), so "Original design by me" only shows when <code>original_design</code> is Yes. Suppliers are never named (white label). Checked against the handbook's banned-words list. This replaces "Made by hand, by one person (me!)... not a factory" in the current store header, which currently sits above the printed products too.</p>
