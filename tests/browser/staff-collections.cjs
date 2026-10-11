@@ -209,6 +209,14 @@ async function wire(ctx) {
   const storeColsAfter = (await json('/collections')).result.filter(c => c.name !== 'Motorcycling').map(c => c.name + ':' + c.status).join('|');
   check(storeColsAfter === storeColsBefore, 'every other collection unchanged in the store data');
   if (OUT) { await page.click('#ed-close'); await page.screenshot({ path: path.join(OUT, 'staff-collections-final.png') }); }
+  // 12. On a phone: the editor fits the screen (no sideways scroll) and sits above the staff nav bar.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.click('.tab[data-tab="collections"]');
+  await page.click('#list-collections .item >> nth=0');
+  const ph = await page.evaluate(() => { const e = document.querySelector('.editor'); const t = document.getElementById('ed-title').getBoundingClientRect();
+    return { overflow: e.scrollWidth > e.clientWidth + 1, titleOnTop: document.elementFromPoint(t.left + 5, t.top + t.height / 2) === document.getElementById('ed-title') }; });
+  check(!ph.overflow && ph.titleOnTop, 'phone: editor fits the width and its title is not covered by the nav bar', JSON.stringify(ph));
+  if (OUT) await page.screenshot({ path: path.join(OUT, 'staff-collections-phone.png') });
   check(!errs.length, 'no page errors', errs.join(' | '));
   await browser.close(); srv.close();
   console.log(`${checks} checks, ${fails} failed`);
