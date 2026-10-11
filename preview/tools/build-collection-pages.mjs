@@ -5,7 +5,7 @@
 //   tests/fixtures/collection-pages/{slug}.html  shop files from /store/, links as on the live site - browser tests
 //   preview/collections/{slug}.html              shop files from /preview/lib/, noindex, no analytics, links to the
 //                                                preview product and collection pages - staff preview
-// Reads products.db read-only (also works before the shop_collections migration: built-in definitions).
+// Reads products.db read-only (also works before the 13 Oct collection-management migration: built-in pages).
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -15,14 +15,14 @@ const Database = require('better-sqlite3');
 const C = await import(path.join(apiDir, 'collections.js'));
 const { renderCollectionPage } = await import(path.join(apiDir, 'collection-page.js'));
 const db = new Database(process.env.PRODUCTS_DB || '/home/craftsbyjon/products-api/products.db', { readonly: true });
-const defs = C.loadDefinitions(db), cat = C.catalogue(db), nav = C.visibleCollections(defs, cat);
+const pages = C.loadPages(db), cat = C.catalogue(db), nav = C.visiblePages(pages, cat);
 for (const d of ['tests/fixtures/collection-pages', 'preview/collections']) { fs.rmSync(d, { recursive: true, force: true }); fs.mkdirSync(d, { recursive: true }); }
-for (const { def } of nav) {
-  const products = C.productsFor(def, cat);
-  fs.writeFileSync(`tests/fixtures/collection-pages/${def.slug}.html`, renderCollectionPage(def, products, { nav }));
-  const prev = renderCollectionPage(def, products, { nav, assets: '/preview/lib/', preview: true, linkBase: '/preview/collections/', linkSuffix: '.html' })
+for (const { page } of nav) {
+  const products = C.productsFor(page, cat);
+  fs.writeFileSync(`tests/fixtures/collection-pages/${page.slug}.html`, renderCollectionPage(page, products, { nav }));
+  const prev = renderCollectionPage(page, products, { nav, assets: '/preview/lib/', preview: true, linkBase: '/preview/collections/', linkSuffix: '.html' })
     .replace(/href="\/products\/([a-z0-9-]+)"/gi, (m, id) => `href="/preview/products/${id}.html"`);
-  fs.writeFileSync(`preview/collections/${def.slug}.html`, prev);
+  fs.writeFileSync(`preview/collections/${page.slug}.html`, prev);
 }
-fs.writeFileSync('tests/fixtures/collection-pages/_index.json', JSON.stringify(nav.map(n => ({ slug: n.def.slug, name: n.def.name, kind: n.def.kind, count: n.count, products: C.productsFor(n.def, cat).map(p => p.id) })), null, 2));
+fs.writeFileSync('tests/fixtures/collection-pages/_index.json', JSON.stringify(nav.map(n => ({ slug: n.page.slug, name: n.page.name, kind: n.page.source || n.page.kind, count: n.count, products: C.productsFor(n.page, cat).map(p => p.id) })), null, 2));
 console.log('rendered', nav.length, 'collection pages (tests and preview)');
