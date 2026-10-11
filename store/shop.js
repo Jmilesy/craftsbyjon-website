@@ -784,7 +784,8 @@
       + '</div></div>';
   }
 
-  function openModal(p, quiet) {
+  // fromHistory: opened by the browser's Back/Forward (the address already says /store/#id), so no new entry.
+  function openModal(p, quiet, fromHistory) {
     // quiet: product page re-drawing itself after Add to Cart; not a new view, so nothing is tracked.
     if (!quiet && window.__modalOpenedId) { closeModalTracking(); }
     var id = p['Product ID'];
@@ -793,7 +794,7 @@
     window.__modalOpenedId = PRODUCT_PAGE ? null : id;  // a product page has no popup to close, so no modal_close
     window.__modalImagesViewed = 1;
     if (id && !PRODUCT_PAGE) {
-      history.pushState({ productId: id }, '', '/store/#' + id);
+      if (!fromHistory) history.pushState({ productId: id }, '', '/store/#' + id);
       document.title = (p['Title'] || id) + ' - Crafts by Jon';
       var metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) metaDesc.setAttribute('content', (p['Short Description'] || p['Title'] || '') + ' Handmade in Deal, Kent by Crafts by Jon. From £' + (p.price || '3.50') + '.');
@@ -1245,9 +1246,20 @@
     el.innerHTML = html;
   }
 
-  window.addEventListener('popstate', function(e) {
-    var modal = document.getElementById('modal-overlay');
-    if (modal && modal.style.display !== 'none') closeModal();
+  // Back/Forward (11 Oct 2026). Opening a product adds /store/#id to the history and closing it adds /store/, so the
+  // phone's Back button should close the popup and Forward reopen it. This handler used to look for 'modal-overlay'
+  // (the element is #modalOverlay), so Back changed the address and left the popup open.
+  window.addEventListener('popstate', function() {
+    if (PRODUCT_PAGE) return;
+    var isOpen = document.getElementById('modalWrap').classList.contains('open');
+    var id = '';
+    try { id = decodeURIComponent(window.location.hash.slice(1)); } catch (e) {}
+    var target = id && allProducts.find(function(p) { return p['Product ID'] === id; });
+    if (target) {
+      if (!isOpen || window.__modalOpenedId !== id) openModal(target, false, true);
+    } else if (isOpen) {
+      closeModal(true);
+    }
   });
 
   function closeModalTracking() {
@@ -1258,10 +1270,10 @@
     }
   }
 
-  function closeModal() {
+  function closeModal(fromHistory) {
     if (PRODUCT_PAGE) return;
     closeModalTracking();
-    history.pushState({}, '', '/store/');
+    if (fromHistory !== true) history.pushState({}, '', '/store/');
     document.title = 'Crafts by Jon - Handmade Acrylic Keyrings & Bookmarks';
     document.getElementById('modalOverlay').classList.remove('open');
     document.getElementById('modalWrap').classList.remove('open');
