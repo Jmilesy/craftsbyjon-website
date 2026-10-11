@@ -22,9 +22,13 @@ const linksIn = html => [...new Set([...html.matchAll(/href="\/products\/([^"?#]
 const cardIds = html => [...html.matchAll(/class="cc-link"[^>]*data-id="([^"]+)"/g)].map(m => m[1]);
 
 async function wire(ctx) {
-  await ctx.route('**/*', route => {
+  await ctx.route('**/*', async route => {
     const u = route.request().url();
-    if (u.startsWith(LIVE_API)) return route.continue({ url: SANDBOX + u.slice(LIVE_API.length) });
+    if (u.startsWith(LIVE_API)) {
+      const q = route.request();
+      const r = await fetch(SANDBOX + u.slice(LIVE_API.length), { method: q.method(), headers: { 'content-type': q.headers()['content-type'] || 'application/json' }, body: ['GET', 'HEAD'].includes(q.method()) ? undefined : q.postDataBuffer() });
+      return route.fulfill({ status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'text/plain', location: r.headers.get('location') || '' }, body: Buffer.from(await r.arrayBuffer()) });
+    }
     if (u.startsWith(`http://localhost:${PORT}/`) || u.startsWith('https://cdnjs.cloudflare.com/')) return route.continue();
     return route.fulfill({ status: 204, body: '' }); // images, fonts, analytics: nothing leaves the machine
   });
