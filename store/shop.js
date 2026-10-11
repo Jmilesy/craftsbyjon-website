@@ -104,6 +104,12 @@
   let toteState = null;         // tote picker state (Colour x Text), null for every other product
   let photoState = null;        // photo personalisation state (photo-personaliser.js), null for every other product
 
+  // Product page mode (/products/{id}, 11 Oct 2026). The server-rendered product page sets
+  // window.CBJ_PAGE = { mode: 'product', id: '...' } and loads this same file, so the popup's pickers,
+  // personalisation, basket and checkout run unchanged; the popup content is shown as the page.
+  // Everything below that checks PRODUCT_PAGE is skipped on /store/.
+  var PRODUCT_PAGE = (window.CBJ_PAGE && window.CBJ_PAGE.mode === 'product' && window.CBJ_PAGE.id) ? window.CBJ_PAGE : null;
+
   async function load() {
     const main = document.getElementById('main');
     try {
@@ -153,6 +159,8 @@
       availableProducts = allProducts.filter(function(p) {
         return p['Collection'] && collectionsStatus[p['Collection']] === 'available';
       });
+
+      if (PRODUCT_PAGE) { showProductPage(main); return; }
 
       if (allProducts.length === 0) {
         main.innerHTML = '<div class="empty-msg">No products set up yet.<br>Use the staff listings page to create Stripe links.</div>';
@@ -360,8 +368,27 @@
         }, colParam ? 150 : 100);
       }
     } catch (e) {
+      // On a product page the server-rendered summary (with its "View & buy in the shop" link) stays in place.
+      if (PRODUCT_PAGE) { document.documentElement.classList.add('pp-failed'); return; }
       main.innerHTML = '<div class="empty-msg">Could not load products. Please try again later.</div>';
     }
+  }
+
+  // Product page: restore the saved basket (it needs the whole catalogue, or other lines would be dropped),
+  // then show this product's popup content as the page. A product that has sold out, or isn't on sale,
+  // keeps the server-rendered summary and gets a short note.
+  function showProductPage(main) {
+    try { restoreCart(); } catch (e) { try { CBJPhoto.clear(window.localStorage); } catch (e2) {} }
+    var p = allProducts.find(function(x) { return x['Product ID'] === PRODUCT_PAGE.id; });
+    if (!p) {
+      document.documentElement.classList.add('pp-unavailable');
+      if (main) main.innerHTML = '<div class="empty-msg">This one can\'t be bought right now. <a href="/store/">Have a look at the rest of the shop</a>.</div>';
+      return;
+    }
+    PRODUCT_PAGE.product = p;
+    openModal(p);
+    document.documentElement.classList.add('pp-ready');
+    document.dispatchEvent(new CustomEvent('cbj:product-ready', { detail: { product: p } }));
   }
 
   // Set active collection filter button and re-filter
@@ -753,14 +780,15 @@
       + '</div></div>';
   }
 
-  function openModal(p) {
-    if (window.__modalOpenedId) { closeModalTracking(); }
+  function openModal(p, quiet) {
+    // quiet: product page re-drawing itself after Add to Cart; not a new view, so nothing is tracked.
+    if (!quiet && window.__modalOpenedId) { closeModalTracking(); }
     var id = p['Product ID'];
-    trackEvent('product_view', id);
+    if (!quiet) trackEvent('product_view', id);
     window.__modalOpenedAt = Date.now();
-    window.__modalOpenedId = id;
+    window.__modalOpenedId = PRODUCT_PAGE ? null : id;  // a product page has no popup to close, so no modal_close
     window.__modalImagesViewed = 1;
-    if (id) {
+    if (id && !PRODUCT_PAGE) {
       history.pushState({ productId: id }, '', '/store/#' + id);
       document.title = (p['Title'] || id) + ' - Crafts by Jon';
       var metaDesc = document.querySelector('meta[name="description"]');
@@ -829,7 +857,7 @@
     var basePrice = parseFloat(p.price || 3.50);
     var displayPrice = '£' + basePrice.toFixed(2);
 
-    gtag('event', 'view_item', {
+    if (!quiet) gtag('event', 'view_item', {
       currency: 'GBP',
       value: parseFloat(p.price || 3.50),
       items: [{ item_id: id, item_name: p['Title'], item_category: p['Collection'] || '', price: parseFloat(p.price || 3.50), quantity: 1 }]
@@ -1121,7 +1149,8 @@
 
     document.getElementById('modalOverlay').classList.add('open');
     document.getElementById('modalWrap').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    if (!PRODUCT_PAGE) document.body.style.overflow = 'hidden';
+    else document.dispatchEvent(new CustomEvent('cbj:product-drawn', { detail: { product: p } }));
   }
 
   function shuffle(arr) {
@@ -1134,6 +1163,7 @@
   // Opens a product from the related or same-design row, recording which product the click came from (task 177)
   function openModalFrom(kind, fromId, product) {
     trackEvent(kind, product['Product ID'], 'from:' + fromId);
+    if (PRODUCT_PAGE) { window.location.href = '/products/' + encodeURIComponent(product['Product ID']); return; }
     openModal(product);
   }
 
@@ -1221,6 +1251,7 @@
   }
 
   function closeModal() {
+    if (PRODUCT_PAGE) return;
     closeModalTracking();
     history.pushState({}, '', '/store/');
     document.title = 'Crafts by Jon - Handmade Acrylic Keyrings & Bookmarks';
@@ -1966,6 +1997,9 @@
     }
     addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta, toteMeta, photoMeta);
     if (photoMeta) resetPhotoState();
+    // Product page: the popup would have closed here. Draw the page again so every choice starts fresh
+    // (otherwise a second tap could add the item again without the finish, size or photo it needs).
+    if (PRODUCT_PAGE) openModal(p, true);
   }
 
   function addToCart(p, variant, mugName, mugMessage, mugTextColour, persText, podMeta, toteMeta, photoMeta) {

@@ -10,6 +10,8 @@
     window.dataLayer = window.dataLayer || [];
     window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
     function loadAnalytics() {
+      // Staff preview builds of product pages set CBJ_PREVIEW: never send their visits to analytics.
+      if (window.CBJ_PREVIEW) return;
       var ga = document.createElement('script');
       ga.async = true;
       ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-299D45HZTC';

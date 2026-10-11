@@ -63,7 +63,7 @@ async function wire(ctx, opts) {
     if ((m = p.match(/^\/products\/([^/]+)\/public-variants$/))) return json(route, FIX.variants[m[1]] || { result: [] });
     if ((m = p.match(/^\/products\/([^/]+)\/public-variant-gallery$/))) return json(route, FIX.variantGallery[m[1]] || { result: {} });
     if (p === '/event') { try { log.events.push(JSON.parse(req.postData() || '{}')); } catch (e) {} return json(route, { ok: true }); }
-    if (p === '/create-checkout-session') { log.checkouts.push(JSON.parse(req.postData() || '{}')); return json(route, { id: 'cs_test_' + log.checkouts.length, url: 'about:blank#stripe' }); }
+    if (p === '/create-checkout-session') { log.checkouts.push(JSON.parse(req.postData() || '{}')); return json(route, { id: 'cs_test_' + log.checkouts.length, url: '#stripe-checkout-test' }); }
     if (p === '/personalisation/upload') { log.uploads++; return json(route, { result: { upload_id: 'up_test_' + log.uploads, low_resolution: false } }); }
     log.live.push(req.method() + ' ' + p);
     return json(route, { error: 'not in fixture' }, 404);

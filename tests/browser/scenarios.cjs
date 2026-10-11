@@ -60,6 +60,8 @@ async function checkoutFromBasket(page, log, extras) {
   const before = log.checkouts.length;
   await page.click('#checkoutBtn');
   for (let i = 0; i < 50 && log.checkouts.length === before; i++) await wait(page, 60);
+  // checkout_started is sent after the checkout request returns (it carries the session id): wait for it.
+  for (let i = 0; i < 50 && !log.events.some(e => e.event === 'checkout_started'); i++) await wait(page, 60);
   return log.checkouts[log.checkouts.length - 1];
 }
 
