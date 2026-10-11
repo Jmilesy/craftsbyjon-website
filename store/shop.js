@@ -852,6 +852,10 @@
       var key = Object.keys(variantImages).find(function(k) { return k.toLowerCase() === name.toLowerCase(); });
       return key ? buildImageUrl(variantImages[key]) : '';
     }
+    // The Black thumbnail below used blackUrl without ever defining it, so the popup threw
+    // "blackUrl is not defined" and never opened for any Clear/Black product (found 11 Oct 2026;
+    // broken since at least 5 Sep 2026, no sale of keyring-001 to -010 since 8 Jul).
+    var blackUrl = variantImageUrl('black');
 
     var bullets = [
       p['Bullet Point 1'], p['Bullet Point 2'], p['Bullet Point 3'],
