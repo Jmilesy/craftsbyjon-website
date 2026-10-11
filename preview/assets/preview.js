@@ -251,7 +251,7 @@
     var opener = null;
     function closeAll() {
       var was = document.querySelector('.sheet.on');
-      document.querySelectorAll('.sheet.on').forEach(function (s) { s.classList.remove('on'); }); scrim.classList.remove('on'); document.body.style.overflow = '';
+      document.querySelectorAll('.sheet.on').forEach(function (s) { s.classList.remove('on'); s.setAttribute('inert', ''); }); scrim.classList.remove('on'); document.body.style.overflow = '';
       if (was && was.id === 'sh-quick') setTimeout(function () { $('#qvBody').innerHTML = ''; }, 250);
       if (was && opener && document.contains(opener)) opener.focus({ preventScroll: true });
       opener = null;
@@ -261,10 +261,11 @@
       closeAll();
       opener = from;
       var s = $('#sh-' + name); if (!s) return;
-      s.classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden';
+      s.removeAttribute('inert'); s.classList.add('on'); scrim.classList.add('on'); document.body.style.overflow = 'hidden';
       if (name === 'search') { renderSearch(''); setTimeout(function () { $('#q').focus(); }, 60); }
       if (name === 'basket') renderBasket();
     }
+    document.querySelectorAll('.sheet').forEach(function (s) { s.setAttribute('inert', ''); });
     window.CBJPV = { open: open, close: closeAll };
     document.addEventListener('click', function (e) {
       var o = e.target.closest('[data-open]'); if (o) { e.preventDefault(); open(o.getAttribute('data-open')); return; }
@@ -287,6 +288,41 @@
 
   // ---------- search ----------
   function norm(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9£ ]+/g, ' '); }
+  // Words customers use for each product type, and a one-letter typo check for longer words.
+  var SYNONYMS = {
+    'T-Shirt': 'tee tees tshirt tshirts teeshirt teeshirts top tops clothing',
+    'Mug': 'cup cups coffee tea', 'Keyring': 'key ring keychain keychains key chain',
+    'Bookmark': 'book mark', 'Tote Bag': 'bag bags shopper', 'Coaster Set': 'coaster mat mats',
+    'Print': 'poster posters art picture wall frame framed'
+  };
+  function near(a, b) {
+    if (Math.abs(a.length - b.length) > 1 || b.length < 4) return false;
+    var i = 0, j = 0, edits = 0;
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) { i++; j++; continue; }
+      if (++edits > 1) return false;
+      if (a.length > b.length) i++; else if (b.length > a.length) j++; else if (a[i + 1] === b[j] && a[i] === b[j + 1]) { i += 2; j += 2; } else { i++; j++; }
+    }
+    return edits + (a.length - i) + (b.length - j) <= 1;
+  }
+  function searchProducts(term) {
+    var words = norm(term).trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return [];
+    return data.catalogue.map(function (p) {
+      var title = norm(p.title), hay = title + ' ' + norm(p.type) + ' ' + (SYNONYMS[p.type] || '') + ' ' + norm(p.collection) + ' ' + norm(p.tags)
+        + (p.personalisable ? ' personalised personalized personalise personalize custom name' : '') + (p.price < 5 ? ' under £5 cheap stocking filler' : '');
+      var hayWords = hay.split(/\s+/);
+      var score = 0;
+      for (var i = 0; i < words.length; i++) {
+        var w = words[i], ws = w.replace(/s$/, '');
+        if (title.indexOf(ws) !== -1) score += 3;
+        else if (hay.indexOf(ws) !== -1) score += 1;
+        else if (ws.length >= 5 && hayWords.some(function (h) { return near(ws, h); })) score += 1;  // one-letter typo: castel, bokmark
+        else return null;
+      }
+      return { p: p, s: score };
+    }).filter(Boolean).sort(function (a, b) { return b.s - a.s; });
+  }
   function renderSearch(term) {
     var t = norm(term).trim(), out = '';
     if (!t) {
@@ -298,15 +334,7 @@
     var words = t.split(/\s+/).filter(Boolean);
     var cols = visibleCollections().filter(function (c) { return words.every(function (w) { return norm(c.name).indexOf(w) !== -1; }); });
     var types = TYPES.filter(function (x) { return words.every(function (w) { return norm(x.name).indexOf(w.replace(/s$/, '')) !== -1; }); });
-    var hits = data.catalogue.map(function (p) {
-      var title = norm(p.title), hay = title + ' ' + norm(p.type) + ' ' + norm(p.collection) + ' ' + norm(p.tags) + (p.personalisable ? ' personalised personalise name' : '') + (p.price < 5 ? ' under £5 cheap stocking filler' : '');
-      var score = 0;
-      for (var i = 0; i < words.length; i++) {
-        var w = words[i], ws = w.replace(/s$/, '');
-        if (title.indexOf(ws) !== -1) score += 3; else if (hay.indexOf(ws) !== -1) score += 1; else return null;
-      }
-      return { p: p, s: score };
-    }).filter(Boolean).sort(function (a, b) { return b.s - a.s; }).slice(0, 12);
+    var allHits = searchProducts(term), hits = allHits.slice(0, 12);
     if (types.length || cols.length) out += '<div class="sr-head">Collections</div><div class="chip-row">'
       + types.map(function (x) { return '<a class="chip" href="' + typeLink(x) + '">' + x.name + '</a>'; }).join('')
       + cols.map(function (c) { return '<a class="chip" href="' + collectionLink(c) + '">' + esc(c.name) + ' <small>' + productsFor(c).length + '</small></a>'; }).join('') + '</div>';
@@ -315,6 +343,7 @@
       var p = h.p;
       return '<a class="sr-row" href="product.html?id=' + encodeURIComponent(p.id) + '">' + img(p.image, 400, '') + '<div><div class="t">' + esc(name(p)) + '</div><div class="m">' + esc(p.type) + ' · ' + priceLabel(p).replace(/<[^>]+>/g, '') + '</div></div></a>';
     }).join('');
+    if (allHits.length > hits.length) out += '<p style="margin:12px 0 0"><a class="btn alt" href="collection.html?q=' + encodeURIComponent(term.trim()) + '">See all ' + allHits.length + ' results</a></p>';
     if (!hits.length) out += '<p style="color:var(--ink-2)">Try "mug", "Deal" or "bee", or <a class="link" href="collection.html?c=all">browse everything</a>. Looking for something I don\'t make yet? <a class="link" href="/custom-orders.html">Ask about a custom order</a>.</p>';
     $('#sr').innerHTML = out; bindTerms();
   }
@@ -451,6 +480,12 @@
 
   function collectionPage() {
     var slug = q('c'), tslug = q('t'), max = parseFloat(q('max')) || null;
+    var qterm = q('q');
+    if (qterm) {
+      var found = searchProducts(qterm).map(function (h) { return h.p; });
+      var sc = { slug: 'search', name: 'Search: "' + qterm + '"', kind: 'auto', rule: function (p) { return found.indexOf(p) !== -1; }, sort: function (a, b) { return found.indexOf(a) - found.indexOf(b); }, intro: found.length + ' results', image: '' };
+      COLLECTIONS.push(sc); slug = 'search';
+    }
     var c = slug ? COLLECTIONS.filter(function (x) { return x.slug === slug; })[0] : null;
     var t = tslug ? TYPES.filter(function (x) { return x.slug === tslug; })[0] : null;
     if (!c && !t) c = COLLECTIONS.filter(function (x) { return x.slug === 'all'; })[0];
@@ -467,7 +502,7 @@
       + '<div class="tools"><div class="wrap tools-in"><div class="chip-row" id="typeChips"></div>'
       + '<button class="chip" id="filterBtn" data-open="filters">Filter</button></div></div>'
       + '<div class="wrap"><div class="result-n" id="resN"></div><div class="grid" id="grid"></div><div class="more" id="more"></div></div>'
-      + '<aside class="sheet sheet-bottom" id="sh-filters" aria-label="Filters"><div class="sheet-head"><h2>Filter & sort</h2><button class="icon-btn" data-close aria-label="Close">' + ICON.close + '</button></div><div class="sheet-body" id="filterBody"></div></aside>';
+      + '<aside class="sheet sheet-bottom" id="sh-filters" aria-label="Filters" inert><div class="sheet-head"><h2>Filter & sort</h2><button class="icon-btn" data-close aria-label="Close">' + ICON.close + '</button></div><div class="sheet-body" id="filterBody"></div></aside>';
 
     function filtered() {
       var list = base.filter(function (p) {
@@ -596,7 +631,9 @@
       + '<div data-r="opts"></div>'
       + (isAcrylicPers ? '<div class="opt"><label class="opt-h" for="pers' + n + '">Add a name or message <span>optional, +£1.50</span></label><input class="field" id="pers' + n + '" data-r="pers" maxlength="30" placeholder="e.g. Miss Smith" aria-describedby="persN' + n + '"><div class="field-note" id="persN' + n + '" data-r="persN">Up to 30 characters</div></div>' : '')
       + (isMugPers ? '<div class="opt"><label class="opt-h" for="mugName' + n + '">Name on the mug <span>up to 20 characters</span></label><input class="field" id="mugName' + n + '" data-r="mugName" maxlength="20" placeholder="e.g. Miss Smith"></div>'
-          + '<div class="opt"><label class="opt-h" for="mugMsg' + n + '">Message</label><select class="field" id="mugMsg' + n + '" data-r="mugMsg">' + (d.mugMessages || []).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select><div class="field-note">Text colour choice stays as it is in the live shop.</div></div>' : '')
+          + '<div class="opt"><label class="opt-h" for="mugMsg' + n + '">Message</label><select class="field" id="mugMsg' + n + '" data-r="mugMsg">' + (d.mugMessages || []).map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select>'
+          + '<input class="field" id="mugCustom' + n + '" data-r="mugCustom" maxlength="40" placeholder="Your message (up to 40 characters)" aria-label="Your own message, up to 40 characters" hidden style="margin-top:8px">'
+          + '<div class="field-note">Text colour choice stays as it is in the live shop.</div></div>' : '')
       + '<div class="buy"><button class="btn block" data-r="add"></button></div>' + fulfil;
 
     if (page) {
@@ -713,13 +750,20 @@
       if (!v) return;  // never add something that doesn't match a real variant
       var opts = {};
       mdl.groups.forEach(function (g) { if (choice[g.k]) opts[g.k] = g.label ? g.label(choice[g.k]) : choice[g.k]; });
-      if (isMugPers) { var nm = R('mugName').value.trim(); if (nm) opts.Name = nm; opts.Message = R('mugMsg').value; }
+      if (isMugPers) {
+        var nm = R('mugName').value.trim(); if (nm) opts.Name = nm;
+        // As in the live modal: "Custom" means the customer's own words from the extra box, never the word "Custom".
+        var msg = R('mugMsg').value === 'Custom' ? R('mugCustom').value.trim() : R('mugMsg').value;
+        if (R('mugMsg').value === 'Custom' && !msg) { R('mugCustom').focus(); R('mugCustom').setAttribute('aria-invalid', 'true'); return; }
+        opts.Message = msg;
+      }
       if (v.retail_price_pence != null) opts.__price = v.retail_price_pence / 100;
-      opts.__variant = v.id != null ? { id: v.id, gelato_variant_id: v.gelato_variant_id || null } : (v.finish ? { finish: v.finish } : null);
+      opts.__variant = v.id != null ? { id: v.id, gelato_variant_id: v.gelato_variant_id || null, gelato_product_uid: v.gelato_product_uid || null } : (v.finish ? { finish: v.finish } : null);
       opts.__image = shown[0] || p.image;  // the basket line shows the picture of what was chosen
       addToBasket(p, opts, R('pers') ? R('pers').value.trim() : '');
     }
     if (R('pers')) R('pers').addEventListener('input', function () { R('persN').textContent = (30 - this.value.length) + ' characters left'; sync(); });
+    if (R('mugMsg')) R('mugMsg').addEventListener('change', function () { var c = this.value === 'Custom'; R('mugCustom').hidden = !c; if (c) R('mugCustom').focus(); });
     R('add').onclick = add;
     renderOptions(); refreshPictures(); sync();
 

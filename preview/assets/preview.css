@@ -77,6 +77,10 @@ h1, h2, h3 { font-family: var(--head); line-height: 1.1; margin: 0; letter-spaci
 .sheet-right { top: 0; bottom: 0; right: 0; width: min(92vw, 420px); transform: translateX(102%); }
 .sheet-bottom { left: 0; right: 0; bottom: 0; max-height: 86vh; border-radius: 18px 18px 0 0; transform: translateY(102%); }
 .sheet.on { transform: none; }
+/* Closed panels are really hidden (not just moved off screen): no keyboard focus, not read out, not drawn in
+   full-page screenshots. visibility switches after the slide-out so the animation still shows. */
+.sheet:not(.on) { visibility: hidden; transition: transform .25s ease, visibility 0s linear .25s; }
+.sheet.on { visibility: visible; transition: transform .25s ease, visibility 0s; }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 10px var(--gutter); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--paper); z-index: 1; }
 .sheet-head h2 { font-size: 20px; }
 .sheet-body { padding: 14px var(--gutter) 24px; }
@@ -366,6 +370,7 @@ table.rv-t { width: 100%; border-collapse: collapse; font-size: 14.5px; backgrou
 @media (min-width: 900px) {
   .qv-sheet { left: 50%; right: auto; bottom: auto; top: 50%; width: min(940px, 92vw); max-height: 88vh; border-radius: 18px; transform: translate(-50%, -46%); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
   .qv-sheet.on { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
+  .qv-sheet:not(.on) { transition: opacity .2s, transform .2s, visibility 0s linear .2s; }
   .qv-sheet .sheet-body { padding: 0 24px 24px; }
   .qv-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 28px; align-items: start; }
   .qv-sheet .gal { margin: 0; }
