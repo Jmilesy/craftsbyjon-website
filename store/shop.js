@@ -155,10 +155,11 @@
         return String(p['Ready to Go'] || '').trim().toLowerCase() === 'yes';
       });
 
-      // Split: main grid = live or no collection; available section = 'available' status
+      // Split: main grid = live or no collection; available section = 'available' status.
+      // A hidden or not-yet-published (draft) collection only loses its button: its products stay in the main grid.
       mainProducts = allProducts.filter(function(p) {
         var cs = collectionsStatus[p['Collection']];
-        return !p['Collection'] || cs === 'live' || cs === undefined;
+        return !p['Collection'] || cs === 'live' || cs === undefined || cs === 'hidden' || cs === 'draft';
       });
       availableProducts = allProducts.filter(function(p) {
         return p['Collection'] && collectionsStatus[p['Collection']] === 'available';

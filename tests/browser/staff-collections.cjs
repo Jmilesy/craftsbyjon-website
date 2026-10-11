@@ -232,6 +232,8 @@ async function wire(ctx) {
   await shop.waitForSelector('#grid .card');
   const btns = await shop.$$eval('#collectionFilterBar .col-btn[data-col]', b => b.map(x => x.dataset.col));
   check(!btns.includes('Motorcycling') && btns.length > 3, 'hidden: the store has no Motorcycling button (other collection buttons still there)', btns.join(','));
+  const gridIds = await shop.$$eval('#grid .card .card-title-link', a => a.map(x => x.getAttribute('href').replace('/products/', '')));
+  check(gridIds.includes(mover), `hidden: ${mover} (main collection now the hidden Motorcycling) is still in the shop grid`, `${gridIds.length} cards`);
   await shop.close();
 
   // 11. Archive it, then check the store's own collection data for everything else is untouched.
