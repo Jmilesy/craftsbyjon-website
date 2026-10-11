@@ -215,7 +215,8 @@ async function wire(ctx) {
   await page.waitForFunction(() => /Published/.test(document.getElementById('ed-msg').textContent));
   const storeColsAfter = (await json('/collections')).result.filter(c => c.name !== 'Motorcycling').map(c => c.name + ':' + c.status).join('|');
   check(storeColsAfter === storeColsBefore, 'every other collection unchanged in the store data');
-  if (OUT) { await page.click('#ed-close'); await page.screenshot({ path: path.join(OUT, 'staff-collections-final.png') }); }
+  await page.click('#ed-close');
+  if (OUT) await page.screenshot({ path: path.join(OUT, 'staff-collections-final.png') });
   // 12. On a phone: the editor fits the screen (no sideways scroll) and sits above the staff nav bar.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.click('.tab[data-tab="collections"]');
