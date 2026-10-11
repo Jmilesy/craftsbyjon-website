@@ -1,0 +1,137 @@
+/* Crafts by Jon: product page look (/products/{id}, 11 Oct 2026), the approved redesign applied to the
+   shop popup's markup. Loaded after shop.css, and only by product pages (<body class="pp">). */
+:root {
+  --pp-ink: #1a1a2e; --pp-ink-2: #4a4a5e; --pp-ink-3: #6b6b7d; --pp-paper: #fbf7f1; --pp-card: #fff; --pp-line: #e9e2d6;
+  --pp-sun: #f5a623; --pp-sun-soft: #fff1d6; --pp-coral-ink: #c43c3c; --pp-sea: #2364aa; --pp-sea-soft: #e4eefa;
+  --pp-leaf: #1f7a5a; --pp-leaf-soft: #e1f3ea; --pp-radius: 14px; --pp-gutter: 16px;
+  --pp-head: 'Bricolage Grotesque', 'Nunito', system-ui, sans-serif;
+  --pp-body: 'Nunito Sans', 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --pp-shadow: 0 1px 2px rgba(26,26,46,.06), 0 6px 18px rgba(26,26,46,.06);
+}
+body.pp { margin: 0; background: var(--pp-paper); color: var(--pp-ink); font-family: var(--pp-body); }
+.pp a { color: inherit; }
+.pp :focus-visible { outline: 3px solid var(--pp-sea); outline-offset: 2px; }
+
+/* Header and strip (shop.css styles every <header> as the store's blue banner: undo that here) */
+.pp header.pp-hdr { background: rgba(251,247,241,.97); color: var(--pp-ink); padding: 0; text-align: left; border-bottom: 1px solid var(--pp-line); }
+.pp header.pp-hdr a { color: var(--pp-ink); }
+.pp-hdr { position: sticky; top: 0; z-index: 300; background: rgba(251,247,241,.97); border-bottom: 1px solid var(--pp-line); }
+.pp-hdr-in { max-width: 1180px; margin: 0 auto; padding: 0 var(--pp-gutter); height: 58px; display: flex; align-items: center; gap: 12px; }
+.pp-logo { font-family: var(--pp-head); font-weight: 800; font-size: 21px; text-decoration: none; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.pp-logo i { width: 26px; height: 26px; border-radius: 8px; background: var(--pp-sun); display: grid; place-items: center; font-style: normal; font-size: 15px; transform: rotate(-6deg); }
+.pp-hdr nav { display: flex; gap: 4px; margin-left: auto; align-items: center; }
+.pp-hdr nav a { text-decoration: none; font-weight: 700; padding: 10px 12px; border-radius: 10px; }
+.pp-hdr nav a:hover { background: rgba(26,26,46,.06); }
+/* The shop's basket button, moved into the header (shop.js shows it once the basket has something in it). */
+#pp-cart-slot .cart-btn { position: relative; top: auto; right: auto; bottom: auto; left: auto; width: auto; height: 40px; box-shadow: none; transform: none; border: 2px solid var(--pp-ink); background: var(--pp-ink); color: #fff; border-radius: 999px; padding: 0 14px; font-size: 14px; font-weight: 800; animation: none; align-items: center; gap: 2px; }
+#pp-cart-slot .cart-btn[style*="block"] { display: inline-flex !important; }
+#pp-cart-slot .cart-btn:hover { transform: none; box-shadow: none; opacity: .9; }
+#pp-cart-slot .cart-btn-label { display: inline; }
+#pp-cart-slot #cartCount { position: static; background: none; color: inherit; font-size: inherit; min-width: 0; height: auto; padding: 0; border-radius: 0; display: inline; }
+@media (max-width: 480px) { .pp-hdr nav a.pp-hide-sm { display: none; } }
+.pp .bundle-banner { position: static; margin: 0; border-radius: 0; box-shadow: none; border: 0; border-bottom: 1px solid #f2dfb5; background: var(--pp-sun-soft); color: var(--pp-ink); font-size: 13.5px; text-align: center; padding: 7px var(--pp-gutter); }
+.pp .bundle-banner a { color: inherit !important; }
+@media (max-width: 640px) { .pp .bundle-banner .banner-static, .pp .bundle-banner .banner-sep { display: none; } }
+
+/* Server-rendered summary: shown until the buying controls are ready, and kept if they fail to load. */
+.pp-static { max-width: 640px; margin: 0 auto; padding: 20px var(--pp-gutter); }
+.pp-static .hero { width: 100%; height: auto; border-radius: var(--pp-radius); display: block; background: #eee; }
+.pp-static h1 { font-family: var(--pp-head); font-size: 28px; margin: 18px 0 6px; }
+.pp-static .price { font-size: 22px; font-weight: 800; margin: 0 0 14px; }
+.pp-static .buy { display: inline-block; background: var(--pp-ink); color: #fff; font-weight: 800; text-decoration: none; padding: 14px 26px; border-radius: 999px; }
+.pp-static .pp-loading { color: var(--pp-ink-3); font-size: 14px; margin: 10px 0 0; }
+html.pp-failed .pp-static .pp-loading, html.pp-unavailable .pp-static .pp-loading { display: none; }
+/* Sold out or off sale: no "View & buy" link to a shop that won't show it; the note below takes its place. */
+html.pp-unavailable .pp-static .buy { display: none; }
+.pp #main:empty { display: none; }
+.pp #main .empty-msg { max-width: 640px; margin: 0 auto; padding: 0 var(--pp-gutter) 20px; }
+
+/* The popup, laid out as the page */
+.pp #modalOverlay { display: none !important; }
+.pp .modal-wrap, .pp .modal-wrap.open { display: block; position: static; inset: auto; z-index: auto; overflow: visible; padding: 0; }
+.pp .modal, .pp .modal-wrap.open .modal { border: 0; border-radius: 0; box-shadow: none; max-width: 1180px; margin: 0 auto; background: transparent; opacity: 1; transform: none; transition: none; }
+.pp .modal-close { display: none; }
+.pp .modal-inner { display: grid; grid-template-columns: 1fr; gap: 0; }
+.pp .modal-img-col { padding: 0; border: 0; }
+.pp .modal-img-main { width: 100%; height: min(76vw, 42vh); object-fit: contain; border-radius: 0; background: #f1ece3; cursor: zoom-in; }
+.pp .modal-img-main:hover { transform: none; box-shadow: none; }
+.pp .modal-img-note { margin: 8px var(--pp-gutter) 0; border-radius: 10px; font-size: 13.5px; }
+@media (min-width: 900px) { .pp .modal-img-note { margin: 10px 0 0; } }
+.pp .modal-thumbs { padding: 0 var(--pp-gutter); gap: 8px; margin-top: 10px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.pp .modal-thumb { width: 58px; height: 58px; border-radius: 10px; border: 2px solid transparent; flex: none; background: #eee; }
+.pp .modal-thumb.active { border-color: var(--pp-ink); }
+.pp .modal-details-col { display: flex; flex-direction: column; padding: 14px var(--pp-gutter) 8px; gap: 0; }
+@media (min-width: 900px) {
+  .pp .modal { padding: 28px var(--pp-gutter) 0; }
+  .pp .modal-inner { grid-template-columns: 1.1fr 1fr; gap: 44px; align-items: start; }
+  .pp .modal-img-main { height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 18px; }
+  .pp .modal-thumbs { padding: 0; flex-wrap: wrap; }
+  .pp .modal-thumb { width: 74px; height: 74px; }
+  .pp .modal-details-col { padding: 0; position: sticky; top: 84px; }
+}
+
+/* Order of the details column on every screen size: buying first, reading after. */
+.pp .pp-crumbs { order: 0; font-size: 13px; color: var(--pp-ink-3); margin: 0 0 6px; }
+.pp .pp-crumbs a { text-decoration: none; } .pp .pp-crumbs a:hover { text-decoration: underline; }
+.pp .modal-collection { display: none; }
+.pp .modal-title { order: 1; font-family: var(--pp-head); font-size: clamp(26px, 6.8vw, 38px); font-weight: 800; line-height: 1.1; letter-spacing: -.01em; margin: 0; color: var(--pp-ink); }
+.pp .modal-price-row { order: 2; margin: 8px 0 2px; }
+.pp .modal-price-row .price { font-family: var(--pp-head); font-size: 28px; font-weight: 800; color: var(--pp-ink); background: none; border: 0; border-radius: 0; padding: 0; margin: 0; box-shadow: none; }
+.pp .stock-note { order: 2; }
+.pp .photo-pers, .pp .mug-personalisation, .pp .modal-variants-label, .pp .modal-variants, .pp #printFrameNote { order: 3; }
+.pp .modal-actions { order: 4; margin-top: 14px; padding-top: 0; }
+.pp .modal-shipping { order: 5; }
+.pp .pp-more { order: 6; }
+.pp .modal-hr { order: 7; display: none; }
+.pp .modal-short-desc { order: 8; margin-top: 18px; }
+.pp .modal-full-desc { order: 9; }
+.pp .modal-bullets { order: 10; }
+.pp .modal-testimonial { order: 11; }
+.pp .modal-short-desc, .pp .modal-full-desc, .pp .modal-bullets { color: var(--pp-ink-2); font-size: 15.5px; line-height: 1.55; }
+
+/* Controls */
+.pp .modal-variants-label, .pp .mug-field-label { font-weight: 800; color: var(--pp-ink); margin: 14px 0 8px; font-size: 15px; }
+.pp .modal-variants { gap: 8px; }
+.pp .modal-variant-btn { min-height: 44px; min-width: 52px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--pp-line); background: #fff; color: var(--pp-ink); font-weight: 700; font-family: inherit; }
+.pp .modal-variant-btn.selected { border-color: var(--pp-ink); box-shadow: inset 0 0 0 1px var(--pp-ink); background: #fff; color: var(--pp-ink); }
+.pp .mug-text-input, .pp .mug-select { min-height: 46px; border-radius: 12px; border: 1.5px solid var(--pp-line); font-family: inherit; font-size: 16px; }
+.pp .btn-add { width: 100%; min-height: 52px; border-radius: 999px; border: 2px solid var(--pp-ink); background: var(--pp-ink); color: #fff; font-family: inherit; font-weight: 800; font-size: 16px; box-shadow: none; transform: none; }
+.pp .btn-add:hover { transform: none; box-shadow: none; opacity: .92; }
+.pp .btn-add:disabled { background: #fff; color: var(--pp-ink); opacity: 1; border-color: var(--pp-ink); cursor: not-allowed; }
+.pp .btn-add.in-cart { background: var(--pp-leaf); border-color: var(--pp-leaf); }
+.pp .modal-variant-hint { font-size: 13.5px; margin-top: 8px; }
+.pp .modal-shipping { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--pp-sea-soft); color: var(--pp-ink-2); font-size: 14.5px; font-style: normal; }
+.pp .pp-more { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin: 12px 0 0; padding: 10px 12px; border: 1.5px dashed var(--pp-line); border-radius: 10px; font-size: 14px; background: var(--pp-card); }
+.pp .pp-more a { font-weight: 800; text-decoration: underline; text-decoration-color: var(--pp-sun); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.pp .modal-testimonial { margin-top: 16px; font-size: 14px; color: var(--pp-ink-3); }
+
+/* Related and same-design cards */
+.pp .modal-related { padding: 28px var(--pp-gutter) 8px; border: 0; max-width: 1180px; margin: 0 auto; background: transparent; }
+.pp .related-heading { font-family: var(--pp-head); font-size: 22px; font-weight: 800; }
+.pp .related-card { border: 0; border-radius: var(--pp-radius); box-shadow: var(--pp-shadow); background: var(--pp-card); }
+.pp .related-card:hover { transform: none; box-shadow: var(--pp-shadow); }
+.pp .related-card-btn { border-radius: 999px; }
+
+/* Server-rendered link lists (also there for search engines) */
+.pp .related { max-width: 1180px; margin: 24px auto 0; padding: 0 var(--pp-gutter); }
+.pp .related h2 { font-family: var(--pp-head); font-size: 18px; margin: 0 0 6px; }
+.pp .related ul { list-style: none; padding: 0; margin: 0; columns: 2 220px; font-size: 14.5px; line-height: 1.9; }
+.pp .related a { color: var(--pp-ink-2); }
+
+/* Sticky Add to Cart bar on phones: only while every buying control is off screen (product-page.js). */
+.pp-sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 350; background: rgba(255,255,255,.98); border-top: 1px solid var(--pp-line); padding: 10px var(--pp-gutter) calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 12px; align-items: center; transform: translateY(110%); visibility: hidden; transition: transform .2s, visibility 0s linear .2s; box-shadow: 0 -6px 18px rgba(26,26,46,.08); }
+.pp-sticky.on { transform: none; visibility: visible; transition: transform .2s, visibility 0s; }
+.pp-sticky-t { flex: 1; min-width: 0; font-size: 14px; line-height: 1.25; }
+.pp-sticky-t b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pp-sticky .btn-add { width: auto; min-height: 46px; padding: 0 20px; }
+html.pp-sticky-on { scroll-padding-bottom: 96px; }
+html.pp-sticky-on body.pp { padding-bottom: 80px; }
+/* Cookie banner still unanswered: the sticky bar sits just above it, and the page keeps room for both. */
+html.cbj-consent-open .pp-sticky { bottom: var(--cbj-consent-h, 0px); }
+html.cbj-consent-open.pp-sticky-on body.pp { padding-bottom: calc(80px + var(--cbj-consent-h, 0px)); }
+@media (min-width: 900px) { .pp-sticky { display: none; } }
+
+.pp-foot { margin-top: 40px; background: var(--pp-ink); color: #d9d9e3; padding: 28px var(--pp-gutter) calc(30px + env(safe-area-inset-bottom)); font-size: 14px; text-align: center; }
+.pp-foot a { color: #fff; }
+@media (prefers-reduced-motion: reduce) { .pp * { transition: none !important; animation: none !important; } }
+.pp .cookie-banner-text a { color: #F5A623; }
