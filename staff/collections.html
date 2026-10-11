@@ -436,7 +436,7 @@ const API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api';
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const STATUS_LABEL = { live: 'Live', available: 'Available', hidden: 'Hidden', archived: 'Archived', draft: 'Draft (not published yet)' };
 const STATUS_HELP = { live: 'shown in the shop', available: 'shown in the shop', hidden: 'kept, but not shown', archived: 'retired (its main products are hidden from the shop too)', draft: 'not shown until you publish' };
-let data = null, products = [], current = null, sortable = null;
+let data = null, products = [], current = null, sortable = null, picker = { q: '', t: '', c: '' };
 
 function escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function showMsg(id, text, type) { const el = document.getElementById(id); el.textContent = text; el.className = `msg show ${type}`; clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 6000); }
@@ -497,8 +497,7 @@ function itemHTML(row, source) {
     ${qty}
   </div>`;
 }
-function ruleText(row) {
-  const p = row.params || {};
+function ruleText(row, p = row.params || {}) {
   return { christmas_gifts: 'in season, 1 Oct to 25 Dec', personalised: 'personalised products', price_under: `under £${p.max}`, new_in: `published in the last ${p.days} days`, all: 'everything' }[row.preset] || row.preset;
 }
 function renderLists() {
@@ -560,7 +559,7 @@ function openEditor(source, key) {
   document.getElementById('ed-fields').innerHTML = f.join('');
   document.querySelectorAll('[data-upload]').forEach(inp => inp.addEventListener('change', () => uploadImage(inp.dataset.upload, inp.files[0])));
   document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', () => saveFields({ [b.dataset.clear]: null })));
-  document.getElementById('ed-products').innerHTML = source === 'collection' ? productsSection() : `<div class="section"><h3>Products</h3><p class="help">${source === 'auto' ? 'Filled automatically: ' + escHtml(ruleText(row)) + '.' : 'Every product whose type is ' + escHtml(row.product_type) + '.'} ${row.count} showing now.</p></div>`;
+  document.getElementById('ed-products').innerHTML = source === 'collection' ? productsSection() : `<div class="section"><h3>Products</h3><p class="help">${source === 'auto' ? 'Filled automatically: ' + escHtml(ruleText(row, val(row, 'params') || {})) + '.' : 'Every product whose type is ' + escHtml(row.product_type) + '.'} ${row.count} showing now${row.draft && row.countWithDraft !== row.count ? `, <b>${row.countWithDraft} after publish</b>` : ''}.</p></div>`;
   if (source === 'collection') wireProducts();
   document.getElementById('ed-discard').disabled = !row.draft;
   document.getElementById('editor-wrap').hidden = false;
@@ -655,7 +654,7 @@ function productsSection() {
   return `<div class="section"><h3>Products in this collection (${n}${row.draft && (row.draft.members || {}).add ? ' incl. unpublished' : ''})</h3>
     <p class="help">Drag to set the order. Tick and remove in bulk. <span class="tag">main</span> = this is the product's main collection (the one the shop's filters, n8n and the auto-poster use).</p>
     <div class="tools"><button class="btn btn-ghost" id="m-all">Tick all</button><button class="btn btn-danger" id="m-remove">Remove ticked</button><button class="btn btn-ghost" id="m-order">Save this order</button></div>
-    <ul class="members" id="m-list">${membersOf(row).map(({ p, state, main }) => `<li data-id="${escHtml(p.id)}" class="${state ? 'pending-' + state : ''}"><span class="drag-handle">⠿</span><input type="checkbox" class="m-tick" value="${escHtml(p.id)}"><img src="${escHtml(imgUrl(p.image))}" alt="" loading="lazy"><span class="t">${escHtml(p.title)}<br><span class="meta">${escHtml(p.id)} · ${escHtml(p.type)}</span></span>${main ? '<span class="tag">main</span>' : ''}${!p.sellable ? '<span class="tag warn">not on sale now</span>' : ''}${state === 'add' ? '<span class="tag">to add</span>' : state === 'remove' ? '<span class="tag warn">to remove</span>' : ''}</li>`).join('') || '<li>No products yet.</li>'}</ul>
+    <ul class="members" id="m-list">${membersOf(row).map(({ p, state, main }) => `<li data-id="${escHtml(p.id)}" class="${state ? 'pending-' + state : ''}"><span class="drag-handle">⠿</span><input type="checkbox" class="m-tick" value="${escHtml(p.id)}"><img src="${escHtml(imgUrl(p.image))}" alt="" loading="lazy"><span class="t">${escHtml(p.title)}<br><span class="meta">${escHtml(p.id)} · ${escHtml(p.type)}${!main && p.mainCollection ? ' · main: ' + escHtml(p.mainCollection) : ''}${p.extraCollectionIds.filter(id => id !== row.id).length ? ' · +' + p.extraCollectionIds.filter(id => id !== row.id).length + ' more' : ''}</span></span>${main ? '<span class="tag">main</span>' : ''}${!p.sellable ? '<span class="tag warn">not on sale now</span>' : ''}${state === 'add' ? '<span class="tag">to add</span>' : state === 'remove' ? '<span class="tag warn">to remove</span>' : ''}</li>`).join('') || '<li>No products yet.</li>'}</ul>
     <h3 style="margin-top:16px">Add products</h3>
     <div class="tools"><input type="search" id="p-q" placeholder="Search…"><select id="p-type"><option value="">All types</option>${types.map(t => `<option>${escHtml(t)}</option>`).join('')}</select><select id="p-col"><option value="">From any collection</option>${cols}</select></div>
     <div class="tools"><button class="btn btn-ghost" id="p-all">Tick all shown</button><button class="btn btn-teal" id="p-add">Add ticked</button><span class="meta" id="p-count"></span></div>
@@ -670,7 +669,10 @@ function wireProducts() {
     document.getElementById('p-list').innerHTML = list.slice(0, 300).map(p => `<li><input type="checkbox" class="p-tick" value="${escHtml(p.id)}"><img src="${escHtml(imgUrl(p.image))}" alt="" loading="lazy"><span class="t">${escHtml(p.title)}<br><span class="meta">${escHtml(p.id)} · ${escHtml(p.type)} · ${escHtml(p.mainCollection || 'no main collection')}</span></span>${!p.sellable ? '<span class="tag warn">not on sale now</span>' : ''}</li>`).join('') || '<li>Nothing matches.</li>';
     document.getElementById('p-count').textContent = list.length + ' product(s)';
   };
-  ['p-q', 'p-type', 'p-col'].forEach(id => document.getElementById(id).addEventListener('input', draw));
+  // The search and filters are kept while the same collection stays open (e.g. after "Add ticked").
+  if (picker.key === row.id) { document.getElementById('p-q').value = picker.q; document.getElementById('p-type').value = picker.t; document.getElementById('p-col').value = picker.c; }
+  const remember = () => { picker = { key: row.id, q: document.getElementById('p-q').value, t: document.getElementById('p-type').value, c: document.getElementById('p-col').value }; };
+  ['p-q', 'p-type', 'p-col'].forEach(id => document.getElementById(id).addEventListener('input', () => { remember(); draw(); }));
   draw();
   const members = async body => {
     try { await api(`/staff-collections/collection/${row.id}/draft`, { method: 'PATCH', body: JSON.stringify({ members: body }) }); await reopen('Saved as a draft. Preview, then publish.'); }
