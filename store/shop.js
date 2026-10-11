@@ -155,10 +155,11 @@
         return String(p['Ready to Go'] || '').trim().toLowerCase() === 'yes';
       });
 
-      // Split: main grid = live or no collection; available section = 'available' status
+      // Split: main grid = live or no collection; available section = 'available' status.
+      // A hidden or not-yet-published (draft) collection only loses its button: its products stay in the main grid.
       mainProducts = allProducts.filter(function(p) {
         var cs = collectionsStatus[p['Collection']];
-        return !p['Collection'] || cs === 'live' || cs === undefined;
+        return !p['Collection'] || cs === 'live' || cs === undefined || cs === 'hidden' || cs === 'draft';
       });
       availableProducts = allProducts.filter(function(p) {
         return p['Collection'] && collectionsStatus[p['Collection']] === 'available';
@@ -171,10 +172,11 @@
         return;
       }
 
-      // Collection buttons: live then available (API sort_order), archived excluded, must have products
+      // Collection buttons: live then available (API sort_order), must have products. Archived, hidden and
+      // draft (not yet published, 13 Oct 2026 collection management) collections get no button.
       var allProductColNames = new Set(allProducts.map(function(p) { return p['Collection']; }).filter(Boolean));
       const collections = (colResult || [])
-        .filter(function(c) { return c.status !== 'archived' && allProductColNames.has(c.name); })
+        .filter(function(c) { return (c.status === 'live' || c.status === 'available' || !c.status) && allProductColNames.has(c.name); })
         .map(function(c) { return c.name; });
       const prices = [...new Set(mainProducts.map(p => parseFloat(p.price || 3.50)))].sort((a, b) => a - b);
       const showPriceFilter = prices.length > 1;
@@ -335,7 +337,7 @@
         // Collection hero banner - use colResult already fetched above
         var normColParam = normCol(colParam);
         var matchedCol = (colResult || []).find(function(c) {
-          return normCol(c.name) === normColParam;
+          return normCol(c.name) === normColParam && (c.status === 'live' || c.status === 'available' || !c.status);
         });
         if (matchedCol && matchedCol.banner_image) {
           var heroEl = document.getElementById('collectionHero');

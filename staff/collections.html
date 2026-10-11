@@ -299,31 +299,493 @@
       text-decoration: underline;
     }
     .banner-clear:hover { color: #922b21; }
+    /* ── Collection management (13 Oct 2026) ── */
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .tab { padding: 9px 16px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--bg-card); font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.88rem; color: var(--text); cursor: pointer; }
+    .tab.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .tab-panel[hidden] { display: none; }
+    .help { font-size: 0.84rem; color: var(--text-soft); margin: -6px 0 16px; line-height: 1.5; }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .item { background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; cursor: pointer; }
+    .item:hover { border-color: var(--teal-hover); }
+    .item .col-name { flex: 1 1 200px; }
+    .item .meta { font-size: 0.78rem; color: var(--text-soft); }
+    .qty { display: inline-flex; flex-direction: column; align-items: flex-end; min-width: 92px; line-height: 1.15; font-size: 0.8rem; color: var(--text-soft); }
+    .qty b { font-size: 1.15rem; color: var(--text); }
+    .qty .next { color: #b9770e; font-weight: 600; }
+    @media (max-width: 560px) { .item { padding: 12px 14px; } .item .col-name { flex-basis: 60%; } .item .meta { flex-basis: 100%; order: 3; } .qty { align-items: flex-start; } }
+    .badge-hidden { background: #eceff1; color: #546e7a; }
+    .badge-draft { background: #ede7f6; color: #5e35b1; }
+    .badge-changes { background: #fff3cd; color: #8a6100; }
+    .badge-home { background: #e3f2fd; color: #1565c0; }
+    .badge-off { background: #f3f3f3; color: #888; }
+    .editor-wrap { position: fixed; inset: 0; background: rgba(30,40,40,0.35); display: flex; justify-content: flex-end; z-index: 10000; } /* above the staff nav bar (9999) */
+    .editor-wrap[hidden] { display: none; }
+    .editor { background: #fff; width: min(760px, 100%); height: 100%; overflow-y: auto; padding: 22px 24px 120px; box-shadow: -6px 0 24px rgba(0,0,0,0.12); }
+    .editor h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--teal); margin-bottom: 4px; }
+    .editor .state { font-size: 0.82rem; margin-bottom: 16px; }
+    .field { margin-bottom: 14px; }
+    .field label, .field .label { display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-soft); margin-bottom: 5px; }
+    .field input[type=text], .field input[type=number], .field textarea, .field select { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; color: var(--text); background: var(--bg-muted); }
+    .field textarea { min-height: 90px; resize: vertical; }
+    .field .count { font-size: 0.72rem; color: var(--text-soft); text-align: right; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .months { display: flex; flex-wrap: wrap; gap: 6px; }
+    .months label { display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem; text-transform: none; letter-spacing: 0; color: var(--text); background: var(--bg-muted); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-weight: 500; }
+    .imgs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    @media (max-width: 560px) { .imgs { grid-template-columns: 1fr; } }
+    .imgbox { border: 1.5px dashed var(--border); border-radius: 8px; padding: 8px; font-size: 0.78rem; text-align: center; }
+    .imgbox img { width: 100%; height: 70px; object-fit: cover; border-radius: 6px; display: block; margin-bottom: 6px; }
+    .imgbox input { font-size: 0.72rem; width: 100%; min-width: 0; }
+    .section { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 16px; }
+    .section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+    /* Editor groups (collapsible) */
+    details.grp { border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 12px; background: #fff; }
+    details.grp > summary { cursor: pointer; padding: 12px 14px; font-weight: 600; font-size: 0.98rem; list-style: none; display: flex; gap: 10px; align-items: baseline; }
+    details.grp > summary::-webkit-details-marker { display: none; }
+    details.grp > summary::before { content: '▸'; color: var(--teal); transition: transform .15s; display: inline-block; }
+    details.grp[open] > summary::before { transform: rotate(90deg); }
+    details.grp > summary .hint { font-weight: 400; font-size: 0.8rem; color: var(--text-soft); }
+    details.grp > .grp-body { padding: 0 14px 12px; }
+    details.grp .section { border-top: 0; margin-top: 0; padding-top: 0; }
+    /* Replacement main collection dialog */
+    .mainpick-wrap { position: fixed; inset: 0; background: rgba(30,40,40,0.45); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .mainpick-wrap[hidden] { display: none; }
+    .mainpick { background: #fff; border-radius: 12px; width: min(620px, 100%); max-height: 90vh; overflow-y: auto; padding: 20px 22px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+    .mainpick h2 { font-family: 'Cormorant Garamond', serif; color: var(--teal); font-size: 1.4rem; margin-bottom: 6px; }
+    .mainpick .mp-row { border-top: 1px solid var(--border); padding: 10px 0; }
+    .mainpick .mp-row b { display: block; font-size: 0.9rem; }
+    .mainpick select { width: 100%; margin-top: 6px; padding: 8px; border-radius: 8px; border: 1.5px solid var(--border); font: inherit; }
+    .mainpick .mp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
+    .members, .picker { list-style: none; max-height: 340px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+    .members li, .picker li { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-bottom: 1px solid var(--bg-muted); font-size: 0.86rem; }
+    .members li img, .picker li img { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; background: var(--bg-muted); }
+    .members li .t, .picker li .t { flex: 1; }
+    .members li.pending-add { background: #f1fbf3; }
+    .members li.pending-remove { background: #fdf0f0; text-decoration: line-through; }
+    .tag { font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 10px; background: var(--teal-light); color: var(--teal-hover); white-space: nowrap; }
+    .tag.warn { background: #fff3cd; color: #8a6100; }
+    .tools { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    .tools input, .tools select { padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; }
+    .tools input { flex: 1 1 180px; }
+    .actions { z-index: 1; position: fixed; bottom: 0; right: 0; width: min(760px, 100%); background: #fff; border-top: 1.5px solid var(--border); padding: 12px 24px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .actions .msg { margin: 0 0 0 auto; }
+    .lookup-result { margin-top: 12px; }
+    .lookup-result label { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.9rem; }
+    @media (max-width: 600px) { .row2, .imgs { grid-template-columns: 1fr; } .editor { padding: 16px 14px 140px; } .actions { padding: 10px 14px; } }
   </style>
 </head>
 <body>
-
 <header>
   <h1>🗂 Collections</h1>
   <a href="/staff/">← Dashboard</a>
 </header>
-
 <div class="wrapper">
-  <div class="page-title">Product Collections</div>
-  <div class="page-sub">Group products into collections. Assign products in the Listings page.</div>
-
-  <div class="add-form">
-    <input type="text" id="new-name" placeholder="New collection name…" maxlength="100" />
-    <button class="btn btn-teal" onclick="addCollection()">Add Collection</button>
-  </div>
+  <div class="page-title">Collections &amp; shop pages</div>
+  <div class="page-sub" id="page-sub">Group products into collections, choose what the shop shows, and preview before publishing.</div>
   <div class="msg" id="add-msg"></div>
 
-  <div id="collections-list"><div class="empty">Loading…</div></div>
+  <!-- Collection management (needs the database update; until then the original page below is used) -->
+  <div id="managed" hidden>
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-tab="collections">Collections</button>
+      <button class="tab" data-tab="auto">Automatic</button>
+      <button class="tab" data-tab="types">Product types</button>
+      <button class="tab" data-tab="lookup">Find a product</button>
+    </div>
+
+    <section class="tab-panel" data-panel="collections">
+      <p class="help">Your collections and themes (Retro Deal, Pets, Humour…). A product can be in as many as you like. Drag ⠿ to change the order in menus. Nothing changes in the shop until you press <b>Publish</b>.</p>
+      <div class="add-form">
+        <input type="text" id="new-name" placeholder="New collection or theme, e.g. Motorcycling…" maxlength="80" />
+        <select id="new-group" class="status-select"></select>
+        <button class="btn btn-teal" id="new-btn">Create</button>
+      </div>
+      <div class="list" id="list-collections"><div class="empty">Loading…</div></div>
+    </section>
+
+    <section class="tab-panel" data-panel="auto" hidden>
+      <p class="help">These fill themselves from your products, with no tagging: personalised items, price, real publication date, the Christmas season. You can change their wording, pictures, homepage spot and rule settings.</p>
+      <div class="list" id="list-auto"></div>
+    </section>
+
+    <section class="tab-panel" data-panel="types" hidden>
+      <p class="help">One page per product type (T-shirts, Mugs…), filled from each product's type. Kept separate from collections.</p>
+      <div class="list" id="list-types"></div>
+    </section>
+
+    <section class="tab-panel" data-panel="lookup" hidden>
+      <p class="help">Pick a product to see and change which collections it is in. Changes wait as drafts on each collection until you publish them.</p>
+      <div class="tools"><input type="search" id="lookup-q" placeholder="Search products by name or code…" /></div>
+      <ul class="picker" id="lookup-list"></ul>
+      <div class="lookup-result" id="lookup-result"></div>
+    </section>
+  </div>
+
+  <!-- Original page (used until the database update is applied) -->
+  <div id="legacy" hidden>
+    <div class="add-form">
+      <input type="text" id="legacy-new-name" placeholder="New collection name…" maxlength="100" />
+      <button class="btn btn-teal" onclick="addCollection()">Add Collection</button>
+    </div>
+    <div id="collections-list"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<div class="editor-wrap" id="editor-wrap" hidden>
+  <div class="editor" role="dialog" aria-modal="true" aria-labelledby="ed-title">
+    <h2 id="ed-title">Edit</h2>
+    <div class="state" id="ed-state"></div>
+    <div id="ed-fields"></div>
+    <div id="ed-products"></div>
+    <div id="ed-seo"></div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-teal" id="ed-save">Save draft</button>
+    <button class="btn btn-ghost" id="ed-preview">Preview</button>
+    <button class="btn btn-accent" id="ed-publish">Publish</button>
+    <button class="btn btn-danger" id="ed-discard">Discard changes</button>
+    <button class="btn btn-ghost" id="ed-close">Close</button>
+    <div class="msg" id="ed-msg"></div>
+  </div>
+</div>
+
+<div class="mainpick-wrap" id="mainpick" hidden>
+  <div class="mainpick" role="dialog" aria-modal="true" aria-labelledby="mp-title">
+    <h2 id="mp-title">Choose a new main collection</h2>
+    <p class="help" id="mp-help"></p>
+    <div id="mp-rows"></div>
+    <div class="mp-actions"><button class="btn btn-ghost" id="mp-cancel">Cancel (nothing published)</button><button class="btn btn-accent" id="mp-ok">Publish</button></div>
+  </div>
 </div>
 
 <script>
 const API = 'https://craftsbyjon.co.uk/n8n-proxy/products-api';
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const STATUS_LABEL = { live: 'Live', available: 'Available', hidden: 'Hidden', archived: 'Archived', draft: 'Draft (not published yet)' };
+const STATUS_HELP = { live: 'shown in the shop', available: 'shown in the shop', hidden: 'kept, but not shown', archived: 'retired (its main products are hidden from the shop too)', draft: 'not shown until you publish' };
+let data = null, products = [], current = null, sortable = null, picker = { q: '', t: '', c: '' };
 
+function escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showMsg(id, text, type) { const el = document.getElementById(id); el.textContent = text; el.className = `msg show ${type}`; clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 6000); }
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, { ...opts, headers: opts.body && !(opts.body instanceof FormData) ? { 'Content-Type': 'application/json' } : undefined });
+  const ct = res.headers.get('content-type') || '';
+  const body = ct.includes('json') ? await res.json() : null;
+  if (!res.ok || (body && body.error)) { const e = new Error((body && body.error) || ('Error ' + res.status)); e.status = res.status; throw e; }
+  return body ? body.result : null;
+}
+const imgUrl = p => !p ? '' : p.startsWith('https://') ? p : 'https://images.craftsbyjon.co.uk/products/' + (p.split('/').pop().includes('.') ? p.split('/').pop() : p.split('/').pop() + '.jpg');
+
+// ── Start: the managed page, or the original one until the database update is applied ──
+async function start() {
+  try { data = await api('/staff-collections'); }
+  catch (e) { if (e.status === 409 || e.status === 404) { document.getElementById('legacy').hidden = false; document.getElementById('page-sub').textContent = 'Group products into collections. Assign products in the Listings page.'; return load(); } showMsg('add-msg', 'Could not load: ' + e.message, 'error'); return; }
+  document.getElementById('managed').hidden = false;
+  products = await api('/staff-collections/products');
+  document.getElementById('new-group').innerHTML = data.navGroups.map(g => `<option>${escHtml(g)}</option>`).join('');
+  renderLists();
+  openFromHash();
+}
+// #product=ID (the link from Listings) opens that product's collections, also when the page is already open.
+function openFromHash() {
+  const m = location.hash.match(/^#product=(.+)$/);
+  if (m && data) { switchTab('lookup'); openProduct(decodeURIComponent(m[1])); }
+}
+window.addEventListener('hashchange', openFromHash);
+async function refresh() { data = await api('/staff-collections'); products = await api('/staff-collections/products'); renderLists(); }
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.hidden = p.dataset.panel !== name);
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+function badges(row) {
+  const st = row.status;
+  const cls = { live: 'badge-live', available: 'badge-available', hidden: 'badge-hidden', archived: 'badge-archived', draft: 'badge-draft' }[st] || 'badge-off';
+  return `<span class="badge ${cls}">${escHtml(STATUS_LABEL[st] || st)}</span>`
+    + (row.showing ? '' : (st === 'live' || st === 'available') ? ' <span class="badge badge-off" title="Empty or out of season">not showing now</span>' : '')
+    + (row.show_on_homepage ? ' <span class="badge badge-home">★ Homepage</span>' : '')
+    + (row.draft ? ' <span class="badge badge-changes">Unpublished changes</span>' : '');
+}
+function itemHTML(row, source) {
+  const key = source === 'collection' ? row.id : row.key;
+  const season = row.season_months ? ' · ' + row.season_months.split(',').map(m => MONTHS[m - 1]).join(' ') : '';
+  const extra = source === 'collection' ? ` · ${row.mainProducts} main + ${row.extraProducts} extra` : source === 'auto' ? ` · rule: ${escHtml(ruleText(row))}` : '';
+  // Number of products: everything assigned (collections) and how many the shop is showing now.
+  const total = source === 'collection' ? row.mainProducts + row.extraProducts : row.count;
+  const next = row.draft && row.countWithDraft !== row.count ? `<span class="next">${row.countWithDraft} after publish</span>` : '';
+  const qty = `<span class="qty" title="${source === 'collection' ? 'Products assigned to this collection, and how many the shop shows now (Ready to Go, on sale, not sold out)' : 'Products the shop shows on this page now'}"><span><b>${total}</b> product${total === 1 ? '' : 's'}</span>${source === 'collection' && total !== row.count ? `<span>${row.count} on sale now</span>` : ''}${next}</span>`;
+  return `<div class="item" data-source="${source}" data-key="${escHtml(key)}">
+    ${source === 'collection' ? '<span class="drag-handle" title="Drag to reorder">⠿</span>' : ''}
+    <span class="col-name">${escHtml(row.name)}</span>
+    <span class="meta">/collections/${escHtml(row.slug || '')}${extra}${season}${source === 'collection' ? ' · ' + escHtml(row.nav_group || '') : ''}</span>
+    <span>${badges(row)}</span>
+    ${qty}
+  </div>`;
+}
+function ruleText(row, p = row.params || {}) {
+  return { christmas_gifts: 'in season, 1 Oct to 25 Dec', personalised: 'personalised products', price_under: `under £${p.max}`, new_in: `published in the last ${p.days} days`, all: 'everything' }[row.preset] || row.preset;
+}
+function renderLists() {
+  const lc = document.getElementById('list-collections');
+  lc.innerHTML = data.collections.length ? data.collections.map(r => itemHTML(r, 'collection')).join('') : '<div class="empty">No collections yet.</div>';
+  document.getElementById('list-auto').innerHTML = data.auto.map(r => itemHTML(r, 'auto')).join('');
+  document.getElementById('list-types').innerHTML = data.types.map(r => itemHTML(r, 'type')).join('');
+  document.querySelectorAll('.item').forEach(el => el.addEventListener('click', e => { if (!e.target.classList.contains('drag-handle')) openEditor(el.dataset.source, el.dataset.key); }));
+  if (sortable) sortable.destroy();
+  sortable = Sortable.create(lc, { handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost', onEnd: async () => {
+    try { await api('/staff-collections/reorder', { method: 'POST', body: JSON.stringify({ source: 'collection', keys: [...lc.querySelectorAll('.item')].map(r => r.dataset.key) }) }); showMsg('add-msg', 'Order saved.', 'ok'); }
+    catch (e) { showMsg('add-msg', e.message, 'error'); }
+  } });
+}
+
+document.getElementById('new-btn').addEventListener('click', async () => {
+  const name = document.getElementById('new-name').value.trim();
+  if (!name) return;
+  try {
+    const row = await api('/staff-collections', { method: 'POST', body: JSON.stringify({ name, nav_group: document.getElementById('new-group').value }) });
+    document.getElementById('new-name').value = '';
+    await refresh();
+    showMsg('add-msg', `"${row.name}" created as a draft. Add products, then publish.`, 'ok');
+    openEditor('collection', row.id);
+  } catch (e) { showMsg('add-msg', e.message, 'error'); }
+});
+document.getElementById('new-name').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('new-btn').click(); });
+
+// ── Editor ──
+function rowFor(source, key) {
+  const list = source === 'collection' ? data.collections : source === 'auto' ? data.auto : data.types;
+  return list.find(r => String(source === 'collection' ? r.id : r.key) === String(key));
+}
+function val(row, k) { const d = row.draft && row.draft.fields; return d && k in d ? d[k] : row[k]; }
+function openEditor(source, key) {
+  const row = rowFor(source, key);
+  if (!row) return;
+  current = { source, key: source === 'collection' ? row.id : row.key, row, members: null };
+  document.getElementById('ed-title').textContent = val(row, 'name');
+  document.getElementById('ed-state').innerHTML = badges(row) + ` <span class="meta">${escHtml(STATUS_HELP[row.status] || '')}${row.draft ? ' · the shop still shows the published version' : ''}</span>`;
+  const statuses = source === 'collection' ? ['live', 'available', 'hidden', 'archived'] : ['live', 'hidden'];
+  const curStatus = val(row, 'status');
+  const months = (val(row, 'season_months') || '').split(',').filter(Boolean).map(Number);
+  const f = [], g2 = [], g3 = [];
+  f.push(`<div class="field"><label for="f-name">Name</label><input type="text" id="f-name" maxlength="80" value="${escHtml(val(row, 'name'))}"></div>`);
+  if (source === 'collection') f.push(`<div class="field"><label for="f-slug">Web address</label><input type="text" id="f-slug" maxlength="60" value="${escHtml(val(row, 'slug') || '')}" ${row.published_at ? 'disabled' : ''}><div class="count">${row.published_at ? 'Fixed once published, so links keep working.' : 'craftsbyjon.co.uk/collections/…'}</div></div>`);
+  f.push(`<div class="row2"><div class="field"><label for="f-status">Status</label><select id="f-status">${curStatus === 'draft' ? '<option value="" selected>Draft: published as Live</option>' : ''}${statuses.map(s => `<option value="${s}" ${s === curStatus ? 'selected' : ''}>${STATUS_LABEL[s]}</option>`).join('')}</select></div>`
+    + (source === 'collection' ? `<div class="field"><label for="f-group">Menu group</label><select id="f-group">${data.navGroups.map(g => `<option ${g === val(row, 'nav_group') ? 'selected' : ''}>${escHtml(g)}</option>`).join('')}</select></div>` : '<div></div>') + '</div>');
+  f.push(`<div class="field"><label for="f-desc">Description</label><textarea id="f-desc" maxlength="600">${escHtml(val(row, 'description') || '')}</textarea></div>`);
+  if (source === 'auto' && row.preset === 'price_under') f.push(`<div class="field"><label for="f-max">Price limit (£)</label><input type="number" id="f-max" min="1" max="500" step="0.5" value="${escHtml((val(row, 'params') || {}).max)}"></div>`);
+  if (source === 'auto' && row.preset === 'new_in') f.push(`<div class="field"><label for="f-days">Counts as new for (days)</label><input type="number" id="f-days" min="1" max="365" value="${escHtml((val(row, 'params') || {}).days)}"><div class="count">Only products with a real publication date (published from now on).</div></div>`);
+  g2.push(`<div class="field"><span class="label">Pictures</span><div class="imgs">${['card_image', 'banner_image', 'banner_image_mobile'].map(k => {
+    const u = val(row, k); const lbl = { card_image: 'Card (homepage, menus)', banner_image: 'Banner (desktop)', banner_image_mobile: 'Banner (phone)' }[k];
+    return `<div class="imgbox" data-img="${k}">${u ? `<img src="${escHtml(u)}" alt="">` : ''}<div>${lbl}</div><input type="file" accept="image/jpeg,image/png,image/webp" data-upload="${k}">${u ? `<button class="banner-clear" data-clear="${k}">Remove</button>` : ''}</div>`; }).join('')}</div></div>`);
+  g2.push(`<div class="row2"><div class="field"><label><input type="checkbox" id="f-home" ${val(row, 'show_on_homepage') ? 'checked' : ''}> Show on the homepage</label></div><div class="field"><label for="f-homeorder">Homepage position</label><input type="number" id="f-homeorder" min="1" max="99" value="${escHtml(val(row, 'homepage_order') ?? '')}"></div></div>`);
+  f.push(`<div class="field"><span class="label">Season: only show in these months (none ticked = all year)</span><div class="months">${MONTHS.map((m, i) => `<label><input type="checkbox" class="f-month" value="${i + 1}" ${months.includes(i + 1) ? 'checked' : ''}>${m}</label>`).join('')}</div>${source === 'auto' && row.preset === 'christmas_gifts' ? '<div class="count">Left empty, this page shows from 1 Oct to 25 Dec.</div>' : ''}</div>`);
+  g3.push(`<div class="field"><label for="f-seot">Search title (optional)</label><input type="text" id="f-seot" maxlength="70" value="${escHtml(val(row, 'seo_title') || '')}"></div>`);
+  g3.push(`<div class="field"><label for="f-seod">Search description (optional)</label><textarea id="f-seod" maxlength="160">${escHtml(val(row, 'seo_description') || '')}</textarea></div>`);
+  const pics = ['card_image', 'banner_image', 'banner_image_mobile'].filter(k => val(row, k)).length;
+  const hint2 = [val(row, 'show_on_homepage') ? 'on the homepage' + (val(row, 'homepage_order') ? ' (position ' + val(row, 'homepage_order') + ')' : '') : 'not on the homepage', pics + ' of 3 pictures'].join(' · ');
+  const hint3 = val(row, 'seo_title') || val(row, 'seo_description') ? 'set' : 'not set (the name and description are used)';
+  document.getElementById('ed-fields').innerHTML = grp('details', 'Details', 'name, status, description' + (source === 'auto' ? ', rule' : '') + ', season', f.join(''))
+    + grp('pictures', 'Pictures & homepage', hint2, g2.join(''));
+  document.getElementById('ed-seo').innerHTML = grp('seo', 'Search (SEO)', hint3, g3.join(''));
+  document.querySelectorAll('[data-upload]').forEach(inp => inp.addEventListener('change', () => uploadImage(inp.dataset.upload, inp.files[0])));
+  document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', () => saveFields({ [b.dataset.clear]: null })));
+  document.getElementById('ed-products').innerHTML = source === 'collection' ? productsSection() : grp('products', 'Products', row.count + ' showing now', `<div class="section"><p class="help">${source === 'auto' ? 'Filled automatically: ' + escHtml(ruleText(row, val(row, 'params') || {})) + '.' : 'Every product whose type is ' + escHtml(row.product_type) + '.'} ${row.count} showing now${row.draft && row.countWithDraft !== row.count ? `, <b>${row.countWithDraft} after publish</b>` : ''}.</p></div>`);
+  if (source === 'collection') wireProducts();
+  document.getElementById('ed-discard').disabled = !row.draft;
+  document.getElementById('editor-wrap').hidden = false;
+  document.getElementById('f-name').focus();
+}
+// Collapsible groups in the editor. Which ones are open is remembered while the page is open (saving re-draws the editor).
+const grpOpen = { details: true, pictures: false, seo: false, products: true };
+function grp(id, title, hint, body) {
+  return `<details class="grp" data-grp="${id}" ${grpOpen[id] ? 'open' : ''}><summary>${escHtml(title)} <span class="hint">${escHtml(hint)}</span></summary><div class="grp-body">${body}</div></details>`;
+}
+document.getElementById('editor-wrap').addEventListener('toggle', e => { if (e.target.matches && e.target.matches('details.grp')) grpOpen[e.target.dataset.grp] = e.target.open; }, true);
+function closeEditor() { document.getElementById('editor-wrap').hidden = true; current = null; }
+document.getElementById('ed-close').addEventListener('click', closeEditor);
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!document.getElementById('mainpick').hidden) return document.getElementById('mp-cancel').click();
+  if (current) closeEditor();
+});
+
+function collectFields() {
+  const g = id => document.getElementById(id);
+  const fields = { name: g('f-name').value, description: g('f-desc').value, seo_title: g('f-seot').value, seo_description: g('f-seod').value,
+    show_on_homepage: g('f-home').checked, homepage_order: g('f-homeorder').value, season_months: [...document.querySelectorAll('.f-month:checked')].map(c => Number(c.value)) };
+  if (g('f-status').value) fields.status = g('f-status').value;
+  if (g('f-group')) fields.nav_group = g('f-group').value;
+  if (g('f-slug') && !g('f-slug').disabled && g('f-slug').value !== current.row.slug) fields.slug = g('f-slug').value;
+  if (g('f-max')) fields.params = { max: Number(g('f-max').value) };
+  if (g('f-days')) fields.params = { days: Number(g('f-days').value) };
+  // Only send what differs from the published version, so a draft holds just the real changes.
+  const out = {};
+  for (const [k, v] of Object.entries(fields)) {
+    const pub = current.row[k];
+    const same = k === 'season_months' ? (v.join(',') || null) === (pub || null)
+      : k === 'show_on_homepage' ? !!v === !!pub
+      : k === 'homepage_order' ? String(v ?? '') === String(pub ?? '')
+      : k === 'params' ? JSON.stringify(v) === JSON.stringify(current.row.params)
+      : String(v ?? '') === String(pub ?? '');
+    if (!same) out[k] = v;
+  }
+  return out;
+}
+async function saveFields(fields) {
+  try {
+    await api(`/staff-collections/${current.source}/${encodeURIComponent(current.key)}/draft`, { method: 'PATCH', body: JSON.stringify({ fields }) });
+    await reopen('Draft saved. Preview it, then publish.');
+  } catch (e) { showMsg('ed-msg', e.message, 'error'); }
+}
+async function reopen(message) {
+  const { source, key } = current;
+  await refresh(); openEditor(source, key);
+  if (message) showMsg('ed-msg', message, 'ok');
+}
+document.getElementById('ed-save').addEventListener('click', () => { const f = collectFields(); if (!Object.keys(f).length) return showMsg('ed-msg', 'No changes to save.', 'ok'); saveFields(f); });
+document.getElementById('ed-preview').addEventListener('click', async () => {
+  const f = collectFields();
+  if (Object.keys(f).length) { try { await api(`/staff-collections/${current.source}/${encodeURIComponent(current.key)}/draft`, { method: 'PATCH', body: JSON.stringify({ fields: f }) }); await reopen(); } catch (e) { return showMsg('ed-msg', e.message, 'error'); } }
+  window.open(`${API}/staff-collections/preview/${current.source}/${encodeURIComponent(current.key)}`, '_blank');
+});
+document.getElementById('ed-publish').addEventListener('click', async () => {
+  const f = collectFields();
+  try {
+    if (Object.keys(f).length) await api(`/staff-collections/${current.source}/${encodeURIComponent(current.key)}/draft`, { method: 'PATCH', body: JSON.stringify({ fields: f }) });
+    await refresh();
+    const row = rowFor(current.source, current.key);
+    const removingMain = current.source === 'collection' && (((row.draft || {}).members || {}).remove || []).filter(id => (products.find(p => p.id === id) || {}).mainCollectionId === row.id);
+    let replaceMain = {};
+    if (removingMain && removingMain.length) {
+      replaceMain = await chooseMains(row, removingMain); // safeguard: nothing is published unless confirmed here
+      if (!replaceMain) return showMsg('ed-msg', 'Not published. Your draft is unchanged.', 'ok');
+    }
+    const s = await api(`/staff-collections/${current.source}/${encodeURIComponent(current.key)}/publish`, { method: 'POST', body: JSON.stringify({ replaceMain }) });
+    await reopen(`Published.${s.added ? ' ' + s.added + ' product(s) added.' : ''}${s.removed ? ' ' + s.removed + ' removed.' : ''}${(s.mainReplaced || []).length ? ' New main collection for ' + s.mainReplaced.map(r => r.id + ' → ' + r.to).join(', ') + '.' : ''}${(s.mainCleared || []).length ? ' No main collection now: ' + s.mainCleared.join(', ') + '.' : ''}`);
+  } catch (e) { showMsg('ed-msg', e.message, 'error'); }
+});
+// Products leaving their MAIN collection: pick a new main for each (its other collections first), or none.
+// Resolves to { productId: collectionId | null }, or null if cancelled.
+function chooseMains(row, ids) {
+  const wrap = document.getElementById('mainpick');
+  const others = data.collections.filter(c => c.id !== row.id && c.status !== 'archived');
+  document.getElementById('mp-help').textContent = `${ids.length === 1 ? 'This product has' : 'These products have'} "${row.name}" as their main collection: the one the shop's filters, n8n and the auto-poster use. Choose where each one goes. "No main collection" keeps it on sale but in no collection filter.`;
+  document.getElementById('mp-rows').innerHTML = ids.map(id => {
+    const p = products.find(x => x.id === id) || { id, title: id, extraCollectionIds: [] };
+    const mine = others.filter(c => p.extraCollectionIds.includes(c.id)), rest = others.filter(c => !p.extraCollectionIds.includes(c.id));
+    return `<div class="mp-row"><b>${escHtml(p.title)}</b><span class="meta">${escHtml(id)}</span>
+      <select data-mp="${escHtml(id)}" aria-label="New main collection for ${escHtml(p.title)}">
+        ${mine.length ? `<optgroup label="Collections it is already in">${mine.map((c, i) => `<option value="${c.id}" ${i === 0 ? 'selected' : ''}>${escHtml(c.name)}</option>`).join('')}</optgroup>` : ''}
+        <option value="" ${mine.length ? '' : 'selected'}>No main collection</option>
+        <optgroup label="Other collections">${rest.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('')}</optgroup>
+      </select></div>`;
+  }).join('');
+  wrap.hidden = false;
+  return new Promise(resolve => {
+    const done = v => { wrap.hidden = true; ok.removeEventListener('click', onOk); cancel.removeEventListener('click', onCancel); resolve(v); };
+    const ok = document.getElementById('mp-ok'), cancel = document.getElementById('mp-cancel');
+    const onOk = () => done(Object.fromEntries([...document.querySelectorAll('[data-mp]')].map(s => [s.dataset.mp, s.value ? Number(s.value) : null])));
+    const onCancel = () => done(null);
+    ok.addEventListener('click', onOk); cancel.addEventListener('click', onCancel);
+    ok.focus();
+  });
+}
+document.getElementById('ed-discard').addEventListener('click', async () => {
+  if (!confirm('Throw away the unpublished changes?')) return;
+  try { await api(`/staff-collections/${current.source}/${encodeURIComponent(current.key)}/discard`, { method: 'POST' }); await reopen('Changes discarded.'); }
+  catch (e) { showMsg('ed-msg', e.message, 'error'); }
+});
+async function uploadImage(field, file) {
+  if (!file) return;
+  const fd = new FormData(); fd.append('image', file);
+  try {
+    const res = await fetch(`${API}/upload-collection-banner`, { method: 'POST', body: fd });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.error || 'Upload failed');
+    await saveFields({ [field]: d.url });
+  } catch (e) { showMsg('ed-msg', 'Upload failed: ' + e.message, 'error'); }
+}
+
+// ── Products in a collection: current list (drag to reorder, tick to remove) and a picker to add many at once ──
+function membersOf(row) {
+  const m = (row.draft && row.draft.members) || {};
+  const add = new Set(m.add || []), rem = new Set(m.remove || []);
+  const inIt = p => p.mainCollectionId === row.id || p.extraCollectionIds.includes(row.id);
+  let list = products.filter(p => inIt(p) || add.has(p.id));
+  const order = m.order || [];
+  list.sort((a, b) => (order.indexOf(a.id) + 1 || 9999) - (order.indexOf(b.id) + 1 || 9999) || a.id.localeCompare(b.id));
+  return list.map(p => ({ p, state: add.has(p.id) && !inIt(p) ? 'add' : rem.has(p.id) ? 'remove' : '', main: p.mainCollectionId === row.id }));
+}
+function productsSection() {
+  const row = current.row;
+  const types = [...new Set(products.map(p => p.type).filter(Boolean))].sort();
+  const cols = data.collections.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+  const n = membersOf(row).filter(m => m.state !== 'remove').length;
+  return grp('products', 'Products', `${n} in this collection${row.draft && (row.draft.members || {}).add ? ' (incl. unpublished)' : ''}`, `<div class="section">
+    <p class="help">Drag to set the order. Tick and remove in bulk. <span class="tag">main</span> = this is the product's main collection (the one the shop's filters, n8n and the auto-poster use).</p>
+    <div class="tools"><button class="btn btn-ghost" id="m-all">Tick all</button><button class="btn btn-danger" id="m-remove">Remove ticked</button><button class="btn btn-ghost" id="m-order">Save this order</button></div>
+    <ul class="members" id="m-list">${membersOf(row).map(({ p, state, main }) => `<li data-id="${escHtml(p.id)}" class="${state ? 'pending-' + state : ''}"><span class="drag-handle">⠿</span><input type="checkbox" class="m-tick" value="${escHtml(p.id)}"><img src="${escHtml(imgUrl(p.image))}" alt="" loading="lazy"><span class="t">${escHtml(p.title)}<br><span class="meta">${escHtml(p.id)} · ${escHtml(p.type)}${!main && p.mainCollection ? ' · main: ' + escHtml(p.mainCollection) : ''}${p.extraCollectionIds.filter(id => id !== row.id).length ? ' · +' + p.extraCollectionIds.filter(id => id !== row.id).length + ' more' : ''}</span></span>${main ? '<span class="tag">main</span>' : ''}${!p.sellable ? '<span class="tag warn">not on sale now</span>' : ''}${state === 'add' ? '<span class="tag">to add</span>' : state === 'remove' ? '<span class="tag warn">to remove</span>' : ''}</li>`).join('') || '<li>No products yet.</li>'}</ul>
+    <h3 style="margin-top:16px">Add products</h3>
+    <div class="tools"><input type="search" id="p-q" placeholder="Search…"><select id="p-type"><option value="">All types</option>${types.map(t => `<option>${escHtml(t)}</option>`).join('')}</select><select id="p-col"><option value="">From any collection</option>${cols}</select></div>
+    <div class="tools"><button class="btn btn-ghost" id="p-all">Tick all shown</button><button class="btn btn-teal" id="p-add">Add ticked</button><span class="meta" id="p-count"></span></div>
+    <ul class="picker" id="p-list"></ul></div>`);
+}
+function wireProducts() {
+  const row = current.row;
+  const memberIds = new Set(membersOf(row).filter(m => m.state !== 'remove').map(m => m.p.id));
+  const draw = () => {
+    const q = document.getElementById('p-q').value.toLowerCase().trim(), t = document.getElementById('p-type').value, c = document.getElementById('p-col').value;
+    const list = products.filter(p => !memberIds.has(p.id) && (!q || (p.title + ' ' + p.id).toLowerCase().includes(q)) && (!t || p.type === t) && (!c || p.mainCollectionId === Number(c) || p.extraCollectionIds.includes(Number(c))));
+    document.getElementById('p-list').innerHTML = list.slice(0, 300).map(p => `<li><input type="checkbox" class="p-tick" value="${escHtml(p.id)}"><img src="${escHtml(imgUrl(p.image))}" alt="" loading="lazy"><span class="t">${escHtml(p.title)}<br><span class="meta">${escHtml(p.id)} · ${escHtml(p.type)} · ${escHtml(p.mainCollection || 'no main collection')}</span></span>${!p.sellable ? '<span class="tag warn">not on sale now</span>' : ''}</li>`).join('') || '<li>Nothing matches.</li>';
+    document.getElementById('p-count').textContent = list.length + ' product(s)';
+  };
+  // The search and filters are kept while the same collection stays open (e.g. after "Add ticked").
+  if (picker.key === row.id) { document.getElementById('p-q').value = picker.q; document.getElementById('p-type').value = picker.t; document.getElementById('p-col').value = picker.c; }
+  const remember = () => { picker = { key: row.id, q: document.getElementById('p-q').value, t: document.getElementById('p-type').value, c: document.getElementById('p-col').value }; };
+  ['p-q', 'p-type', 'p-col'].forEach(id => document.getElementById(id).addEventListener('input', () => { remember(); draw(); }));
+  draw();
+  const members = async body => {
+    try { await api(`/staff-collections/collection/${row.id}/draft`, { method: 'PATCH', body: JSON.stringify({ members: body }) }); await reopen('Saved as a draft. Preview, then publish.'); }
+    catch (e) { showMsg('ed-msg', e.message, 'error'); }
+  };
+  document.getElementById('p-all').addEventListener('click', () => document.querySelectorAll('.p-tick').forEach(x => x.checked = true));
+  document.getElementById('m-all').addEventListener('click', () => document.querySelectorAll('.m-tick').forEach(x => x.checked = true));
+  document.getElementById('p-add').addEventListener('click', () => { const ids = [...document.querySelectorAll('.p-tick:checked')].map(x => x.value); if (ids.length) members({ add: ids }); });
+  document.getElementById('m-remove').addEventListener('click', () => { const ids = [...document.querySelectorAll('.m-tick:checked')].map(x => x.value); if (ids.length) members({ remove: ids }); });
+  document.getElementById('m-order').addEventListener('click', () => members({ order: [...document.querySelectorAll('#m-list li[data-id]')].map(li => li.dataset.id) }));
+  Sortable.create(document.getElementById('m-list'), { handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost' });
+}
+
+// ── Find a product: its collections ──
+function drawLookup() {
+  const q = document.getElementById('lookup-q').value.toLowerCase().trim();
+  const list = q ? products.filter(p => (p.title + ' ' + p.id).toLowerCase().includes(q)).slice(0, 30) : [];
+  document.getElementById('lookup-list').innerHTML = list.map(p => `<li data-id="${escHtml(p.id)}" style="cursor:pointer"><img src="${escHtml(imgUrl(p.image))}" alt=""><span class="t">${escHtml(p.title)}<br><span class="meta">${escHtml(p.id)}</span></span></li>`).join('');
+  document.querySelectorAll('#lookup-list li').forEach(li => li.addEventListener('click', () => openProduct(li.dataset.id)));
+}
+document.getElementById('lookup-q').addEventListener('input', drawLookup);
+async function openProduct(id) {
+  try {
+    const r = await api('/staff-collections/product/' + encodeURIComponent(id));
+    const el = document.getElementById('lookup-result');
+    el.innerHTML = `<div class="section"><h3>${escHtml(r.product.title)}</h3><p class="help">Tick the collections it should be in. Its main collection is set in Listings.</p>
+      ${r.collections.filter(c => c.status !== 'archived').map(c => { const on = c.pending === 'add' || (c.member && c.pending !== 'remove');
+        return `<label><input type="checkbox" class="lk" value="${c.id}" ${on ? 'checked' : ''} ${c.main ? 'disabled' : ''} data-was="${on ? 1 : 0}"> ${escHtml(c.name)} ${c.main ? '<span class="tag">main</span>' : ''}${c.pending ? `<span class="tag warn">unpublished: ${c.pending === 'add' ? 'to add' : 'to remove'}</span>` : ''} <span class="meta">${escHtml(STATUS_LABEL[c.status] || c.status)}</span></label>`; }).join('')}
+      <div class="tools"><button class="btn btn-teal" id="lk-save">Save as drafts</button></div></div>`;
+    document.getElementById('lk-save').addEventListener('click', async () => {
+      const add = [], remove = [];
+      document.querySelectorAll('.lk:not([disabled])').forEach(x => { if (x.checked && x.dataset.was !== '1') add.push(Number(x.value)); if (!x.checked && x.dataset.was === '1') remove.push(Number(x.value)); });
+      if (!add.length && !remove.length) return showMsg('add-msg', 'No changes.', 'ok');
+      try { await api('/staff-collections/product/' + encodeURIComponent(id), { method: 'POST', body: JSON.stringify({ add, remove }) }); await refresh(); openProduct(id); showMsg('add-msg', 'Saved as drafts on ' + (add.length + remove.length) + ' collection(s). Open each one to preview and publish.', 'ok'); }
+      catch (e) { showMsg('add-msg', e.message, 'error'); }
+    });
+  } catch (e) { showMsg('add-msg', e.message, 'error'); }
+}
+
+// ── Original page (until the database update is applied) ──
 let sortableInstance = null;
 
 async function load() {
@@ -395,10 +857,6 @@ function rowHTML(c) {
     </div>`;
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 function startRename(id) {
   const row = document.getElementById(`row-${id}`);
   const currentName = row.dataset.name;
@@ -449,7 +907,7 @@ async function confirmDelete(id) {
 }
 
 async function addCollection() {
-  const input = document.getElementById('new-name');
+  const input = document.getElementById('legacy-new-name');
   const name = input.value.trim();
   if (!name) return;
   const res = await fetch(`${API}/collections`, {
@@ -463,17 +921,6 @@ async function addCollection() {
   showMsg('add-msg', `Collection "${name}" added.`, 'ok');
   load();
 }
-
-function showMsg(id, text, type) {
-  const el = document.getElementById(id);
-  el.textContent = text;
-  el.className = `msg show ${type}`;
-  setTimeout(() => el.classList.remove('show'), 4000);
-}
-
-document.getElementById('new-name').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addCollection();
-});
 
 async function handleBannerDrop(event, id) {
   event.preventDefault();
@@ -525,8 +972,9 @@ async function clearBanner(id) {
   showMsg('add-msg', 'Banner removed.', 'ok');
   load();
 }
+document.getElementById('legacy-new-name').addEventListener('keydown', e => { if (e.key === 'Enter') addCollection(); });
 
-load();
+start();
 </script>
 <script src="/staff/nav.js"></script>
 </body>
