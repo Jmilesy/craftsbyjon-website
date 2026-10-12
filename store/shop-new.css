@@ -138,7 +138,7 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 @media (hover: hover) { .shop2 .card:hover > img:first-child { transform: scale(1.02); } .shop2 .card:hover .card-title-link { text-decoration: underline; } }
 .shop2 .card img.tote-strip { border-radius: 8px; margin-top: 6px; box-shadow: none; aspect-ratio: auto; }
 @media (max-width: 639px) { .shop2 .card img.tote-strip { display: none; } }
-.shop2 .card-body { padding: 8px 0 0; display: flex; flex-direction: column; align-items: stretch; gap: 4px; flex: 1; background: none; }
+.shop2 .card-body { border: 0; padding: 8px 0 0; display: flex; flex-direction: column; align-items: stretch; gap: 4px; flex: 1; background: none; }
 .shop2 .card-title { order: 1; margin: 0; font: 700 15px/1.3 var(--body); color: var(--ink); }
 .shop2 .card-title-link { color: inherit; text-decoration: none; }
 .shop2 .card-desc { display: none; }
@@ -169,7 +169,8 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 .shop2 .overlay { z-index: 990; }
 .shop2 .cart-panel { z-index: 1000; }
 .shop2 .cart-header { border-bottom: 1px solid var(--line); background: var(--paper); }
-.shop2 .cart-header h2 { font-family: var(--head); }
+.shop2 .cart-header h2 { font-family: var(--head); color: var(--ink); }
+.shop2 .cart-close { color: var(--ink); min-width: 44px; min-height: 44px; border-radius: 12px; }
 .shop2 .btn-checkout { border-radius: 999px; background: var(--ink); color: #fff; border: 2px solid var(--ink); box-shadow: none; min-height: 50px; font: 800 16px var(--body); }
 .shop2 .btn-checkout:disabled { opacity: .45; }
 .shop2 .modal { border-radius: 18px; border: 0; box-shadow: 0 20px 60px rgba(26,26,46,.25); background: var(--paper); font-family: var(--body); }
