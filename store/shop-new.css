@@ -1,0 +1,191 @@
+/* Crafts by Jon shop (/store/): the new site look (H4, 12 Oct 2026). Loaded after shop.css, only by the shop
+   (<body class="shop2">). Same header, menus, fonts, colours and footer as the homepage (store/home.css) and the
+   same product-card look as the collection pages. store/shop.js and its markup are unchanged: this restyles them. */
+.shop2 {
+  --ink: #1a1a2e; --ink-2: #4a4a5e; --ink-3: #6b6b7d;
+  --paper: #fbf7f1; --card: #ffffff; --line: #e9e2d6;
+  --sun: #f5a623; --sun-soft: #fff1d6; --coral-ink: #c43c3c;
+  --sea: #2364aa; --sea-soft: #e4eefa; --leaf: #1f7a5a; --leaf-soft: #e1f3ea;
+  --radius: 14px; --radius-sm: 9px;
+  --shadow: 0 1px 2px rgba(26,26,46,.06), 0 6px 18px rgba(26,26,46,.06);
+  --head: 'Bricolage Grotesque', 'Nunito', system-ui, sans-serif;
+  --body: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --wrap: 1180px; --gutter: 16px;
+}
+body.shop2 { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; overflow-x: hidden; }
+.shop2 h1, .shop2 h2, .shop2 h3 { font-family: var(--head); letter-spacing: -0.01em; }
+.shop2 :focus-visible { outline: 3px solid var(--sea); outline-offset: 2px; }
+.shop2 .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gutter); }
+.shop2 [hidden] { display: none !important; }
+.shop2 .skip { position: absolute; left: 8px; top: -60px; z-index: 1200; background: var(--ink); color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 800; }
+.shop2 .skip:focus { top: 8px; }
+
+/* Header (shop.css styles every <header> as the old blue banner: undone here) */
+.shop2 header.hdr { position: sticky; top: 0; z-index: 400; background: rgba(251,247,241,.96); backdrop-filter: blur(8px); color: var(--ink); border-bottom: 1px solid var(--line); padding: 0; text-align: left; }
+.shop2 .hdr-in { display: flex; align-items: center; gap: 8px; height: 60px; }
+.shop2 .logo { font-family: var(--head); font-weight: 800; font-size: 21px; text-decoration: none; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--ink); }
+.shop2 .logo-dot { width: 26px; height: 26px; border-radius: 8px; background: var(--sun); display: grid; place-items: center; font-size: 15px; transform: rotate(-6deg); }
+.shop2 .icon-btn { background: none; border: 0; min-width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 12px; cursor: pointer; position: relative; flex: none; text-decoration: none; font-weight: 800; color: var(--ink); font-family: var(--body); }
+.shop2 .icon-btn:hover { background: rgba(26,26,46,.06); }
+.shop2 .icon-btn svg { width: 24px; height: 24px; }
+.shop2 .menu-btn { padding: 0 10px 0 6px; font-size: 15px; }
+.shop2 .hdr .spacer { flex: 1; }
+.shop2 .nav-desk { display: none; gap: 2px; margin-left: 18px; }
+.shop2 .nav-desk > div { position: relative; }
+.shop2 .nav-top { background: none; border: 0; padding: 10px 12px; border-radius: 10px; font: 700 16px var(--body); color: var(--ink); cursor: pointer; text-decoration: none; display: inline-block; }
+.shop2 .nav-top:hover, .shop2 .nav-desk > div:focus-within .nav-top { background: rgba(26,26,46,.06); }
+.shop2 .dd { display: none; position: absolute; top: 100%; left: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 10px; min-width: 260px; z-index: 450; }
+.shop2 .nav-desk > div:hover .dd, .shop2 .nav-desk > div:focus-within .dd { display: grid; }
+.shop2 .dd a { padding: 9px 12px; border-radius: 8px; text-decoration: none; display: flex; justify-content: space-between; gap: 14px; color: var(--ink); }
+.shop2 .dd a:hover { background: var(--sun-soft); }
+.shop2 .dd a span { color: var(--ink-3); font-size: 13px; }
+@media (min-width: 960px) { .shop2 .nav-desk { display: flex; } .shop2 .menu-btn { display: none; } .shop2 .hdr-in { height: 68px; } }
+
+/* Basket button, moved into the header: a bag with the item count (same look as the homepage's). */
+.shop2 #hdrCartSlot .cart-btn, .shop2 #hdrCartSlot .cart-btn[style] { display: inline-flex !important; position: relative; inset: auto; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 12px; background: none; box-shadow: none; transform: none; animation: none; align-items: center; justify-content: center; font-size: 0; color: transparent; cursor: pointer; }
+.shop2 #hdrCartSlot .cart-btn::before { content: ''; width: 24px; height: 24px; background: no-repeat center / 24px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1a2e' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M5 8h14l-1.2 12H6.2z'/%3E%3Cpath d='M9 8V6.5a3 3 0 0 1 6 0V8'/%3E%3C/svg%3E"); }
+.shop2 #hdrCartSlot .cart-btn:hover { background: rgba(26,26,46,.06); }
+.shop2 #hdrCartSlot .cart-btn-label { display: none; }
+.shop2 #hdrCartSlot #cartCount { display: none; position: absolute; top: 3px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--coral-ink); color: #fff; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
+.shop2 #hdrCartSlot .cart-btn.has-items #cartCount { display: block; }
+
+/* Phone menu (same as the homepage) */
+.shop2 .scrim { position: fixed; inset: 0; background: rgba(26,26,46,.45); z-index: 900; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.shop2 .scrim.on { opacity: 1; pointer-events: auto; }
+.shop2 .sheet { position: fixed; z-index: 950; background: var(--paper); overflow-y: auto; -webkit-overflow-scrolling: touch; top: 0; bottom: 0; left: 0; width: min(88vw, 380px); transform: translateX(-102%); }
+.shop2 .sheet:not(.on) { visibility: hidden; transition: transform .25s ease, visibility 0s linear .25s; }
+.shop2 .sheet.on { transform: none; visibility: visible; transition: transform .25s ease, visibility 0s; }
+.shop2 .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px var(--gutter); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--paper); z-index: 1; }
+.shop2 .sheet-head h2 { font-size: 20px; margin: 0; }
+.shop2 .sheet-body { padding: 14px var(--gutter) 28px; }
+.shop2 .menu-group { margin-bottom: 18px; }
+.shop2 .menu-group h3 { font-family: var(--body); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); margin: 0 0 4px; }
+.shop2 .menu-link { display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 8px 4px; border-bottom: 1px solid var(--line); text-decoration: none; font-weight: 700; font-size: 17px; color: var(--ink); }
+.shop2 .menu-link span { font-weight: 600; color: var(--ink-3); font-size: 13px; }
+html.menu-open, html.menu-open body { overflow: hidden; }
+
+/* Offer strip (the shop's 3-for-£10 banner), as on product pages */
+.shop2 .bundle-banner { position: static; margin: 0; max-width: none; border-radius: 0; box-shadow: none; border: 0; border-bottom: 1px solid #f2dfb5; background: var(--sun-soft); color: var(--ink); font-size: 13.5px; text-align: center; padding: 7px var(--gutter); }
+.shop2 .bundle-banner a { color: inherit !important; }
+@media (max-width: 640px) { .shop2 .bundle-banner .banner-static, .shop2 .bundle-banner .banner-sep { display: none; } }
+.shop2 .gifts-strip { background: #12452f; border: 0; margin: 0; }
+.shop2 .gifts-strip a { color: #fff; font-weight: 700; }
+
+/* Shop heading and search */
+.shop2 .shop-intro { padding: 16px 0 4px; }
+.shop2 .shop-intro-in { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: end; justify-content: space-between; }
+.shop2 .shop-intro h1 { font-size: clamp(28px, 7vw, 40px); font-weight: 800; line-height: 1.1; margin: 0; color: var(--ink); }
+.shop2 .shop-lede { color: var(--ink-2); margin: 6px 0 0; max-width: 60ch; font-size: 15.5px; }
+@media (max-width: 599px) { .shop2 .shop-lede { font-size: 14.5px; } }
+.shop2 .header-search-group { display: none; }
+@media (min-width: 900px) {
+  .shop2 .header-search-group { display: flex; }
+  .shop2 .header-scope-select { border: 1.5px solid var(--line); border-right: 0; border-radius: 999px 0 0 999px; background: var(--card); font: 600 14px var(--body); padding: 0 12px; height: 44px; color: var(--ink); }
+  .shop2 .header-search-input { border: 1.5px solid var(--line); border-radius: 0 999px 999px 0; background: #fff; font: 15px var(--body); padding: 0 16px; height: 44px; width: 320px; color: var(--ink); }
+  .shop2 .header-search-input:focus, .shop2 .header-scope-select:focus { border-color: var(--ink); }
+}
+.shop2 .collection-hero { margin: 8px auto 0; max-width: var(--wrap); padding: 0 var(--gutter); }
+.shop2 .collection-hero img { border-radius: var(--radius); }
+
+/* Layout */
+.shop2 main { max-width: var(--wrap); margin: 0 auto; padding: 8px var(--gutter) 10px; }
+.shop2 .loading, .shop2 .empty-msg { color: var(--ink-2); }
+
+/* Phones: Browse (collections, search, sort), Personalised, and product-type chips above the products */
+.shop2 .mobile-filter-bar { gap: 8px; padding: 6px 0 8px; justify-content: flex-start; }
+.shop2 .mobile-hamburger { min-height: 44px; padding: 0 18px; border-radius: 999px; background: var(--ink); color: #fff; font: 800 15px var(--body); letter-spacing: 0; gap: 8px; }
+.shop2 .mobile-pers-toggle { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); font: 800 14px var(--body); }
+.shop2 .mobile-pers-toggle.active { background: var(--ink); color: #fff; }
+@media (max-width: 899px) {
+  .shop2 .desktop-toolbar { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; }
+  .shop2 .type-filter-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; flex: 1; padding: 2px; }
+  .shop2 .type-filter-row::-webkit-scrollbar { display: none; }
+  .shop2 .desktop-toolbar #sortFilter { display: none; }
+}
+.shop2 .type-link { flex: 0 0 auto; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 0 14px; min-height: 40px; font: 700 14px var(--body); cursor: pointer; text-decoration: none; }
+.shop2 .type-link.active { background: var(--ink); color: #fff; border-color: var(--ink); text-decoration: none; font-weight: 800; }
+@media (hover: hover) { .shop2 .type-link:hover { opacity: 1; border-color: var(--ink); } }
+.shop2 .results-count { font-size: 13px; color: var(--ink-3); margin: 0 0 8px; }
+.shop2 .filter-select { border: 1.5px solid var(--line); border-radius: 999px; background: var(--card); font: 700 14px var(--body); padding: 0 14px; min-height: 40px; color: var(--ink); }
+@media (min-width: 900px) {
+  .shop2 .desktop-toolbar { margin-bottom: 16px; }
+  .shop2 .type-filter-row { gap: 8px; flex-wrap: wrap; }
+  .shop2 .store-body { grid-template-columns: 220px 1fr; gap: 28px; }
+  .shop2 .store-sidebar { top: 88px; }
+  .shop2 .sidebar-home-link { display: none; }
+  .shop2 .store-sidebar #collectionFilterBar { gap: 2px; }
+  .shop2 .store-sidebar .col-btn { background: none; border: 0; border-radius: 10px; padding: 9px 12px; font: 700 15px var(--body); color: var(--ink); text-align: left; box-shadow: none; }
+  .shop2 .store-sidebar .col-btn:hover { background: rgba(26,26,46,.06); opacity: 1; }
+  .shop2 .store-sidebar .col-btn.active { background: var(--ink); color: #fff; }
+  .shop2 .store-sidebar .col-btn.available-col { opacity: 1; }
+  .shop2 .sidebar-deals { border-top: 1px solid var(--line); }
+  .shop2 .sidebar-deals-title { color: var(--ink-3); }
+  .shop2 .sidebar-deals-link { color: var(--ink); text-decoration: underline; text-decoration-color: var(--sun); text-underline-offset: 3px; font-weight: 800; }
+  .shop2 .grid, .shop2 .collection-section-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1150px) { .shop2 .grid, .shop2 .collection-section-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* Product cards: the collection pages' look */
+.shop2 .grid, .shop2 .collection-section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+@media (min-width: 640px) and (max-width: 899px) { .shop2 .grid, .shop2 .collection-section-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.shop2 .collection-section { margin-bottom: 28px; }
+.shop2 .collection-section-header { font-family: var(--head); font-size: clamp(22px, 5.5vw, 28px); font-weight: 800; text-transform: none; letter-spacing: -0.01em; color: var(--ink); border: 0; padding: 0; margin: 4px 0 12px; background: none; }
+.shop2 .collection-section-header::after { display: none; }
+.shop2 .card { background: transparent; border: 0; border-radius: 0; box-shadow: none; overflow: visible; display: flex; flex-direction: column; cursor: pointer; transform: none; }
+.shop2 .card:hover { transform: none; box-shadow: none; }
+.shop2 .card > img:first-child { width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--radius); background: #efe8dc; box-shadow: var(--shadow); border: 0; transition: transform .25s; }
+.shop2 .card[data-product-type="bookmark"] > img:first-child { object-fit: cover; height: auto; }
+@media (hover: hover) { .shop2 .card:hover > img:first-child { transform: scale(1.02); } .shop2 .card:hover .card-title-link { text-decoration: underline; } }
+.shop2 .card img.tote-strip { border-radius: 8px; margin-top: 6px; box-shadow: none; aspect-ratio: auto; }
+.shop2 .card-body { padding: 8px 0 0; display: flex; flex-direction: column; align-items: stretch; gap: 4px; flex: 1; background: none; }
+.shop2 .card-title { order: 1; margin: 0; font: 700 15px/1.3 var(--body); color: var(--ink); }
+.shop2 .card-title-link { color: inherit; text-decoration: none; }
+.shop2 .card-desc { display: none; }
+.shop2 .pers-badge { order: 2; display: inline-block; background: var(--sun-soft); color: #8a5a00; border: 0; border-radius: 999px; font-size: 11.5px; font-weight: 800; padding: 3px 8px; }
+.shop2 .card .stock-note { order: 2; }
+.shop2 .card .price { order: 3; align-self: flex-start; background: none; border: 0; box-shadow: none; padding: 0; margin: 0; font: 800 16px var(--body); color: var(--ink); border-radius: 0; }
+.shop2 .btn-add { order: 4; width: 100%; margin-top: 6px; min-height: 44px; border-radius: 999px; border: 2px solid var(--ink); background: var(--ink); color: #fff; font: 800 14px var(--body); box-shadow: none; transform: none; padding: 0 12px; }
+.shop2 .btn-add:hover { box-shadow: none; transform: none; opacity: .9; }
+.shop2 .btn-add.in-cart { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+.shop2 .card-view { display: none; }
+.shop2 .no-results { color: var(--ink-2); }
+.shop2 .clear-filters-link { color: var(--ink); text-decoration: underline; text-decoration-color: var(--sun); font-weight: 800; }
+
+/* Browse panel (phones): the same sheet look as the menu, 48px rows */
+.shop2 .drawer-overlay { background: rgba(26,26,46,.45); }
+.shop2 .collection-drawer { background: var(--paper); width: min(88vw, 360px); max-width: none; box-shadow: none; }
+.shop2 .drawer-header { background: var(--paper); color: var(--ink); border-bottom: 1px solid var(--line); padding: 8px 8px 8px var(--gutter); min-height: 64px; font-family: var(--head); font-size: 20px; font-weight: 800; }
+.shop2 .drawer-close { color: var(--ink); width: 48px; height: 48px; font-size: 22px; border-radius: 12px; }
+.shop2 .drawer-item { min-height: 48px; padding: 12px var(--gutter); border-bottom: 1px solid var(--line); font: 700 16px var(--body); color: var(--ink); }
+.shop2 .drawer-item.active { background: var(--ink); color: #fff; }
+.shop2 .drawer-item.home-link { color: var(--ink); }
+.shop2 .drawer-divider { background: var(--line); }
+.shop2 .drawer-nav input, .shop2 .drawer-nav select { border-color: var(--line) !important; border-radius: 999px !important; min-height: 44px; font-family: var(--body) !important; }
+
+/* Basket panel and popup: the new fonts, colours and buttons (layout unchanged) */
+.shop2 .cart-panel { background: var(--paper); border-left: 0; font-family: var(--body); }
+.shop2 .cart-header { border-bottom: 1px solid var(--line); background: var(--paper); }
+.shop2 .cart-header h2 { font-family: var(--head); }
+.shop2 .btn-checkout { border-radius: 999px; background: var(--ink); color: #fff; border: 2px solid var(--ink); box-shadow: none; min-height: 50px; font: 800 16px var(--body); }
+.shop2 .btn-checkout:disabled { opacity: .45; }
+.shop2 .modal { border-radius: 18px; border: 0; box-shadow: 0 20px 60px rgba(26,26,46,.25); background: var(--paper); font-family: var(--body); }
+.shop2 .modal-title { font-family: var(--head); }
+.shop2 .modal-add-btn, .shop2 #modalAddBtn { border-radius: 999px; background: var(--ink); color: #fff; border: 2px solid var(--ink); box-shadow: none; min-height: 50px; font-weight: 800; }
+
+/* "Browse all products" links and footer */
+.shop2 #all-products-links h2 { font-family: var(--head) !important; font-size: 20px !important; color: var(--ink) !important; }
+.shop2 #all-products-links ul { font-family: var(--body) !important; }
+.shop2 #all-products-links a { color: var(--ink-2) !important; }
+.shop2 .foot { background: var(--ink); color: #d9d9e3; margin-top: 40px; padding: 34px 0 calc(34px + env(safe-area-inset-bottom)); font-size: 14.5px; text-align: left; border: 0; line-height: 1.5; }
+.shop2 .foot a { color: #fff; text-decoration: none; }
+.shop2 .foot a:hover { text-decoration: underline; }
+.shop2 .foot-grid { display: grid; gap: 22px; grid-template-columns: 1fr 1fr; }
+.shop2 .foot-grid > :first-child { grid-column: 1 / -1; }
+@media (min-width: 800px) { .shop2 .foot-grid { grid-template-columns: 2fr 1fr 1fr; } .shop2 .foot-grid > :first-child { grid-column: auto; } }
+.shop2 .foot h3 { font-family: var(--body); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: #a8a8bd; margin: 0 0 10px; }
+.shop2 .foot ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.shop2 .foot ul a { display: inline-block; padding: 6px 0; }
+.shop2 .foot .logo { color: #fff; margin-bottom: 8px; }
+.shop2 .foot .tagline { color: var(--sun); font-weight: 700; margin: 0 0 8px; }
+.shop2 .foot .addr { font-size: 13px; color: #a8a8bd; margin: 0 0 6px; }
+.shop2 .copy { margin-top: 22px; font-size: 12.5px; color: #8e8ea3; }
