@@ -972,6 +972,7 @@
     html += '<div class="modal-title">' + escHtml(p['Title']) + '</div>';
     html += '<div class="modal-price-row"><span class="price" id="modalPriceVal">' + displayPrice + '</span></div>';
     html += stockNoteHtml(p);
+    if (PRODUCT_PAGE && isMugDealProduct(p)) html += mugDealHtml();
     html += '<hr class="modal-hr">';
 
     if (p['Short Description']) {
@@ -2150,6 +2151,21 @@
     });
     var bundleCount = Math.floor(eligibleQty / 3);
     return { eligibleQty: eligibleQty, bundleCount: bundleCount, discountPence: bundleCount * 50 };
+  }
+
+  // Mug multibuy on mug product pages (12 Oct 2026). Only says what checkout already does: products-api's
+  // create-checkout-session takes £1.99 off each pair (and £7.97 off each set of 4) of lines priced exactly £11.99,
+  // the same rule as getMugBundleInfo() below. Shown on mugs at that price only, so the £14.99 photo mug and
+  // anything else at another price never show it. Pricing is unchanged; the link goes to the mugs range page.
+  function isMugDealProduct(p) {
+    return (p.product_type || '').toLowerCase() === 'mug' && Math.round(parseFloat(p.price || 0) * 100) === 1199;
+  }
+  function mugDealHtml() {
+    return '<div class="mug-deal" role="note">'
+      + '<strong class="mug-deal-head">Buy 2 mugs for £21.99 — save £1.99!</strong>'
+      + '<span class="mug-deal-text">Mix and match eligible mugs. Discount applied automatically at checkout.</span>'
+      + '<a class="mug-deal-link" href="/collections/mugs">Choose your second mug &rarr;</a>'
+      + '</div>';
   }
 
   function getMugBundleInfo() {
