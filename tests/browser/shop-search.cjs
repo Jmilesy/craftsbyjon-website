@@ -70,7 +70,7 @@ async function search(page, q) {
     // Clearing the search puts the page back exactly as it was.
     const back = await search(page, '');
     check(same(back.grid, base.grid) && same(back.avail, base.avail) && back.count === base.count, 'clearing the search restores the grid, Also available and the count', `count="${back.count}"`);
-    check(!errs.length && log.live.every(l => /collections-list/.test(l)) && !log.checkouts.length, 'no page errors, no unexpected API calls, no checkout', errs.join(' | ') + ' ' + log.live.join(','));
+    check(!errs.length && !log.live.length && !log.checkouts.length, 'no page errors, no unexpected API calls, no checkout', errs.join(' | ') + ' ' + log.live.join(','));
     await ctx.close();
   }
 
