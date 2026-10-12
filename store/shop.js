@@ -970,8 +970,12 @@
       html += '<div class="modal-collection">' + escHtml(p['Collection']) + ' Collection</div>';
     }
     html += '<div class="modal-title">' + escHtml(p['Title']) + '</div>';
-    html += '<div class="modal-price-row"><span class="price" id="modalPriceVal">' + displayPrice + '</span></div>';
+    // The mug note sits inside the price row in the shop popup (so it stays under the price at every width there),
+    // and straight after it on product pages (placed by product-page.css).
+    var mugDeal = isMugDealProduct(p) ? mugDealHtml() : '';
+    html += '<div class="modal-price-row"><span class="price" id="modalPriceVal">' + displayPrice + '</span>' + (PRODUCT_PAGE ? '' : mugDeal) + '</div>';
     html += stockNoteHtml(p);
+    if (PRODUCT_PAGE) html += mugDeal;
     html += '<hr class="modal-hr">';
 
     if (p['Short Description']) {
@@ -2150,6 +2154,30 @@
     });
     var bundleCount = Math.floor(eligibleQty / 3);
     return { eligibleQty: eligibleQty, bundleCount: bundleCount, discountPence: bundleCount * 50 };
+  }
+
+  // Mug multibuy note under the price, on mug product pages and in the shop popup (12 Oct 2026). Only says what
+  // checkout already does: products-api's create-checkout-session takes £1.99 off each pair (and £7.97 off each set
+  // of 4) of lines priced exactly £11.99, the same rule as getMugBundleInfo() below. Shown on mugs at that price
+  // only, so the £14.99 photo mug and anything else at another price never show it. Pricing is unchanged; the link
+  // goes to the mugs range page. Product pages style it in product-page.css; the shop popup (which doesn't load
+  // that file) gets the same look inline.
+  function isMugDealProduct(p) {
+    return (p.product_type || '').toLowerCase() === 'mug' && Math.round(parseFloat(p.price || 0) * 100) === 1199;
+  }
+  function mugDealHtml() {
+    var st = PRODUCT_PAGE ? {} : {
+      box: 'margin:10px 0 4px;padding:12px 14px;border-radius:14px;background:#fff1d6;border:1px solid #f2dfb5;color:#1a1a2e;display:flex;flex-direction:column;gap:3px;text-align:left',
+      head: 'font-size:16px;font-weight:800;line-height:1.25',
+      text: 'font-size:14px;line-height:1.45;color:#4a4a5e',
+      link: 'align-self:flex-start;margin-top:4px;font-weight:800;font-size:14.5px;color:#1a1a2e;text-decoration:underline;text-underline-offset:3px;min-height:44px;display:inline-flex;align-items:center'
+    };
+    var at = function(k) { return st[k] ? ' style="' + st[k] + '"' : ''; };
+    return '<div class="mug-deal" role="note"' + at('box') + '>'
+      + '<strong class="mug-deal-head"' + at('head') + '>Buy 2 mugs for £21.99 — save £1.99!</strong>'
+      + '<span class="mug-deal-text"' + at('text') + '>Mix and match eligible mugs. Discount applied automatically at checkout.</span>'
+      + '<a class="mug-deal-link" href="/collections/mugs"' + at('link') + '>Choose your second mug &rarr;</a>'
+      + '</div>';
   }
 
   function getMugBundleInfo() {

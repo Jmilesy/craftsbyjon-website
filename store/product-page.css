@@ -78,6 +78,11 @@ html.pp-unavailable .pp-static .buy { display: none; }
 .pp .modal-price-row { order: 2; margin: 8px 0 2px; }
 .pp .modal-price-row .price { font-family: var(--pp-head); font-size: 28px; font-weight: 800; color: var(--pp-ink); background: none; border: 0; border-radius: 0; padding: 0; margin: 0; box-shadow: none; }
 .pp .stock-note { order: 2; }
+/* Mug multibuy note under the price (mugs at £11.99 only; shop.js decides). */
+.pp .mug-deal { order: 2; margin: 10px 0 4px; padding: 12px 14px; border-radius: var(--pp-radius); background: var(--pp-sun-soft); border: 1px solid #f2dfb5; color: var(--pp-ink); display: flex; flex-direction: column; gap: 3px; }
+.pp .mug-deal-head { font-family: var(--pp-head); font-size: 17px; font-weight: 800; line-height: 1.25; }
+.pp .mug-deal-text { font-size: 14px; line-height: 1.45; color: var(--pp-ink-2); }
+.pp .mug-deal-link { align-self: flex-start; margin-top: 4px; font-weight: 800; font-size: 14.5px; color: var(--pp-ink); text-decoration: underline; text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
 .pp .photo-pers, .pp .mug-personalisation, .pp .modal-variants-label, .pp .modal-variants, .pp #printFrameNote { order: 3; }
 .pp .modal-actions { order: 4; margin-top: 14px; padding-top: 0; }
 .pp .modal-shipping { order: 5; }
