@@ -90,6 +90,8 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 /* Layout */
 .shop2 main { max-width: var(--wrap); margin: 0 auto; padding: 8px var(--gutter) 10px; }
 .shop2 .loading, .shop2 .empty-msg { color: var(--ink-2); }
+.shop2 .grid, .shop2 .collection-section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+@media (min-width: 640px) and (max-width: 899px) { .shop2 .grid, .shop2 .collection-section-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* Phones: Browse (collections, search, sort), Personalised, and product-type chips above the products */
 .shop2 .mobile-filter-bar { gap: 8px; padding: 6px 0 8px; justify-content: flex-start; }
@@ -126,8 +128,6 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 @media (min-width: 1150px) { .shop2 .grid, .shop2 .collection-section-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 /* Product cards: the collection pages' look */
-.shop2 .grid, .shop2 .collection-section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
-@media (min-width: 640px) and (max-width: 899px) { .shop2 .grid, .shop2 .collection-section-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .shop2 .collection-section { margin-bottom: 28px; }
 .shop2 .collection-section-header { font-family: var(--head); font-size: clamp(22px, 5.5vw, 28px); font-weight: 800; text-transform: none; letter-spacing: -0.01em; color: var(--ink); border: 0; padding: 0; margin: 4px 0 12px; background: none; }
 .shop2 .collection-section-header::after { display: none; }
@@ -137,6 +137,7 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 .shop2 .card[data-product-type="bookmark"] > img:first-child { object-fit: cover; height: auto; }
 @media (hover: hover) { .shop2 .card:hover > img:first-child { transform: scale(1.02); } .shop2 .card:hover .card-title-link { text-decoration: underline; } }
 .shop2 .card img.tote-strip { border-radius: 8px; margin-top: 6px; box-shadow: none; aspect-ratio: auto; }
+@media (max-width: 639px) { .shop2 .card img.tote-strip { display: none; } }
 .shop2 .card-body { padding: 8px 0 0; display: flex; flex-direction: column; align-items: stretch; gap: 4px; flex: 1; background: none; }
 .shop2 .card-title { order: 1; margin: 0; font: 700 15px/1.3 var(--body); color: var(--ink); }
 .shop2 .card-title-link { color: inherit; text-decoration: none; }
@@ -164,12 +165,35 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 
 /* Basket panel and popup: the new fonts, colours and buttons (layout unchanged) */
 .shop2 .cart-panel { background: var(--paper); border-left: 0; font-family: var(--body); }
+/* Above the sticky site header (z-index 400), like the popup and the Browse panel. */
+.shop2 .overlay { z-index: 990; }
+.shop2 .cart-panel { z-index: 1000; }
 .shop2 .cart-header { border-bottom: 1px solid var(--line); background: var(--paper); }
 .shop2 .cart-header h2 { font-family: var(--head); }
 .shop2 .btn-checkout { border-radius: 999px; background: var(--ink); color: #fff; border: 2px solid var(--ink); box-shadow: none; min-height: 50px; font: 800 16px var(--body); }
 .shop2 .btn-checkout:disabled { opacity: .45; }
 .shop2 .modal { border-radius: 18px; border: 0; box-shadow: 0 20px 60px rgba(26,26,46,.25); background: var(--paper); font-family: var(--body); }
-.shop2 .modal-title { font-family: var(--head); }
+.shop2 .modal-title { font-family: var(--head); color: var(--ink); }
+.shop2 .modal-collection { color: var(--ink-3); }
+.shop2 .modal-price-row .price { font-family: var(--head); font-size: 26px; font-weight: 800; color: var(--ink); background: none; border: 0; border-radius: 0; padding: 0; margin: 0; box-shadow: none; }
+.shop2 .modal-img-main { background: #f1ece3; }
+.shop2 .modal-thumb { border-radius: 10px; border: 2px solid transparent; }
+.shop2 .modal-thumb.active { border-color: var(--ink); }
+.shop2 .modal-variants-label, .shop2 .mug-field-label { font-weight: 800; color: var(--ink); font-size: 15px; }
+.shop2 .modal-variant-btn { min-height: 44px; min-width: 52px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; color: var(--ink); font-weight: 700; font-family: inherit; }
+.shop2 .modal-variant-btn.selected { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); background: #fff; color: var(--ink); }
+.shop2 .mug-text-input, .shop2 .mug-select { min-height: 46px; border-radius: 12px; border: 1.5px solid var(--line); font-family: inherit; font-size: 16px; }
+.shop2 .modal .btn-add { min-height: 52px; font-size: 16px; }
+.shop2 .modal .btn-add:disabled { background: #fff; color: var(--ink); opacity: 1; border-color: var(--ink); cursor: not-allowed; }
+.shop2 .modal-shipping { border-radius: 10px; background: var(--sea-soft); color: var(--ink-2); font-style: normal; }
+.shop2 .related-heading { font-family: var(--head); }
+.shop2 .related-card { border: 0; border-radius: var(--radius); box-shadow: var(--shadow); }
+.shop2 .related-card-btn { border-radius: 999px; }
+/* Price slider (desktop sidebar) in the new colours */
+.shop2 .price-slider-range { background: var(--ink); }
+.shop2 .price-range-input::-webkit-slider-thumb { background: var(--sun); border-color: var(--ink); }
+.shop2 .price-range-input::-moz-range-thumb { background: var(--sun); border-color: var(--ink); }
+.shop2 .price-slider-label { color: var(--ink-2); }
 .shop2 .modal-add-btn, .shop2 #modalAddBtn { border-radius: 999px; background: var(--ink); color: #fff; border: 2px solid var(--ink); box-shadow: none; min-height: 50px; font-weight: 800; }
 
 /* "Browse all products" links and footer */
