@@ -70,7 +70,15 @@
     btn.addEventListener('click', function () { isOpen() ? shut() : open(); });
     close.addEventListener('click', function () { shut(); });
     scrim.addEventListener('click', function () { shut(); });
-    sheet.addEventListener('click', function (e) { var a = e.target.closest('a'); if (a && a.hasAttribute('data-close')) shut(false); });
+    // Links to a part of this page: close the menu first, then go there (the page can't scroll while it's open).
+    sheet.addEventListener('click', function (e) {
+      var a = e.target.closest('a'); if (!a || !a.hasAttribute('data-close')) return;
+      var target = document.getElementById((a.getAttribute('href') || '').slice(1));
+      if (!target) { shut(false); return; }
+      e.preventDefault(); shut(false);
+      target.scrollIntoView();
+      try { history.replaceState(null, '', '#' + target.id); } catch (err) {}
+    });
     document.addEventListener('keydown', function (e) {
       if (!isOpen()) return;
       if (e.key === 'Escape') { shut(); return; }
@@ -145,14 +153,16 @@
       + '<span class="bd"><span class="tt">' + esc(pr.name) + '</span>'
       + '<span class="pr">' + (pr.price_from ? '<small>from</small> ' : '') + money(pr.price) + '</span></span></a>';
   }
-  function row(p, i) {
+  function row(p, i, shown) {
     var url = sameSite(p.url);
-    if (!url || !p.products || !p.products.length) return '';
+    // A product already in an earlier row isn't shown again.
+    var products = (p.products || []).filter(function (pr) { if (shown[pr.id]) return false; shown[pr.id] = 1; return true; });
+    if (!url || !products.length) return '';
     var id = 'row-' + i;
     return '<section class="sec" aria-labelledby="' + id + '"><div class="wrap">'
       + '<div class="sec-h"><div><h2 id="' + id + '">' + esc(p.name) + '</h2>' + (p.description ? '<p>' + esc(p.description) + '</p>' : '') + '</div>'
       + '<a class="link" href="' + esc(url) + '">See all ' + esc(p.count) + '</a></div>'
-      + '<div class="rail">' + p.products.map(function (pr) { return card(pr, p.slug); }).join('') + '</div></div></section>';
+      + '<div class="rail">' + products.map(function (pr) { return card(pr, p.slug); }).join('') + '</div></div></section>';
   }
   function chips(pages) {
     return '<div class="chip-row">' + pages.map(function (p) {
@@ -182,7 +192,8 @@
       col.hidden = false;
     }
     // Product rows for the first two homepage collections.
-    $('#rows').innerHTML = home.slice(0, 2).map(row).join('');
+    var shown = {};
+    $('#rows').innerHTML = home.slice(0, 2).map(function (p, i) { return row(p, i, shown); }).join('');
 
     // Find a gift: every group from the admin, as chips.
     var groups = groupsOf(pages);
