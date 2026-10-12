@@ -46,11 +46,11 @@ h1, h2, h3 { font-family: var(--head); line-height: 1.1; margin: 0; letter-spaci
 .dd a { padding: 9px 12px; border-radius: 8px; text-decoration: none; display: flex; justify-content: space-between; gap: 14px; }
 .dd a:hover { background: var(--sun-soft); }
 .dd a span { color: var(--ink-3); font-size: 13px; }
-.shop-desk { display: none; }
+.hdr .shop-desk { display: none; }
 @media (min-width: 960px) {
   .nav-desk { display: flex; }
   .menu-btn { display: none; }
-  .shop-desk { display: inline-flex; }
+  .hdr .shop-desk { display: inline-flex; }
   .hdr-in { height: 68px; }
 }
 .strip { background: var(--sun-soft); border-bottom: 1px solid #f2dfb5; font-size: 13.5px; text-align: center; padding: 7px var(--gutter); }
