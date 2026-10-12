@@ -66,9 +66,6 @@ async function wire(ctx, opts) {
     const req = route.request(), u = new URL(req.url()), p = u.pathname.replace(/^.*products-api/, '');
     if (p === '/products') return json(route, products);
     if (p === '/collections') return json(route, FIX.collections);
-    // The new site header's menus (store/site-nav.js) read this feed; not in the fixture, so the menus keep their
-    // fixed links and no collection buttons are hidden, as when the feed can't load.
-    if (p === '/collections-list') return json(route, { error: 'not in fixture' }, 404);
     let m;
     if ((m = p.match(/^\/products\/([^/]+)\/public-variants$/))) return json(route, FIX.variants[m[1]] || { result: [] });
     if ((m = p.match(/^\/products\/([^/]+)\/public-variant-gallery$/))) return json(route, FIX.variantGallery[m[1]] || { result: {} });

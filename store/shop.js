@@ -561,11 +561,6 @@
     } else if (collection) {
       // Specific collection: pull from all non-archived (includes available-status collections full-size)
       pool = allProducts;
-    } else if (q) {
-      // All, searching: main products plus the "Also available" ones, so a search for e.g. "teacher" or "bee"
-      // finds products in available-status collections too (12 Oct 2026). allProducts has already dropped
-      // anything not Ready to Go, sold out, unpriced or in an archived collection, so nothing new is exposed.
-      pool = mainProducts.concat(availableProducts);
     } else {
       // All: main (live) products only - available products go in their own section below
       pool = mainProducts;
@@ -626,7 +621,7 @@
       } else if (collection) {
         poolSize = allProducts.filter(function(p) { return p['Collection'] === collection; }).length;
       } else {
-        poolSize = q ? mainProducts.length + availableProducts.length : mainProducts.length;
+        poolSize = mainProducts.length;
       }
       countEl.textContent = 'Showing ' + filtered.length + ' of ' + poolSize + ' product' + (poolSize !== 1 ? 's' : '');
     }
@@ -641,10 +636,10 @@
       renderGrid();
     }
 
-    // Available section only shows in the "All" view, and not while searching (its products are in the results)
+    // Available section only shows in the default "All" unfiltered view
     var avEl = document.getElementById('availableSection');
     if (avEl) {
-      if (!collection && !q) {
+      if (!collection) {
         renderAvailable();
       } else {
         avEl.innerHTML = '';
