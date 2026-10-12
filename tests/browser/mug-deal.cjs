@@ -1,6 +1,6 @@
-// Mug multibuy note on mug product pages (12 Oct 2026). "Buy 2 mugs for £21.99" shows under the price on every mug
-// priced £11.99 (the lines products-api's checkout discounts) and nowhere else: not the £14.99 photo mug, not any
-// other product, not the shop popup. Phone and desktop layout. Basket, checkout request, events and ?src are the
+// Mug multibuy note (12 Oct 2026). "Buy 2 mugs for £21.99" shows under the price on every mug priced £11.99 (the
+// lines products-api's checkout discounts), on its product page and in the /store/ popup, and nowhere else: not
+// the £14.99 photo mug, not any other product. Phone and desktop layout. Basket, checkout request, events and ?src are the
 // same as without the note (compared against the shop.js before the change).
 //   node tests/browser/mug-deal.cjs
 //   OLD_SHOP=<path to the previous store/shop.js> node tests/browser/mug-deal.cjs   (adds the before/after comparison)
@@ -46,10 +46,24 @@ const deal = () => { const d = document.querySelector('.mug-deal'); if (!d) retu
   check(!bad.length, 'wording, single copy, link to /collections/mugs, no page errors', bad.join(' || ').slice(0, 600));
   await ctx.close();
 
-  // 2. Not in the shop popup (product pages only, as asked).
-  { const c = await browser.newContext(PHONE); await H.wire(c); const p = await c.newPage();
-    await p.goto(`http://localhost:${PORT}/store/#mug-005`); await p.waitForSelector('#modalWrap.open #modalAddBtn');
-    check(!(await p.evaluate(deal)), 'shop popup for mug-005: no note (product pages only)'); await c.close(); }
+  // 2. The /store/ popup: same rule, same wording, for every product.
+  { const c = await browser.newContext(PHONE); await H.wire(c, { patch: PHOTO });
+    const pw = [], pb = [];
+    for (const id of PAGES) {
+      const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await p.goto(`http://localhost:${PORT}/store/#${id}`); await p.waitForSelector('#modalWrap.open #modalAddBtn', { timeout: 15000 }).catch(() => {});
+      const opened = !!(await p.$('#modalWrap.open'));
+      const d = await p.evaluate(deal);
+      const want = expected.includes(id);
+      if (!opened && want) pb.push(id + ' popup did not open');   // products not for sale (sold out) have no popup, as before
+      if (!!d !== want) pw.push(id + (want ? ' (missing)' : ' (should not show)'));
+      if (d && (d.n !== 1 || d.head !== HEAD || d.text !== TEXT || d.href !== '/collections/mugs' || !/Choose your second mug/.test(d.link))) pb.push(id + ' ' + JSON.stringify(d));
+      if (errs.length) pb.push(id + ' errors: ' + errs.join(' | '));
+      await p.close();
+    }
+    check(!pw.length, `shop popup: shown for the ${expected.length} mugs, for none of the other ${PAGES.length - expected.length} products (photo mug included)`, pw.join(', '));
+    check(!pb.length, 'shop popup: same wording and link, every popup opens, no page errors', pb.join(' || ').slice(0, 600));
+    await c.close(); }
 
   // 3. Layout: under the price, above the options and Add to Cart, inside the screen, 44px link.
   for (const [w, h, mobile] of [[360, 640, true], [390, 844, true], [430, 932, true], [768, 1024, true], [1280, 900, false]]) for (const id of ['mug-005', 'mug-001']) {
@@ -62,6 +76,21 @@ const deal = () => { const d = document.querySelector('.mug-deal'); if (!d) retu
     const ok = L.deal && L.deal.top >= L.price.bottom - 1 && L.deal.bottom <= L.add.top && (!L.opts || L.deal.bottom <= L.opts.top) && L.deal.left >= 0 && L.deal.right <= L.vw && L.sw <= L.vw && L.link.h >= 44;
     check(ok, `${w}x${h} ${id}: under the price, above ${L.opts ? 'the name/message fields and ' : ''}Add to Cart, fits the screen, link ${L.link && L.link.h}px tall`, JSON.stringify(L));
     await p.screenshot({ path: `/tmp/mug-deal-${id}-${w}.png` }).catch(() => {});
+    await c.close();
+  }
+
+  // 3b. Popup layout on the shop.
+  for (const [w, h, mobile] of [[360, 640, true], [390, 844, true], [430, 932, true], [768, 1024, true], [1280, 900, false]]) for (const id of ['mug-005', 'mug-001']) {
+    const c = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile }); await H.wire(c); const p = await c.newPage();
+    await p.goto(`http://localhost:${PORT}/store/#${id}`); await p.waitForSelector('#modalWrap.open #modalAddBtn'); await p.waitForTimeout(400);
+    const L = await p.evaluate(() => {
+      const r = s => { const e = document.querySelector('#modalWrap.open ' + s); if (!e) return null; const b = e.getBoundingClientRect(); return { top: Math.round(b.top), bottom: Math.round(b.bottom), left: Math.round(b.left), right: Math.round(b.right), h: Math.round(b.height) }; };
+      const m = document.querySelector('#modalWrap.open .modal-details-col').getBoundingClientRect();
+      return { title: r('.modal-title'), price: r('#modalPriceVal'), deal: r('.mug-deal'), link: r('.mug-deal-link'), opts: r('.mug-personalisation'), add: r('#modalAddBtn'), col: { left: Math.round(m.left), right: Math.round(m.right) }, vw: window.innerWidth, sw: document.documentElement.scrollWidth };
+    });
+    const ok = L.deal && L.deal.top >= L.price.bottom - 1 && L.deal.top > L.title.bottom && L.deal.bottom <= L.add.top && (!L.opts || L.deal.bottom <= L.opts.top) && L.deal.left >= L.col.left && L.deal.right <= L.col.right && L.sw <= L.vw && L.link.h >= 44;
+    check(ok, `popup ${w}x${h} ${id}: under the price, above ${L.opts ? 'the name/message fields and ' : ''}Add to Cart, inside the popup, link ${L.link && L.link.h}px tall`, JSON.stringify(L));
+    await p.screenshot({ path: `/tmp/mug-deal-popup-${id}-${w}.png` }).catch(() => {});
     await c.close();
   }
 
@@ -93,6 +122,33 @@ const deal = () => { const d = document.querySelector('.mug-deal'); if (!d) retu
     check(JSON.stringify(before.body) === JSON.stringify(now.body), 'checkout request identical to before the change', JSON.stringify([before.body, now.body]).slice(0, 400));
     check(JSON.stringify(before.events) === JSON.stringify(now.events) && before.analytics === now.analytics, 'events and analytics identical to before', JSON.stringify([before.events, now.events]));
     check(JSON.stringify(before.lines) === JSON.stringify(now.lines) && before.hint === now.hint, 'saved basket and basket hint identical to before', JSON.stringify([before.lines, now.lines, before.hint]));
+  }
+
+  // 5. Shop popup visit: two mugs from the /store/ popups to checkout, the same as before the change.
+  async function popupJourney(port) {
+    const c = await browser.newContext(PHONE); const log = await H.wire(c); const p = await c.newPage(); const errs = [];
+    p.on('pageerror', e => errs.push(e.message));
+    await p.goto(`http://localhost:${port}/store/?src=fb-mugpopup#mug-001`); await p.waitForSelector('#modalWrap.open #modalAddBtn');
+    await p.fill('#modal-mug-name', 'Mrs Patel'); await p.selectOption('#modal-mug-message', { index: 2 }); await p.click('.mug-store-swatch >> nth=0');
+    await p.click('#modalAddBtn'); await p.waitForTimeout(500);
+    const deal1 = await p.evaluate(deal);
+    await p.goto('about:blank'); await p.goto(`http://localhost:${port}/store/#mug-005`); await p.waitForSelector('#modalWrap.open #modalAddBtn');
+    await p.click('#modalAddBtn'); await p.waitForTimeout(500);
+    await p.evaluate(() => { if (typeof closeModal === 'function') closeModal(); if (typeof openCart === 'function') openCart(); }); await p.waitForTimeout(400);
+    const hint = await p.evaluate(() => (document.getElementById('bundleBanner') || {}).textContent || '');
+    await p.click('#checkoutBtn'); for (let i = 0; i < 40 && !log.checkouts.length; i++) await p.waitForTimeout(60);
+    const saved = await p.evaluate(() => localStorage.getItem('cbj_cart_v1'));
+    await c.close();
+    return { deal1, hint: hint.trim(), body: log.checkouts[0] || null, events: log.events.map(e => [e.event, e.product_id, e.source].join(':')), errs, analytics: log.analytics.length,
+      lines: (JSON.parse(saved || '{}').lines || []).map(l => [l.id, l.qty, l.price].join(':')) };
+  }
+  const pnow = await popupJourney(PORT);
+  check(pnow.deal1 && pnow.body && pnow.body.items.length === 2 && pnow.body.items.every(i => i.price === 11.99) && pnow.body.source === 'fb-mugpopup' && /2 for £21\.99/.test(pnow.hint) && !pnow.errs.length,
+    'popup: teacher mug (name, message, colour) + retro mug to checkout, both £11.99, source kept, basket says "2 for £21.99 applied"', `items=${pnow.body && pnow.body.items.map(i => i.product_id + '@' + i.price + (i.mug_name ? '(' + i.mug_name + ')' : ''))} source=${pnow.body && pnow.body.source} ${pnow.errs.join(' | ')}`);
+  if (old) {
+    const pb = await popupJourney(OLD_PORT);
+    check(JSON.stringify(pb.body) === JSON.stringify(pnow.body), 'popup: checkout request identical to before the change', JSON.stringify([pb.body, pnow.body]).slice(0, 400));
+    check(JSON.stringify(pb.events) === JSON.stringify(pnow.events) && pb.analytics === pnow.analytics && JSON.stringify(pb.lines) === JSON.stringify(pnow.lines) && pb.hint === pnow.hint, 'popup: events, analytics, saved basket and basket hint identical to before', JSON.stringify([pb.events, pnow.events]));
   }
 
   await browser.close(); srv.close(); if (old) old.close();
