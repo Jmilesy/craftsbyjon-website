@@ -184,7 +184,8 @@
   }
 
   async function loadProducts() {
-    var list = await getJSON(API + '/products');
+    // Trailing slash = the staff-protected route, which still lists drafts (the public /products hides them, 13 Oct 2026).
+    var list = await getJSON(API + '/products/');
     list = list.result || list;
     printIds = list.map(function (p) { return p['Product ID']; }).filter(function (id) { return /^pod-print-/.test(id); });
     for (var i = 0; i < printIds.length; i++) {

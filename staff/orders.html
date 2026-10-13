@@ -462,7 +462,8 @@
 
   async function loadProductMap() {
     try {
-      const res = await fetch(PRODUCTS_API + '/products');
+      // Trailing slash = the staff-protected route, which still lists drafts (the public /products hides them, 13 Oct 2026).
+      const res = await fetch(PRODUCTS_API + '/products/');
       const { result } = await res.json();
       priceIdToProductId = {};
       (result || []).forEach(p => {

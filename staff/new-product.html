@@ -506,7 +506,8 @@
     const hint = document.getElementById('id-hint');
     hint.textContent = 'Looking up next ID…';
     try {
-      const res = await fetch(PRODUCTS_API);
+      // Trailing slash = the staff-protected route, which still lists drafts (the public /products hides them, 13 Oct 2026).
+      const res = await fetch(PRODUCTS_API + '/');
       const data = await res.json();
       const products = data.result || [];
       const nums = products
@@ -641,7 +642,8 @@
 
     // Step 1: Save product
     try {
-      const res = await fetch(PRODUCTS_API, {
+      // Staff-protected route: the public /products no longer accepts writes (13 Oct 2026).
+      const res = await fetch(PRODUCTS_API + '/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

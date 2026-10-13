@@ -340,7 +340,8 @@
   } catch (e) { set('tile-tasks', '?'); }
   // Unposted products (has pre-written FB post, never sent)
   try {
-    const r = await fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/products');
+    // Trailing slash = the staff-protected route, which still lists drafts (the public /products hides them, 13 Oct 2026).
+    const r = await fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/products/');
     const { result } = await r.json();
     const n = result.filter(p => p['FB Sales'] && !p['FB Posts Sent']).length;
     set('tile-unposted', n);
