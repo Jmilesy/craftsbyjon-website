@@ -18,3 +18,11 @@ Files are matched to a design and a slot from their names: `Anchor.png` (mug), `
 
 The mapping section saves colour rules for t-shirts (Navy and Rs Sport Grey to Dark, White, Natural and Sand to Light, pre-filled, editable) and a single key for mugs. Posters are deliberately not mappable until the print Text option exists. `STAFF_UPLOAD_LIMIT_MB` in the page only controls the warning shown, it must match the nginx limit on the exact `/n8n-proxy/products-api/print-files` location (200 MB since 28 Sep 2026; the rest of the staff products-api block stays at 20 MB).
 
+
+# Draft previews and staff product paths (13 Oct 2026)
+
+The public product list (`/n8n-proxy/products-api/products`) no longer contains drafts, and the public `/products` and `/collections` paths are read-only from outside. So:
+
+- `store/shop.js`: a `?preview=<id>` link for a product that is not in the public list reads the staff-protected `/n8n-proxy/products-api/products/` with the browser's staff cookie and opens the draft with a banner saying it cannot be checked out. Without a staff login (log in at `/staff-login` on the same device) it shows a notice instead. A preview link for a live product works as before, with no staff call. Checkout refuses drafts on the server for everyone, staff included.
+- Staff pages that read the full list or create products/collections use the trailing-slash staff paths: `listings`, `staff-index`, `new-product`, `pod-intake`, `orders`, `print-images` (`/products/`) and `collections` (`POST /collections/`).
+- Test: `node tests/browser/draft-preview.cjs` (20 checks at phone size). Server side and nginx: `craftsbyjon-vps-app/docs/CURRENT-STATE.md` ("Draft products cannot be bought").

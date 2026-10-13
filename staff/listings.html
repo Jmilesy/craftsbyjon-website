@@ -1173,7 +1173,8 @@
     document.getElementById('app').style.display = 'none';
     generatedPosts = {};
     try {
-      const res = await fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/products');
+      // Trailing slash = the staff-protected route, which still lists drafts (the public /products hides them, 13 Oct 2026).
+      const res = await fetch('https://craftsbyjon.co.uk/n8n-proxy/products-api/products/');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (!data.result || !data.result.length) throw new Error('No product rows found.');

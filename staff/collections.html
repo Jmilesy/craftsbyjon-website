@@ -910,7 +910,8 @@ async function addCollection() {
   const input = document.getElementById('legacy-new-name');
   const name = input.value.trim();
   if (!name) return;
-  const res = await fetch(`${API}/collections`, {
+  // Staff-protected route (trailing slash): the public /collections no longer accepts writes (13 Oct 2026).
+  const res = await fetch(`${API}/collections/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name })

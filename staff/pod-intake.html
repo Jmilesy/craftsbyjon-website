@@ -396,7 +396,8 @@
       // Each option row carries its own Inkthreadable product code (per colour) and which print master
       // is printed (text or notext). No Gelato variant IDs: checkout and order handling read the row.
       setProgressLine('tote', 'pending', `${toteDesign.title || productId} — saving product…`);
-      const res = await fetch(PRODUCTS_API, {
+      // Staff-protected route: the public /products no longer accepts writes (13 Oct 2026).
+      const res = await fetch(PRODUCTS_API + '/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -793,7 +794,8 @@
 
       setProgressLine(i, 'pending', `${d.design} — saving product…`);
       try {
-        const res = await fetch(PRODUCTS_API, {
+        // Staff-protected route: the public /products no longer accepts writes (13 Oct 2026).
+        const res = await fetch(PRODUCTS_API + '/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

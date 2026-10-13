@@ -114,6 +114,14 @@
   // Everything below that checks PRODUCT_PAGE is skipped on /store/.
   var PRODUCT_PAGE = (window.CBJ_PAGE && window.CBJ_PAGE.mode === 'product' && window.CBJ_PAGE.id) ? window.CBJ_PAGE : null;
 
+  // Fixed banner for staff previews (13 Oct 2026).
+  function showPreviewNotice(text, isError) {
+    var banner = document.createElement('div');
+    banner.textContent = text;
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:' + (isError ? '#9b1c1c' : '#b45309') + ';color:#fff;text-align:center;padding:8px;font-size:.85rem;font-weight:600';
+    document.body.appendChild(banner);
+  }
+
   async function load() {
     const main = document.getElementById('main');
     try {
@@ -134,6 +142,24 @@
       });
 
       allProductsRaw = result || [];
+
+      // Staff preview of a draft (13 Oct 2026): the public list no longer contains drafts, so a ?preview=
+      // link for a product that is not in it reads the full list from the staff-protected route, using the
+      // staff login cookie of this browser. Without a staff login it just says so. Drafts still cannot be
+      // bought by anyone: checkout refuses them on the server.
+      var draftPreviewId = new URLSearchParams(window.location.search).get('preview');
+      if (draftPreviewId && !allProductsRaw.some(function(p) { return p['Product ID'] === draftPreviewId; })) {
+        try {
+          var staffRes = await fetch(API + '/products/', { credentials: 'same-origin', cache: 'no-store' });
+          if (staffRes.ok) {
+            var staffList = ((await staffRes.json()) || {}).result || [];
+            var draft = staffList.find(function(p) { return p['Product ID'] === draftPreviewId; });
+            if (draft) allProductsRaw.push(draft);
+          } else {
+            showPreviewNotice('Staff preview: log in to the staff area on this device first, then open this link again.', true);
+          }
+        } catch (e) { /* the shop still loads */ }
+      }
 
       // Exclude archived-collection products and anything not marked Ready to Go
       allProducts = (result || []).filter(function(p) {
@@ -315,10 +341,9 @@
             // it. Restore the ?preview= URL immediately after so a refresh keeps working.
             history.replaceState({ previewId: previewId }, '', '/store/?preview=' + encodeURIComponent(previewId));
             document.title = '[PREVIEW] ' + document.title;
-            var banner = document.createElement('div');
-            banner.textContent = '⚠ PREVIEW MODE - this product is a draft and is not visible to customers';
-            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b45309;color:#fff;text-align:center;padding:8px;font-size:.85rem;font-weight:600';
-            document.body.appendChild(banner);
+            if (String(previewTarget['Ready to Go'] || '').trim().toLowerCase() !== 'yes') {
+              showPreviewNotice('⚠ PREVIEW MODE - this product is a draft. You can try the options and photo upload, but it cannot be checked out until it is Ready to Go.', false);
+            }
           }, 0);
         }
       }
