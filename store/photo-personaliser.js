@@ -25,11 +25,22 @@
     return f || null;
   }
 
-  // Option rows (e.g. Age: 16th, 18th, 21st), in number order.
+  // Option rows (e.g. Birthday: 16th Rainbow, 21st Rainbow, 21st Champagne), in number order; options with the
+  // same number keep the order they were set up in (row id), so Rainbow comes before Champagne (13 Oct 2026).
   function options(vars) {
     var rows = (Array.isArray(vars) ? vars : []).filter(function (v) { return v && v.option1_value && !v.gelato_variant_id && Number(v.active) !== 0; });
     var num = function (v) { var m = /\d+/.exec(String(v.option1_value)); return m ? Number(m[0]) : 9999; };
-    return rows.sort(function (a, b) { return num(a) - num(b) || String(a.option1_value).localeCompare(String(b.option1_value)); });
+    var id = function (v) { var n = Number(v.id); return Number.isFinite(n) ? n : Infinity; };
+    return rows.sort(function (a, b) { return num(a) - num(b) || id(a) - id(b) || String(a.option1_value).localeCompare(String(b.option1_value)); });
+  }
+
+  // Print resolution (13 Oct 2026): the crop's short side should keep this many genuine photo pixels. It is the
+  // spec's recommend_px (1180 for the birthday mug: Jon prints the photo at 1180 x 1180 px, 300 DPI).
+  var DEFAULT_TARGET_PX = 1000;
+  function targetPx(specOrProduct) {
+    var s = specOrProduct && specOrProduct.photo ? specOrProduct : spec(specOrProduct);
+    var t = s && s.photo && Number(s.photo.recommend_px);
+    return t > 0 ? t : DEFAULT_TARGET_PX;
   }
 
   function checkFile(file) {
@@ -64,8 +75,15 @@
     var cy = Math.min(Math.max(v.cy, h / 2), v.natH - h / 2);
     return { natW: v.natW, natH: v.natH, aspect: v.aspect, maxZoom: v.maxZoom || 4, zoom: zoom, cx: cx, cy: cy, w: w, h: h };
   }
-  function initialView(natW, natH, aspect) {
-    return clampView({ natW: natW, natH: natH, aspect: aspect || 1, zoom: 1, cx: natW / 2, cy: natH / 2 });
+  // How far the customer may zoom: until the crop's short side reaches `target` photo pixels, never past 4x.
+  // A photo that is already smaller than the target cannot be zoomed into at all (it can still be moved).
+  function maxZoomFor(natW, natH, aspect, target) {
+    var b = baseRect(natW, natH, aspect || 1);
+    return Math.max(1, Math.min(4, Math.min(b.w, b.h) / (target || DEFAULT_TARGET_PX)));
+  }
+  // `target` (genuine pixels) caps the zoom; without it the old 4x limit applies.
+  function initialView(natW, natH, aspect, target) {
+    return clampView({ natW: natW, natH: natH, aspect: aspect || 1, maxZoom: target ? maxZoomFor(natW, natH, aspect, target) : 4, zoom: 1, cx: natW / 2, cy: natH / 2 });
   }
   function cropOf(v) {
     var r = function (n) { return (Math.round(n * 1e6) / 1e6) || 0; };
@@ -83,8 +101,13 @@
   function zoomTo(v, zoom) {
     return clampView({ natW: v.natW, natH: v.natH, aspect: v.aspect, maxZoom: v.maxZoom, zoom: zoom, cx: v.cx, cy: v.cy });
   }
-  // Short side of the cropped area in photo pixels (for the "may look soft" warning).
+  // Short side of the cropped area in genuine photo pixels (for the "may look soft" warning).
   function cropPixels(v) { return Math.round(Math.min(v.w, v.h)); }
+  // { px, target, ok, atLimit }: ok when the crop keeps the target; atLimit when the zoom cap has been reached.
+  function quality(v, target) {
+    var px = cropPixels(v), t = target || DEFAULT_TARGET_PX;
+    return { px: px, target: t, ok: px >= t, atLimit: v.maxZoom > 1 && v.maxZoom < 4 && v.zoom >= v.maxZoom - 1e-6 };
+  }
 
   function cartKey(productId, variantId, uploadId, name) {
     return productId + '|v:' + variantId + '|ph:' + uploadId + '|n:' + (name || '');
@@ -135,9 +158,10 @@
 
   var api = {
     STORE_KEY: STORE_KEY, MAX_BYTES: MAX_BYTES, PHOTO_MAX_AGE_MS: PHOTO_MAX_AGE_MS,
-    spec: spec, isPhotoProduct: isPhotoProduct, nameField: nameField, options: options,
+    spec: spec, isPhotoProduct: isPhotoProduct, nameField: nameField, options: options, targetPx: targetPx,
     checkFile: checkFile, checkName: checkName,
     initialView: initialView, clampView: clampView, cropOf: cropOf, layout: layout, pan: pan, zoomTo: zoomTo, cropPixels: cropPixels,
+    maxZoomFor: maxZoomFor, quality: quality,
     cartKey: cartKey, toStored: toStored, fromStored: fromStored, save: save, load: load, clear: clear
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

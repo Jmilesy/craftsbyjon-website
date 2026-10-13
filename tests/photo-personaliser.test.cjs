@@ -79,3 +79,62 @@ test('basket save and restore', () => {
   assert.equal(mem.s[P.STORE_KEY], undefined);
   assert.deepEqual(P.fromStored({ v: 1, saved: now - 15 * 86400e3, lines: stored.lines }, byId, now).cart, {}, 'old baskets are not restored');
 });
+
+// Print resolution and option order (13 Oct 2026).
+const target = 1180;
+test('target comes from recommend_px, defaults to 1000', () => {
+  assert.equal(P.targetPx({ personalisation_spec: { photo: { recommend_px: 1180 } } }), 1180);
+  assert.equal(P.targetPx({ photo: { recommend_px: 1180 } }), 1180, 'a spec object works too');
+  assert.equal(P.targetPx(product), 1000);
+});
+
+test('zoom stops at the target: crop never drops below 1180 genuine pixels on an adequate photo', () => {
+  for (const [w, h] of [[4000, 3000], [3000, 4000], [8160, 6120], [2400, 2400], [1300, 1200], [1180, 1180]]) {
+    const v0 = P.initialView(w, h, 1, target);
+    assert.ok(v0.maxZoom >= 1 && v0.maxZoom <= 4, `${w}x${h} maxZoom ${v0.maxZoom}`);
+    for (const z of [1, 1.5, 2, 2.5, 3, 3.5, 4, 10]) {
+      const v = P.zoomTo(v0, z);
+      assert.ok(P.cropPixels(v) >= target, `${w}x${h} zoom ${z}: ${P.cropPixels(v)} px`);
+      assert.ok(P.quality(v, target).ok);
+    }
+    const max = P.zoomTo(v0, 99);
+    if (Math.min(w, h) / target < 4) {
+      assert.equal(P.cropPixels(max), target, `${w}x${h}: zoomed fully in = exactly ${target}`);
+      assert.equal(P.quality(max, target).atLimit, Math.min(w, h) > target, `${w}x${h} at limit`);
+    }
+  }
+  // 12 MP phone photo: about 2.54x allowed, the crop sent to the server is 1180 px on the short side.
+  const v = P.zoomTo(P.initialView(4000, 3000, 1, target), 99);
+  const c = P.cropOf(v);
+  assert.ok(Math.abs(v.maxZoom - 3000 / 1180) < 1e-9);
+  assert.ok(Math.abs(c.w * 4000 - 1180) < 0.01 && Math.abs(c.h * 3000 - 1180) < 0.01, JSON.stringify(c));
+  // A very large photo still stops at 4x.
+  assert.equal(P.initialView(12000, 9000, 1, target).maxZoom, 4);
+});
+
+test('photos smaller than the target: no zoom, a warning, still usable', () => {
+  for (const [w, h] of [[1000, 1000], [1600, 700], [600, 800]]) {
+    const v = P.initialView(w, h, 1, target);
+    assert.equal(v.maxZoom, 1, `${w}x${h}`);
+    assert.equal(P.zoomTo(v, 3).zoom, 1, 'zoom ignored');
+    const q = P.quality(v, target);
+    assert.equal(q.ok, false); assert.equal(q.px, Math.min(w, h)); assert.equal(q.atLimit, false);
+    const moved = P.pan(v, -50, -50, 300);
+    assert.equal(P.cropPixels(moved), Math.min(w, h), 'moving keeps the size');
+  }
+});
+
+test('without a target the old 4x zoom applies (other photo products unchanged)', () => {
+  assert.equal(P.initialView(4000, 3000, 1).maxZoom, 4);
+  assert.equal(P.cropPixels(P.zoomTo(P.initialView(4000, 3000, 1), 4)), 750);
+});
+
+test('options: Rainbow before Champagne within each age (set-up order), ages in number order', () => {
+  const rows = [
+    { id: 934, option1_value: '40th Champagne' }, { id: 931, option1_value: '21st Rainbow' }, { id: 929, option1_value: '16th Rainbow' },
+    { id: 932, option1_value: '21st Champagne' }, { id: 933, option1_value: '40th Rainbow' }, { id: 930, option1_value: '18th Rainbow' },
+    { id: 999, option1_value: '18th Gelato', gelato_variant_id: 'g1' }, { id: 998, option1_value: '50th Off', active: 0 }
+  ];
+  assert.deepEqual(P.options(rows).map(v => v.option1_value), ['16th Rainbow', '18th Rainbow', '21st Rainbow', '21st Champagne', '40th Rainbow', '40th Champagne']);
+  assert.deepEqual(P.options([{ option1_value: '18th' }, { option1_value: '16th' }]).map(v => v.option1_value), ['16th', '18th'], 'rows without ids still sort');
+});

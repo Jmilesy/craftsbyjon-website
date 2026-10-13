@@ -26,3 +26,10 @@ The public product list (`/n8n-proxy/products-api/products`) no longer contains 
 - `store/shop.js`: a `?preview=<id>` link for a product that is not in the public list reads the staff-protected `/n8n-proxy/products-api/products/` with the browser's staff cookie and opens the draft with a banner saying it cannot be checked out. Without a staff login (log in at `/staff-login` on the same device) it shows a notice instead. A preview link for a live product works as before, with no staff call. Checkout refuses drafts on the server for everyone, staff included.
 - Staff pages that read the full list or create products/collections use the trailing-slash staff paths: `listings`, `staff-index`, `new-product`, `pod-intake`, `orders`, `print-images` (`/products/`) and `collections` (`POST /collections/`).
 - Test: `node tests/browser/draft-preview.cjs` (20 checks at phone size). Server side and nginx: `craftsbyjon-vps-app/docs/CURRENT-STATE.md` ("Draft products cannot be bought").
+
+# Photo print size and birthday mug popup (13 Oct 2026)
+
+- `store/photo-personaliser.js`: `targetPx` (the spec's `recommend_px`, 1180 for the birthday mug), `maxZoomFor`, `quality`; `initialView` takes the target and caps the zoom so the crop keeps that many genuine photo pixels (photos already smaller cannot be zoomed). `options` sorts by number, then by row id, so Rainbow comes before Champagne.
+- `store/shop.js`: slider `max` set from the cap (disabled when there is nothing to zoom), a live print-quality line under the crop (`#photoQuality`: warning below the target, a note at the cap). Photo popup wording without any dispatch or delivery time.
+- `staff/orders.html`: genuine-pixel crop size against `PHOTO_PRINT_PX` (1180); no name row for photo-only products.
+- Tests: `tests/photo-personaliser.test.cjs` (12), `tests/browser/photo-quality.cjs` (56, phone and desktop), `tests/browser/staff-photo-lines.cjs` (5). Server side: `craftsbyjon-vps-app/docs/CURRENT-STATE.md` ("Photo print size 1180 px").
