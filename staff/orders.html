@@ -939,6 +939,8 @@
     ['submitted_to_gelato', 'Submitted to Gelato'], ['dispatched', 'Dispatched']
   ];
 
+  // Print size of the customer photo in Jon's mug artwork: 1180 x 1180 px at 300 DPI (13 Oct 2026).
+  const PHOTO_PRINT_PX = 1180;
   function photoUrl(o, l, v, download) {
     const q = new URLSearchParams({ v, ref: o.order_ref, line: String(l.line_no) });
     if (l.crop && (v === 'crop' || v === 'crop-thumb')) for (const k of ['x', 'y', 'w', 'h']) q.set(k, String(l.crop[k]));
@@ -952,9 +954,12 @@
     const strip = PHOTO_STAGES.map((s, i) =>
       `<span class="ph-step ${i < at ? 'done' : i === at ? 'now' : ''}">${i < at ? '&#10003; ' : ''}${s[1]}</span>`).join('<span class="ph-arrow">&rsaquo;</span>');
     const lines = (o.personalisations || []).map(l => {
+      // Photo-only products (no name field, 13 Oct 2026) have no "name" key at all, so no name row is shown.
+      const hasNameField = !!(l.fields && Object.prototype.hasOwnProperty.call(l.fields, 'name'));
       const name = l.fields && l.fields.name ? esc(l.fields.name) : '<em style="color:#999">no name</em>';
+      // Genuine photo pixels on the crop's short side, compared with the 1180 px print size (13 Oct 2026).
       const small = l.photo_width && l.crop ? Math.round(Math.min(l.crop.w * l.photo_width, l.crop.h * l.photo_height)) : null;
-      const lowRes = small != null && small < 1000;
+      const lowRes = small != null && small < PHOTO_PRINT_PX;
       const photo = l.upload_id
         ? `<a href="${esc(photoUrl(o, l, l.crop ? 'crop' : 'full', false))}" target="_blank" rel="noopener"><img class="ph-thumb" src="${esc(photoUrl(o, l, l.crop ? 'crop-thumb' : 'thumb', false))}" alt="Customer photo, line ${l.line_no}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph-gone',textContent:'Photo not available (deleted or missing)'}))"></a>`
         : `<div class="ph-gone">No photo on this line${l.claim_error ? ': ' + esc(l.claim_error) : ''}</div>`;
@@ -965,8 +970,8 @@
         ${photo}
         <div class="ph-info">
           <div><strong>Item ${l.line_no}:</strong> ${esc(l.title || l.product_id)}${l.option_label ? ' &middot; <strong>' + esc(l.option_label) + '</strong>' : ''} &times;${esc(l.quantity)}</div>
-          <div>Name on mug: <strong>${name}</strong></div>
-          ${l.photo_width ? `<div style="font-size:0.78rem;color:#777">Photo ${esc(l.photo_width)} &times; ${esc(l.photo_height)} px${small != null ? ', crop ' + small + ' px square' : ''}${lowRes ? ' <span style="color:#b45309;font-weight:700">(small, may print soft)</span>' : ''}</div>` : ''}
+          ${hasNameField ? `<div>Name on mug: <strong>${name}</strong></div>` : ''}
+          ${l.photo_width ? `<div style="font-size:0.78rem;color:#777">Photo ${esc(l.photo_width)} &times; ${esc(l.photo_height)} px${small != null ? ', crop ' + small + ' px square of genuine photo pixels' : ''}${small != null ? (lowRes ? ' <span style="color:#b45309;font-weight:700">(below the ' + PHOTO_PRINT_PX + ' px print size: may print soft; enlarging adds no detail)</span>' : ' <span style="color:#15803d;font-weight:700">(meets ' + PHOTO_PRINT_PX + ' px)</span>') : ''}</div>` : ''}
           <div class="ph-status">Artwork: <strong>${l.artwork_status === 'artwork_ready' ? '&#9989; ready' : '&#9203; to do'}</strong></div>
           <div class="ph-actions">
             ${l.upload_id ? `<a class="filter-btn" style="text-decoration:none" href="${esc(photoUrl(o, l, 'crop', true))}">&#11015; Cropped photo</a>

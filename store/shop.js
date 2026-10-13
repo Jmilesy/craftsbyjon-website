@@ -1134,7 +1134,8 @@
     ];
     html += '<div class="modal-testimonial">' + modalQuotes[Math.floor(Math.random() * modalQuotes.length)] + '</div>';
     if (isPhotoProduct) {
-      html += '<div class="modal-shipping">Made to order with your photo &middot; Ships within 3&ndash;5 working days &middot; Free UK shipping on orders £10+</div>';
+      // No dispatch or delivery time is promised for photo products (13 Oct 2026, Jon).
+      html += '<div class="modal-shipping">Made to order with your photo &middot; Printed to order and delivered directly to you</div>';
     } else if ((p.application_method || '').indexOf('Print on Demand') === 0) {
       html += '<div class="modal-shipping">Printed to order &middot; Ships within 3&ndash;4 working days &middot; Free UK shipping on orders £10+</div>';
     } else {
@@ -1627,6 +1628,7 @@
     h += '<div class="photo-crop" id="photoCrop"><img id="photoCropImg" alt="Your photo" draggable="false"></div>';
     h += '<div class="photo-zoom"><span aria-hidden="true">&minus;</span><input type="range" id="photoZoom" min="1" max="4" step="0.01" value="1" aria-label="Zoom" oninput="photoZoomed(this.value)"><span aria-hidden="true">+</span></div>';
     h += '<div class="photo-hint">Drag the photo to move it and use the slider to zoom. The square is the photo side of your mug.</div>';
+    h += '<div class="photo-status" id="photoQuality" role="status" aria-live="polite"></div>';
     h += '<button type="button" class="photo-change" onclick="document.getElementById(\'photoFile\').click()">Use a different photo</button>';
     h += '</div></div>';
     if (nf) {
@@ -1637,7 +1639,7 @@
     }
     h += '<label class="photo-rights"><input type="checkbox" id="photoRights" onchange="photoRightsChanged(this)"> I took this photo or have permission to use it</label>';
     h += '<div class="photo-privacy">Your photo is only used to make your mug. It is kept privately, never shared or posted, and deleted 30 days after your order is posted (or within 48 hours if you do not order). <a href="/privacy.html#customer-photos" target="_blank" rel="noopener">How I look after your photo</a></div>';
-    h += '<div class="mug-lead-time">&#127874; I prepare your design by hand before it is printed, so please allow 3 to 5 working days for it to be posted.</div>';
+    h += '<div class="mug-lead-time">&#127874; I prepare your design by hand and check it before it is printed and sent to you.</div>';
     h += '</div>';
     return h;
   }
@@ -1708,11 +1710,16 @@
     var img = document.getElementById('photoCropImg');
     img.onload = function() {
       if (photoState !== st || st.token !== token) return;
-      st.view = CBJPhoto.initialView(img.naturalWidth, img.naturalHeight, (st.spec.photo && st.spec.photo.crop_aspect) || 1);
+      // The zoom stops where the crop would fall below the print target (13 Oct 2026).
+      st.view = CBJPhoto.initialView(img.naturalWidth, img.naturalHeight, (st.spec.photo && st.spec.photo.crop_aspect) || 1, CBJPhoto.targetPx(st.spec));
       document.getElementById('photoCropWrap').style.display = '';
       document.getElementById('photoPickLabel').style.display = 'none';
-      document.getElementById('photoZoom').value = 1;
+      var zoomInput = document.getElementById('photoZoom');
+      zoomInput.max = String(st.view.maxZoom);
+      zoomInput.value = 1;
+      zoomInput.disabled = st.view.maxZoom <= 1;
       renderPhotoCrop();
+      renderPhotoQuality();
       bindPhotoCrop();
     };
     img.onerror = function() {
@@ -1740,7 +1747,7 @@
         } else {
           st.upload = res.j.result;
           setPhotoStatus(st.upload.low_resolution
-            ? 'Photo added. It is quite small, so it may print a little soft. A larger original will look sharper.'
+            ? 'Photo added. It is smaller than I would like for printing; see the note under the photo.'
             : 'Photo added.', st.upload.low_resolution ? 'warn' : 'ok');
         }
         updatePhotoReady();
@@ -1786,6 +1793,26 @@
     if (!photoState || !photoState.view) return;
     photoState.view = CBJPhoto.zoomTo(photoState.view, Number(v));
     renderPhotoCrop();
+    renderPhotoQuality();
+  }
+
+  // Print quality under the crop (13 Oct 2026): a warning when the crop keeps fewer genuine photo pixels than
+  // the print target (only possible when the photo itself is that small, since the zoom stops at the target).
+  function renderPhotoQuality() {
+    var st = photoState;
+    var el = document.getElementById('photoQuality');
+    if (!st || !st.view || !el) return;
+    var q = CBJPhoto.quality(st.view, CBJPhoto.targetPx(st.spec));
+    if (!q.ok) {
+      el.className = 'photo-status warn';
+      el.textContent = 'Print quality: this photo gives ' + q.px + ' pixels across, and I print at ' + q.target + ', so your mug may look a little soft. A larger original photo will print sharper.';
+    } else if (q.atLimit) {
+      el.className = 'photo-status';
+      el.textContent = 'This is as far as the photo can zoom in and still print sharply.';
+    } else {
+      el.className = 'photo-status';
+      el.textContent = '';
+    }
   }
 
   function photoNameInput(inp) {
