@@ -717,6 +717,13 @@
     return '<div class="stock-note' + (low ? ' stock-low' : '') + '">' + qty + ' remaining</div>';
   }
 
+  // Shop-card wording for products whose full title is too long for a card (14 Oct 2026). The product page,
+  // popup, SEO and checkout keep the real title. `group` is the heading in the "All" view for a product that
+  // is not in one of the manual collections (it is still on its automatic collection pages).
+  var CARD_DISPLAY = {
+    'mug-birthday-photo': { title: 'Birthday Photo Mug', sub: '16th, 18th, 21st & 40th \u2022 6 designs', group: 'Personalised gifts' }
+  };
+
   function renderGrid() {
     var grid = document.getElementById('grid');
     if (!grid) return;
@@ -731,7 +738,7 @@
       var groups = {};
       var groupOrder = [];
       products.forEach(function(p) {
-        var col = p['Collection'] || 'Uncollected';
+        var col = p['Collection'] || (CARD_DISPLAY[p['Product ID']] && CARD_DISPLAY[p['Product ID']].group) || 'Uncollected';
         if (!groups[col]) { groups[col] = []; groupOrder.push(col); }
         groups[col].push(p);
       });
@@ -766,11 +773,13 @@
           + (inCart ? '&#10003; In Cart' : 'Add to Cart') + '</button>';
       var persBadge = isPersonalisedNonMug ? '<div><span class="pers-badge">&#9998; Personalisation available</span></div>' : '';
       var isBookmark = id.toLowerCase().startsWith('bookmark-') || (p.product_type || '').toLowerCase() === 'bookmark';
-      return '<div class="card"' + (isBookmark ? ' data-product-type="bookmark"' : '') + ' onclick="trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ')">'
+      var cardShow = CARD_DISPLAY[id] || null;
+      return '<div class="card"' + (isBookmark ? ' data-product-type="bookmark"' : '') + (isPhotoCard ? ' data-photo-card="1"' : '') + ' onclick="trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ')">'
         + '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(p['Title']) + '" loading="lazy">'
         + toteStripHtml(p)
         + '<div class="card-body">'
-        + '<div class="card-title"><a class="card-title-link" href="/products/' + encodeURIComponent(id) + '" onclick="event.preventDefault(); event.stopPropagation(); trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ');">' + escHtml(p['Title']) + '</a></div>'
+        + '<div class="card-title"><a class="card-title-link" href="/products/' + encodeURIComponent(id) + '" onclick="event.preventDefault(); event.stopPropagation(); trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ');">' + escHtml(cardShow && cardShow.title ? cardShow.title : p['Title']) + '</a></div>'
+        + (cardShow && cardShow.sub ? '<div class="card-sub">' + escHtml(cardShow.sub) + '</div>' : '')
         + '<div class="card-desc">' + escHtml(p['Short Description']) + '</div>'
         + persBadge
         + stockNoteHtml(p)
@@ -802,11 +811,13 @@
         + (inCart ? '&#10003; In Cart' : 'Add to Cart') + '</button>';
     var persBadge = isPersonalisedNonMug ? '<div><span class="pers-badge">&#9998; Personalisation available</span></div>' : '';
     var isBookmark = id.toLowerCase().startsWith('bookmark-') || (p.product_type || '').toLowerCase() === 'bookmark';
-    return '<div class="card"' + (isBookmark ? ' data-product-type="bookmark"' : '') + ' onclick="trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ')">'
+    var cardShow = CARD_DISPLAY[id] || null;
+    return '<div class="card"' + (isBookmark ? ' data-product-type="bookmark"' : '') + (isPhotoCard ? ' data-photo-card="1"' : '') + ' onclick="trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ')">'
       + '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(p['Title']) + '" loading="lazy">'
       + toteStripHtml(p)
       + '<div class="card-body">'
-      + '<div class="card-title"><a class="card-title-link" href="/products/' + encodeURIComponent(id) + '" onclick="event.preventDefault(); event.stopPropagation(); trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ');">' + escHtml(p['Title']) + '</a></div>'
+      + '<div class="card-title"><a class="card-title-link" href="/products/' + encodeURIComponent(id) + '" onclick="event.preventDefault(); event.stopPropagation(); trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ');">' + escHtml(cardShow && cardShow.title ? cardShow.title : p['Title']) + '</a></div>'
+        + (cardShow && cardShow.sub ? '<div class="card-sub">' + escHtml(cardShow.sub) + '</div>' : '')
       + '<div class="card-desc">' + escHtml(p['Short Description']) + '</div>'
       + persBadge
       + stockNoteHtml(p)
