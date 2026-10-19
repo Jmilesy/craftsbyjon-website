@@ -1072,7 +1072,7 @@
         html += '<div class="mug-colour-selected" id="mug-colour-selected-display"><em>None selected</em></div></div>';
       }
 
-      html += '<div class="mug-lead-time">☕ Personalised mugs are made to order - please allow 3–4 working days for it to be posted</div>';
+      html += '<div class="mug-lead-time">☕ Personalised mugs are made to order</div>';
       html += '</div>';
     } else if (p.personalised === 1) {
       var persNote = p.personalisation_note || 'Added to the rear of the product';
@@ -1148,7 +1148,7 @@
       // No dispatch or delivery time is promised for photo products (13 Oct 2026, Jon).
       html += '<div class="modal-shipping">Made to order with your photo &middot; Printed to order and delivered directly to you</div>';
     } else if ((p.application_method || '').indexOf('Print on Demand') === 0) {
-      html += '<div class="modal-shipping">Printed to order &middot; Ships within 3&ndash;4 working days &middot; Free UK shipping on orders £10+</div>';
+      html += '<div class="modal-shipping">Printed to order &middot; Postage included</div>';
     } else {
       html += '<div class="modal-shipping">Handmade in Deal, Kent &middot; Ships within 1&ndash;2 business days &middot; Free UK shipping on orders £10+</div>';
     }
