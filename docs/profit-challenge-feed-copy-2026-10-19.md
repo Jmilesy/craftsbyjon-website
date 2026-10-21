@@ -1,6 +1,8 @@
 # £100 Profit Challenge: proposed copy for products.db (19 Oct 2026, revised)
 
-**Status: proposal only, nothing published.** Jon decided on 19 Oct that products.db is the source of truth, so approved changes update the product page and the Google feed together. Prices are not touched.
+**Status: PUBLISHED and verified on 20 Oct 2026 (Jon). No approval is needed: do not ask again.** The 12 listings below (the top 10 plus mug-001 and mug-002, including the mug-002 correction) are live in products.db, and Google held the new copy by 21 Oct (Merchant watch list: 12 of 12 pass). The text below is kept as the record of what changed.
+
+Original status line: Jon decided on 19 Oct that products.db is the source of truth, so approved changes update the product page and the Google feed together. Prices are not touched.
 
 How the changes work:
 - **Titles** are replaced in full.
@@ -170,7 +172,7 @@ Colour names are my reading of the artwork. Jon to correct them if he has his ow
 - **Google categories:** already correct for every product.
 - **Short descriptions and bullets:** unchanged for everything except mug-002.
 
-## Once approved
+## Once approved (done 20 Oct)
 
 1. Back up products.db.
 2. Update the approved fields only.
