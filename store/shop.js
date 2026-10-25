@@ -481,7 +481,7 @@
 
   // ── Product-type filter (desktop toolbar: Keyrings / Bookmarks / Mugs / etc) ──
   var _activeProductType = '';
-  var TYPE_PLURAL = { 'Mug': 'Mugs', 'Keyring': 'Keyrings', 'Bookmark': 'Bookmarks', 'T-Shirt': 'T-Shirts', 'Coaster Set': 'Coasters' };
+  var TYPE_PLURAL = { 'Mug': 'Mugs', 'Keyring': 'Keyrings', 'Bookmark': 'Bookmarks', 'T-Shirt': 'T-Shirts', 'Coaster Set': 'Coasters', 'Greeting Card': 'Cards' };
   function getProductType(p) {
     var t = (p.product_type || '').trim();
     if (t) return t;
@@ -2243,6 +2243,46 @@
       + '</div>';
   }
 
+  // Christmas cards (Oct 2026). Each card is a 3.99 line and the basket is charged the cheapest way of covering the
+  // number of cards with the 1/3/6/12 tiers (3.99 / 10.00 / 12.99 / 22.00), so a basket never costs more than the next
+  // tier up. Display only: products-api/card-tiers.js is what is actually charged and must stay in step with this.
+  var CARD_LIST_PENCE = 399;
+  var CARD_TIERS = [[1, 399], [3, 1000], [6, 1299], [12, 2200]];
+  function isCardProduct(p) {
+    return !!p && (p.product_type || '').trim().toLowerCase() === 'greeting card';
+  }
+  function cardBasketPence(n) {
+    if (!(n > 0)) return 0;
+    var best = [0];
+    for (var i = 1; i <= n; i++) {
+      best[i] = Infinity;
+      for (var t = 0; t < CARD_TIERS.length; t++) {
+        var cost = best[Math.max(0, i - CARD_TIERS[t][0])] + CARD_TIERS[t][1];
+        if (cost < best[i]) best[i] = cost;
+      }
+    }
+    return best[n];
+  }
+  function getCardBundleInfo() {
+    var cardQty = 0;
+    Object.values(cart).forEach(function(data) {
+      if (isCardProduct(data.product)) cardQty += data.qty;
+    });
+    var discountPence = cardQty > 0 ? Math.max(0, cardQty * CARD_LIST_PENCE - cardBasketPence(cardQty)) : 0;
+    return { cardQty: cardQty, discountPence: discountPence };
+  }
+  function cardBannerText(info) {
+    var n = info.cardQty;
+    if (n <= 0) return null;
+    if (info.discountPence > 0) {
+      var saved = info.discountPence >= 100 ? '£' + (info.discountPence / 100).toFixed(2) : info.discountPence + 'p';
+      var text = 'Card mix & match applied - you\'re saving ' + saved;
+      if (n === 4 || n === 5) text += ' (up to 6 cards cost the same)';
+      return text;
+    }
+    return 'Cards: add ' + (3 - n) + ' more for 3 for £10, mix any designs';
+  }
+
   function getMugBundleInfo() {
     var mugQty = 0;
     Object.values(cart).forEach(function(data) {
@@ -2279,7 +2319,8 @@
     var info = getBundleInfo();
     var mugInfo = getMugBundleInfo();
     var eq = info.eligibleQty;
-    var mugText = mugBannerText(mugInfo);
+    var cardInfo = getCardBundleInfo();
+    var mugText = [mugBannerText(mugInfo), cardBannerText(cardInfo)].filter(Boolean).join(' \u2666 ') || null;
     if (eq >= 3) {
       var savingStr = info.discountPence >= 100 ? '£' + (info.discountPence / 100).toFixed(2) : info.discountPence + 'p';
       banner.className = 'bundle-banner qualified';
@@ -2291,7 +2332,7 @@
       banner.className = 'bundle-banner';
       bannerText.textContent = 'Bundle deal: add 2 more to get 3 for £10' + (mugText ? ' \u2666 ' + mugText : '');
     } else if (mugText) {
-      banner.className = mugInfo.mugQty >= 4 ? 'bundle-banner qualified' : 'bundle-banner';
+      banner.className = (mugInfo.mugQty >= 4 || cardInfo.discountPence > 0) ? 'bundle-banner qualified' : 'bundle-banner';
       bannerText.innerHTML = mugText;
     } else {
       banner.className = 'bundle-banner';
@@ -2316,7 +2357,7 @@
 
     var bundleInfo = getBundleInfo();
     var mugInfo = getMugBundleInfo();
-    var discountPence = bundleInfo.discountPence + mugInfo.discountPence;
+    var discountPence = bundleInfo.discountPence + mugInfo.discountPence + getCardBundleInfo().discountPence;
     var displayTotal = totalPence - discountPence;
 
     document.getElementById('cartCount').textContent = totalItems;
@@ -2326,7 +2367,9 @@
 
     var shippingNote = document.getElementById('shippingNote');
     if (shippingNote) {
-      if (displayTotal >= 1000) {
+      if (cartIsAllPod()) {
+        shippingNote.textContent = 'Postage included · UK only';
+      } else if (displayTotal >= 1000) {
         shippingNote.textContent = '🎉 Free UK shipping applied!';
       } else {
         var awayStr = ((1000 - displayTotal) / 100).toFixed(2);
