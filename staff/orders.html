@@ -586,6 +586,7 @@
               <div style="margin-top:6px;"><button class="filter-btn" onclick="refreshGelato(${o.id}, '${o.order_ref}')">&#128260; Refresh from Gelato</button></div>
             </div>` : ''}
             ${o.has_inkthreadable_lines ? renderInkBlock(o) : ''}
+            ${o.has_prodigi_lines ? renderProdigiBlock(o) : ''}
             ${renderCdBlock(o)}
             ${o.shipping_notes ? `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#1A5FA8;">&#128230; SHIPPING NOTES</strong><br>
@@ -600,7 +601,7 @@
               ${o.stripe_payment_intent ? `<a class="filter-btn" style="text-decoration:none" href="https://dashboard.stripe.com/payments/${o.stripe_payment_intent}" target="_blank">💳 Stripe</a>` : ''}
             </div>
           </div>
-          ${isPending && (o.is_all_pod || o.is_pure_gelato) && ((o.gelato_orders && o.gelato_orders.length) || (o.ink_orders && o.ink_orders.length)) ? `
+          ${isPending && (o.is_all_pod || o.is_pure_gelato) && ((o.gelato_orders && o.gelato_orders.length) || (o.ink_orders && o.ink_orders.length) || (o.prodigi_orders && o.prodigi_orders.length)) ? `
           <div class="order-action" style="font-size:0.8rem;color:#555;max-width:160px;">Print-only order: marks itself dispatched when every print partner has shipped it.</div>` : isPending ? `
           <div class="order-action">
             <button class="btn-dispatch" id="btn-${o.id}" onclick="dispatch(${o.id}, '${o.order_ref}')">
@@ -910,6 +911,93 @@
     if (!window.confirm('Delete the unpaid Inkthreadable order for ' + ref + '? No charge either way. It cannot be deleted once paid.')) return;
     try { await inkPost('/orders/' + id + '/ink-cancel'); showToast('✓ Unpaid order deleted for ' + ref); await Promise.all([loadStats(), loadOrders()]); }
     catch (e) { alert('Could not delete: ' + e.message); }
+  }
+
+  // ---- Prodigi (the Christmas cards; a Prodigi DRAFT is created for you and nothing is made or charged until you approve it) ----
+  function renderProdigiBlock(o) {
+    const st = o.prodigi_fulfilment_status || 'none';
+    const note = esc(o.prodigi_fulfilment_note || '');
+    const g = (o.prodigi_orders || []).slice(-1)[0] || null;
+    const pid = esc((g && g.prodigi_order_id) || o.prodigi_order_id || '');
+    const cards = Number(o.prodigi_cards) || 0;
+    const total = g && g.totals && g.totals.total ? '&pound;' + esc(g.totals.total) : null;
+    const issues = (g && g.issues || []).map(i => `<div style="color:${i.severity === 'error' ? '#C62828' : '#8a6d00'};margin-top:4px;">&#9888; ${esc(i.message || i.code || 'Prodigi reports an issue')}</div>`).join('');
+    const ref = esc(o.order_ref);
+    const linkBox = `<div style="margin-top:8px;font-size:0.82rem;color:#333;">Placed it by hand at Prodigi? Paste the Prodigi order number so tracking and customer emails work:<br>
+        <input type="text" id="pl-${o.id}" placeholder="Prodigi order number" style="padding:4px 6px;width:290px;max-width:100%;"> <button class="filter-btn" onclick="linkProdigi(${o.id}, '${ref}')">Link</button></div>`;
+    const retry = `<button class="filter-btn" onclick="createProdigi(${o.id}, '${ref}')">&#128260; Try again</button>`;
+    if (st === 'pending_approval') {
+      return `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
+        <strong style="font-size:0.9rem;color:#1A5FA8;">&#127876; PRODIGI &mdash; WAITING FOR YOUR APPROVAL</strong><br>
+        <span style="font-size:0.85rem;color:#333;">A draft for ${cards} card${cards === 1 ? '' : 's'} has been created at Prodigi (order ${pid}). <strong>Nothing is printed or charged until you approve it.</strong> Cost to you: ${total ? '<strong>' + total + '</strong> including postage' : 'not shown yet (Prodigi fills it in about a minute after creating the draft; press Refresh)'}.</span>
+        ${issues}
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="filter-btn" style="background:#4CAF50;color:#fff;border-color:#4CAF50;" onclick="submitProdigi(${o.id}, '${ref}', ${total ? "'" + esc(g.totals.total) + "'" : 'null'}, ${cards})">&#9989; Approve and send to Prodigi</button>
+          <button class="filter-btn" onclick="refreshProdigi(${o.id}, '${ref}')">&#128260; Refresh</button>
+          <button class="filter-btn" onclick="cancelProdigi(${o.id}, '${ref}', false)">&#10005; Cancel draft</button>
+        </div></div>`;
+    }
+    if (st === 'needs_manual_file' || st === 'error') {
+      return `<div style="background:#FFEBEE;border:1.5px solid #E57373;border-radius:4px;padding:8px 12px;margin-top:8px;">
+        <strong style="font-size:0.9rem;color:#C62828;">&#9888; PRODIGI &mdash; ${st === 'error' ? 'NEEDS ATTENTION' : 'NEEDS MANUAL ORDER'}</strong><br>
+        <span style="font-size:0.85rem;color:#333;">${st === 'error' ? 'Something went wrong with the Prodigi order.' : 'No Prodigi order was created automatically.'} Fix the reason below and press Try again, or place it by hand at Prodigi.</span><br>
+        <span style="font-size:0.78rem;color:#999;">${note}</span>
+        <div style="margin-top:8px;">${retry}</div>${linkBox}</div>`;
+    }
+    if (st === 'cancelled') {
+      return `<div style="background:#f5f5f5;border:1.5px solid #bbb;border-radius:4px;padding:8px 12px;margin-top:8px;">
+        <strong style="font-size:0.9rem;color:#666;">PRODIGI &mdash; CANCELLED</strong><br>
+        <span style="font-size:0.78rem;color:#999;">${note}</span>
+        <div style="margin-top:8px;">${retry}</div>${linkBox}</div>`;
+    }
+    if (st === 'submitted') {
+      const held = g && ['on_hold', 'failed'].includes(g.status);
+      const canCancel = g && ['submitted'].includes(g.status);
+      return `<div style="background:${held ? '#FFEBEE' : '#E8F5E9'};border:1.5px solid ${held ? '#E57373' : '#4CAF50'};border-radius:4px;padding:6px 12px;margin-top:8px;font-size:0.8rem;color:${held ? '#C62828' : '#2e7d32'};">
+        ${held ? '&#9888; Prodigi has put this order on hold' : '&#9989; Sent to Prodigi'} (order ${pid})
+        ${(o.prodigi_orders || []).map(x => `<div style="margin-top:4px;color:#333;">Status: <strong>${esc((x.status || 'unknown').replace(/_/g, ' '))}</strong>${x.totals && x.totals.total ? ' &middot; &pound;' + esc(x.totals.total) : ''}${(x.parcels || []).map(p => ' &middot; ' + esc(p.carrier || '') + ' ' + esc(p.code || '')).join('')}${x.shipped_emailed_at ? ' &middot; shipped email sent' : ''}</div>`).join('')}
+        ${issues}
+        ${o.prodigi_processing_emailed_at ? '<div style="margin-top:4px;color:#333;">&#9993; "Being made" email sent</div>' : ''}
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;"><button class="filter-btn" onclick="refreshProdigi(${o.id}, '${ref}')">&#128260; Refresh from Prodigi</button>
+        ${canCancel ? `<button class="filter-btn" onclick="cancelProdigi(${o.id}, '${ref}', true)">&#10005; Cancel at Prodigi</button>` : ''}</div>
+      </div>`;
+    }
+    return `<div style="background:#FFF8E1;border:1.5px solid #F5C542;border-radius:4px;padding:8px 12px;margin-top:8px;">
+      <strong style="font-size:0.9rem;color:#8a6d00;">PRODIGI &mdash; NOT LINKED</strong><br>
+      <span style="font-size:0.85rem;color:#333;">This order has a card line but nothing has been set up at Prodigi for it.</span><div style="margin-top:8px;">${retry}</div>${linkBox}</div>`;
+  }
+
+  async function prodigiPost(path, body) {
+    const res = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(out.error || res.status);
+    return out;
+  }
+  async function submitProdigi(id, ref, total, cards) {
+    const cost = total ? '£' + total + ' (including postage)' : 'a cost Prodigi has not shown yet. Press Refresh first if you want to see it';
+    if (!window.confirm('Approve ' + ref + ' and send it to Prodigi?\n\nProdigi will print and post ' + cards + ' card' + (cards === 1 ? '' : 's') + ' to the customer and charge your Prodigi account ' + cost + '.\n\nAfter this, cancelling is up to Prodigi and may not be possible once printing has started.')) return;
+    try { const out = await prodigiPost('/orders/' + id + '/prodigi-submit'); showToast('✓ ' + ref + ' sent to Prodigi' + (out.total ? ' (£' + out.total + ')' : '')); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Prodigi was not sent this order: ' + e.message); await loadOrders(); }
+  }
+  async function refreshProdigi(id, ref) {
+    try { await prodigiPost('/orders/' + id + '/prodigi-refresh'); showToast('✓ ' + ref + ' refreshed from Prodigi'); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Could not refresh: ' + e.message); }
+  }
+  async function createProdigi(id, ref) {
+    try { const out = await prodigiPost('/orders/' + id + '/prodigi-create'); showToast('✓ ' + ref + ': ' + ((out.check && (out.check.status || out.check.skipped)) || 'done')); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Could not create the Prodigi order: ' + e.message); }
+  }
+  async function cancelProdigi(id, ref, sent) {
+    if (!window.confirm((sent ? 'Ask Prodigi to cancel the order for ' : 'Cancel the Prodigi draft for ') + ref + '?' + (sent ? '\n\nProdigi will refuse if printing has already started.' : ' It was never approved, so there is no charge.'))) return;
+    try { await prodigiPost('/orders/' + id + '/prodigi-cancel'); showToast('✓ Prodigi order cancelled for ' + ref); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Prodigi would not cancel it: ' + e.message); await loadOrders(); }
+  }
+  async function linkProdigi(id, ref) {
+    const v = (document.getElementById('pl-' + id).value || '').trim();
+    if (!v) { alert('Paste the Prodigi order number first'); return; }
+    if (!window.confirm('Link Prodigi order ' + v + ' to ' + ref + '?\n\nFrom now on the customer is emailed from that order\'s real status. If it has already shipped, they are emailed straight away.')) return;
+    try { await prodigiPost('/orders/' + id + '/prodigi-link', { prodigi_order_id: v }); showToast('✓ ' + ref + ' linked to Prodigi'); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Could not link: ' + e.message); }
   }
 
   async function cancelFulfilment(id, ref) {
