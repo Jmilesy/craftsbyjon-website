@@ -929,7 +929,7 @@
     if (st === 'pending_approval') {
       return `<div style="background:#E3F2FD;border:1.5px solid #4A90E2;border-radius:4px;padding:8px 12px;margin-top:8px;">
         <strong style="font-size:0.9rem;color:#1A5FA8;">&#127876; PRODIGI &mdash; WAITING FOR YOUR APPROVAL</strong><br>
-        <span style="font-size:0.85rem;color:#333;">A draft for ${cards} card${cards === 1 ? '' : 's'} has been created at Prodigi (order ${pid}). <strong>Nothing is printed or charged until you approve it.</strong> Cost to you: ${total ? '<strong>' + total + '</strong> including postage' : 'not shown yet (Prodigi fills it in about a minute after creating the draft; press Refresh)'}.</span>
+        <span style="font-size:0.85rem;color:#333;">A draft for ${cards} card${cards === 1 ? '' : 's'} has been created at Prodigi (order ${pid}). <strong>Approving sends it to Prodigi, where it waits on hold. Nothing is printed or charged until you then release it.</strong> Cost to you: ${total ? '<strong>' + total + '</strong> including postage' : 'not shown yet (Prodigi fills it in about a minute after creating the draft; press Refresh)'}.</span>
         ${issues}
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
           <button class="filter-btn" style="background:#4CAF50;color:#fff;border-color:#4CAF50;" onclick="submitProdigi(${o.id}, '${ref}', ${total ? "'" + esc(g.totals.total) + "'" : 'null'}, ${cards})">&#9989; Approve and send to Prodigi</button>
@@ -951,14 +951,20 @@
         <div style="margin-top:8px;">${retry}</div>${linkBox}</div>`;
     }
     if (st === 'submitted') {
-      const held = g && ['on_hold', 'failed'].includes(g.status);
-      const canCancel = g && ['submitted'].includes(g.status);
-      return `<div style="background:${held ? '#FFEBEE' : '#E8F5E9'};border:1.5px solid ${held ? '#E57373' : '#4CAF50'};border-radius:4px;padding:6px 12px;margin-top:8px;font-size:0.8rem;color:${held ? '#C62828' : '#2e7d32'};">
-        ${held ? '&#9888; Prodigi has put this order on hold' : '&#9989; Sent to Prodigi'} (order ${pid})
+      // 'waiting' = approved, parked on hold by Prodigi, and Prodigi offers a release (the normal state after Approve on this account).
+      const waiting = !!(g && g.status === 'on_hold' && (g.allowed || []).includes('resume') && !(g.issues || []).some(i => i.severity === 'error'));
+      const held = !!(g && ['on_hold', 'failed'].includes(g.status)) && !waiting;
+      const canCancel = g && (g.status === 'submitted' || (g.status === 'on_hold' && (g.allowed || []).includes('cancel')));
+      const relTotal = g && g.totals && g.totals.total ? esc(g.totals.total) : null;
+      const releaseButton = relTotal
+        ? `<button class="filter-btn" id="rel-${o.id}" style="background:#4CAF50;color:#fff;border-color:#4CAF50;" onclick="releaseProdigi(${o.id}, '${ref}', '${relTotal}')">&#128179; Release and pay &pound;${relTotal}</button>`
+        : `<span style="font-size:0.8rem;color:#8a6d00;">Press Refresh to see the cost before releasing.</span>`;
+      return `<div style="background:${held ? '#FFEBEE' : waiting ? '#FFF8E1' : '#E8F5E9'};border:1.5px solid ${held ? '#E57373' : waiting ? '#F5C542' : '#4CAF50'};border-radius:4px;padding:6px 12px;margin-top:8px;font-size:0.8rem;color:${held ? '#C62828' : waiting ? '#8a6d00' : '#2e7d32'};">
+        ${held ? '&#9888; Prodigi has put this order on hold' : waiting ? '&#9208; Approved and waiting at Prodigi. Nothing has been charged yet' : '&#9989; Sent to Prodigi'} (order ${pid})${held && g && g.status === 'on_hold' ? '<div style=\"margin-top:4px;color:#333;\">Prodigi is not offering a release for this order. Check it in the Prodigi dashboard.</div>' : ''}
         ${(o.prodigi_orders || []).map(x => `<div style="margin-top:4px;color:#333;">Status: <strong>${esc((x.status || 'unknown').replace(/_/g, ' '))}</strong>${x.totals && x.totals.total ? ' &middot; &pound;' + esc(x.totals.total) : ''}${(x.parcels || []).map(p => ' &middot; ' + esc(p.carrier || '') + ' ' + esc(p.code || '')).join('')}${x.shipped_emailed_at ? ' &middot; shipped email sent' : ''}</div>`).join('')}
         ${issues}
         ${o.prodigi_processing_emailed_at ? '<div style="margin-top:4px;color:#333;">&#9993; "Being made" email sent</div>' : ''}
-        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;"><button class="filter-btn" onclick="refreshProdigi(${o.id}, '${ref}')">&#128260; Refresh from Prodigi</button>
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">${waiting ? releaseButton : ''}<button class="filter-btn" onclick="refreshProdigi(${o.id}, '${ref}')">&#128260; Refresh from Prodigi</button>
         ${canCancel ? `<button class="filter-btn" onclick="cancelProdigi(${o.id}, '${ref}', true)">&#10005; Cancel at Prodigi</button>` : ''}</div>
       </div>`;
     }
@@ -975,9 +981,45 @@
   }
   async function submitProdigi(id, ref, total, cards) {
     const cost = total ? '£' + total + ' (including postage)' : 'a cost Prodigi has not shown yet. Press Refresh first if you want to see it';
-    if (!window.confirm('Approve ' + ref + ' and send it to Prodigi?\n\nProdigi will print and post ' + cards + ' card' + (cards === 1 ? '' : 's') + ' to the customer and charge your Prodigi account ' + cost + '.\n\nAfter this, cancelling is up to Prodigi and may not be possible once printing has started.')) return;
+    if (!window.confirm('Approve ' + ref + ' and send it to Prodigi?\n\nProdigi will hold it until you release it. When you do, Prodigi prints and posts ' + cards + ' card' + (cards === 1 ? '' : 's') + ' to the customer and charges your bank ' + cost + '. Approving charges nothing.\n\nWhile it is on hold you can still cancel it.')) return;
     try { const out = await prodigiPost('/orders/' + id + '/prodigi-submit'); showToast('✓ ' + ref + ' sent to Prodigi' + (out.total ? ' (£' + out.total + ')' : '')); await Promise.all([loadStats(), loadOrders()]); }
     catch (e) { alert('Prodigi was not sent this order: ' + e.message); await loadOrders(); }
+  }
+  // Release a held Prodigi order. Shows the funds check first (advice only: Jon decides), then asks Prodigi to release,
+  // which is the moment Prodigi charges the bank. The warning level (75) lives in orders-api, not here.
+  const gbp = (v) => '£' + Number(v).toFixed(2);
+  async function releaseProdigi(id, ref, total) {
+    const btn = document.getElementById('rel-' + id);
+    const label = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Checking funds...'; }
+    let f = null, problem = null;
+    try {
+      const res = await fetch(API + '/staff-only/prodigi/' + id + '/funds');
+      const out = await res.json().catch(() => ({}));
+      if (res.ok) f = out; else problem = out.error || ('HTTP ' + res.status);
+    } catch (e) { problem = e.message; }
+    if (btn) { btn.disabled = false; btn.innerHTML = label; }
+    const cost = f ? f.thisRelease : total;
+    if (!cost) { alert('The cost is not known yet. Press Refresh and try again.'); return; }
+    const lines = [];
+    if (f && f.bank && f.bank.ok) {
+      if (f.warn) lines.push('WARNING: this would leave you below your ' + gbp(f.warnBelow) + ' level.', '');
+      const when = f.bank.refreshAt ? new Date(f.bank.refreshAt).toLocaleString('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'time unknown';
+      lines.push(f.bank.name + ' available balance: ' + gbp(f.bank.available) + ' (last bank refresh: ' + when + ')');
+      if (f.sinceRefresh && f.sinceRefresh.known) {
+        if (Number(f.sinceRefresh.total) > 0) lines.push('Prodigi charges since then: ' + gbp(f.sinceRefresh.total) + ' (' + f.sinceRefresh.orders.map(x => x.ref).join(', ') + ')');
+      } else lines.push('The bank did not say when it last refreshed, so recent Prodigi charges could not be added back.');
+      lines.push('This release: ' + gbp(f.thisRelease));
+      lines.push('You would have about ' + gbp(f.after) + ' left, before your other bills.');
+      if (f.otherHeld && f.otherHeld.count > 0) lines.push('Other orders still held at Prodigi: ' + f.otherHeld.count + ' (' + gbp(f.otherHeld.total) + '), not included above.');
+      (f.notes || []).forEach(n => lines.push('Note: ' + n));
+    } else {
+      lines.push('Funds check unavailable (' + ((f && f.bank && f.bank.error) || problem || 'unknown reason') + '). This release is ' + gbp(cost) + '.');
+    }
+    lines.push('', 'Release ' + ref + ' and pay Prodigi ' + gbp(cost) + ' now?', 'Prodigi will charge your bank and start printing. Once printing starts it cannot be cancelled.');
+    if (!window.confirm(lines.join('\n'))) return;
+    try { const out = await prodigiPost('/staff-only/prodigi/' + id + '/release', { expected_total: cost }); showToast('✓ ' + ref + ' released to Prodigi (' + gbp(out.total) + ')'); await Promise.all([loadStats(), loadOrders()]); }
+    catch (e) { alert('Prodigi was not released: ' + e.message); await loadOrders(); }
   }
   async function refreshProdigi(id, ref) {
     try { await prodigiPost('/orders/' + id + '/prodigi-refresh'); showToast('✓ ' + ref + ' refreshed from Prodigi'); await Promise.all([loadStats(), loadOrders()]); }
