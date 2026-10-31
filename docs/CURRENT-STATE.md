@@ -33,3 +33,10 @@ The public product list (`/n8n-proxy/products-api/products`) no longer contains 
 - `store/shop.js`: slider `max` set from the cap (disabled when there is nothing to zoom), a live print-quality line under the crop (`#photoQuality`: warning below the target, a note at the cap). Photo popup wording without any dispatch or delivery time.
 - `staff/orders.html`: genuine-pixel crop size against `PHOTO_PRINT_PX` (1180); no name row for photo-only products.
 - Tests: `tests/photo-personaliser.test.cjs` (12), `tests/browser/photo-quality.cjs` (56, phone and desktop), `tests/browser/staff-photo-lines.cjs` (5). Server side: `craftsbyjon-vps-app/docs/CURRENT-STATE.md` ("Photo print size 1180 px").
+
+# Staff orders: Pack view (31 Oct 2026)
+
+- `staff/orders.html`: each order card has a "Pack view" button, and clicking the order ref or the items line opens the same popup. It shows a picture of every item in the order with a large quantity badge (red when more than one), the product id, gift, personalisation, custom and shipping notes, and the address to send to. Escape or clicking outside closes it.
+- Pictures come from the product list the page already loads (staff path `/n8n-proxy/products-api/products/`, no new route or backend call, so Rule 23 is not affected). An item is matched to its product by `stripe_price_id`, then by the order's `stock_items` title, then by exact title. The image URL follows the same rule as `store/shop.js` `buildImageUrl` (bare filename becomes `https://images.craftsbyjon.co.uk/products/<name>.jpg`). An item that cannot be matched shows "No image found for this item".
+- Not included: the customer's photo and print file for personalised photo lines still show only on the order card, not in the popup.
+- Test: `node --test tests/staff-orders-pack-view.test.cjs` (4 checks, using the real CBJ-0037 and CBJ-0036 items and a copy of the live product list in `tests/fixtures/products-list-2026-10-31.json`).

@@ -268,6 +268,21 @@
       .order-date { margin-left: 0; }
     }
 
+    /* Pack view (31 Oct 2026) */
+    .pack-box { max-width: 780px; }
+    .pack-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:4px; }
+    .pack-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; margin:14px 0; }
+    .pack-item { border:1.5px solid var(--border); border-radius:10px; padding:10px; text-align:center; background:#fff; }
+    .pack-item img { width:100%; aspect-ratio:1/1; object-fit:contain; border-radius:6px; background:#f6f6f6; display:block; }
+    .pack-noimg { width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; border-radius:6px; background:#f6f6f6; color:#999; font-size:0.8rem; padding:8px; }
+    .pack-qty { display:inline-block; margin-top:8px; background:var(--teal); color:#fff; font-weight:700; font-size:1.15rem; border-radius:999px; padding:2px 14px; }
+    .pack-qty.multi { background:#C62828; }
+    .pack-title { font-size:0.85rem; margin-top:6px; color:#333; line-height:1.3; }
+    .pack-meta { font-size:0.75rem; color:#777; margin-top:2px; }
+    .pack-note { border-radius:4px; padding:8px 12px; margin-top:8px; font-size:0.88rem; color:#333; white-space:pre-wrap; }
+    .order-ref.clickable, .order-items.clickable { cursor:pointer; }
+    .order-items.clickable:hover, .order-ref.clickable:hover { text-decoration:underline; }
+
     /* Manual order modal */
     .modal-overlay {
       display: none;
@@ -388,6 +403,10 @@
 
 </div>
 
+<div class="modal-overlay" id="packModal" onclick="if(event.target===this)closePackView()">
+  <div class="modal-box pack-box" id="packBody"></div>
+</div>
+
 <div class="modal-overlay" id="manualOrderModal">
   <div class="modal-box">
     <h2>➕ Add Manual Order</h2>
@@ -459,6 +478,7 @@
   let currentFilter = 'all';
   let allOrders = [];
   let priceIdToProductId = {};
+  let productsById = {};
 
   async function loadProductMap() {
     try {
@@ -466,8 +486,10 @@
       const res = await fetch(PRODUCTS_API + '/products/');
       const { result } = await res.json();
       priceIdToProductId = {};
+      productsById = {};
       (result || []).forEach(p => {
         if (p.stripe_price_id) priceIdToProductId[p.stripe_price_id] = p['Product ID'];
+        productsById[p['Product ID']] = p;
       });
     } catch (e) {
       console.error('Product map error', e);
@@ -529,7 +551,7 @@
         <div class="order-card ${o.status}" id="order-${o.id}">
           <div class="order-main">
             <div class="order-top">
-              <span class="order-ref">${o.order_ref}</span>
+              <span class="order-ref clickable" title="Open pack view" onclick="openPackView(${o.id})">${o.order_ref}</span>
               <span class="badge badge-${o.status}">${isPending ? 'Pending' : 'Dispatched'}</span>
               <span class="order-date">${formatDate(o.created_at)}</span>
             </div>
@@ -538,7 +560,7 @@
               &nbsp;&middot;&nbsp;${esc(o.customer_email || '—')}
             </div>
             <div style="font-size:0.82rem;color:#999;margin:2px 0 4px;">${esc([o.shipping_line1, o.shipping_line2, o.shipping_city, o.shipping_postal_code].filter(Boolean).join(', ') || 'No shipping address')}</div>
-            <div class="order-items">${itemsSummary}</div>
+            <div class="order-items clickable" title="Open pack view" onclick="openPackView(${o.id})">${itemsSummary}</div>
             ${o.is_gift ? `<div style="background:#FCE4EC;border:1.5px solid #E91E63;border-radius:4px;padding:8px 12px;margin-top:8px;">
               <strong style="font-size:0.9rem;color:#AD1457;">&#127873; GIFT ORDER</strong><br>
               <span style="font-size:0.88rem;color:#333;">${o.gift_message ? esc(o.gift_message) : '(no message left)'}</span>
@@ -594,6 +616,7 @@
             </div>` : ''}
             <div class="order-total">${o.amount_total_formatted}</div>
             <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="filter-btn" onclick="openPackView(${o.id})">🧺 Pack view</button>
               <button class="filter-btn" onclick="printSlip(${o.id})">🖨 Packing slip</button>
               <button class="filter-btn" onclick="autoPrintSlip(${o.id})">🖨️➡️ Auto-print</button>
               <button class="filter-btn" onclick="editCustomNotes(${o.id})">🎨 ${o.custom_order_notes ? 'Edit' : 'Add'} custom notes</button>
@@ -611,6 +634,70 @@
         </div>`;
     }).join('');
   }
+
+  // ---- Pack view (31 Oct 2026): pictures of what is in an order, for picking and packing ----
+  // Same rule as store/shop.js buildImageUrl, so a bare filename resolves exactly as it does on the shop.
+  function packImageUrl(stored) {
+    if (!stored) return '';
+    if (stored.startsWith('https://')) return stored;
+    const filename = String(stored).split('/').pop();
+    const base = filename.indexOf('.') !== -1 ? filename : filename + '.jpg';
+    return 'https://images.craftsbyjon.co.uk/products/' + base;
+  }
+
+  function packFindProduct(o, item) {
+    if (item.stripe_price_id && priceIdToProductId[item.stripe_price_id]) {
+      return productsById[priceIdToProductId[item.stripe_price_id]] || null;
+    }
+    let stock = o.stock_items;
+    if (typeof stock === 'string') { try { stock = JSON.parse(stock); } catch (e) { stock = []; } }
+    const hit = (stock || []).find(x => x.title === item.name);
+    if (hit && productsById[hit.product_id]) return productsById[hit.product_id];
+    return Object.values(productsById).find(p => p.Title === item.name) || null;
+  }
+
+  function openPackView(id) {
+    const o = allOrders.find(x => x.id === id);
+    if (!o) return alert('Order not found in current view');
+    const items = o.items || [];
+    const units = items.reduce((n, i) => n + (Number(i.quantity) || 0), 0);
+    const cards = items.map(i => {
+      const p = packFindProduct(o, i);
+      const src = p ? packImageUrl(p['Image URL']) || packImageUrl(String(p['Product ID'] || '').toLowerCase()) : '';
+      const qty = Number(i.quantity) || 0;
+      const img = src
+        ? `<img src="${esc(src)}" alt="${esc(i.name)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'pack-noimg',textContent:'Image failed to load'}))">`
+        : `<div class="pack-noimg">No image found for this item</div>`;
+      return `<div class="pack-item">${img}
+        <div class="pack-qty ${qty > 1 ? 'multi' : ''}">&times;${esc(i.quantity)}</div>
+        <div class="pack-title">${esc(i.name)}</div>
+        ${p ? `<div class="pack-meta">${esc(p['Product ID'])}</div>` : ''}
+      </div>`;
+    }).join('');
+    const addr = [o.shipping_name || o.customer_name, o.shipping_line1, o.shipping_line2, o.shipping_city, o.shipping_postal_code].filter(Boolean).map(esc).join('<br>');
+    const notes = [
+      o.is_gift ? `<div class="pack-note" style="background:#FCE4EC;border:1.5px solid #E91E63;"><strong>&#127873; GIFT ORDER</strong><br>${o.gift_message ? esc(o.gift_message) : '(no message left)'}</div>` : '',
+      o.personalisation_notes ? `<div class="pack-note" style="background:#FFF3CD;border:1.5px solid #FFC107;"><strong>&#9999; PERSONALISATION NEEDED</strong><br>${esc(o.personalisation_notes)}</div>` : '',
+      o.mug_name ? `<div class="pack-note" style="background:#FFF3CD;border:1.5px solid #FFC107;"><strong>&#9749; MUG</strong><br>Name: ${esc(o.mug_name)}${o.mug_message ? '<br>Message: ' + esc(o.mug_message) : ''}</div>` : '',
+      o.custom_order_notes ? `<div class="pack-note" style="background:#EDE7F6;border:1.5px solid #7E57C2;"><strong>&#127912; CUSTOM ORDER DETAILS</strong><br>${esc(o.custom_order_notes)}</div>` : '',
+      o.shipping_notes ? `<div class="pack-note" style="background:#E3F2FD;border:1.5px solid #4A90E2;"><strong>&#128230; SHIPPING NOTES</strong><br>${esc(o.shipping_notes)}</div>` : '',
+    ].join('');
+    document.getElementById('packBody').innerHTML = `
+      <div class="pack-head"><h2>${esc(o.order_ref)}</h2>
+        <span class="badge badge-${o.status}">${o.status === 'pending' ? 'Pending' : 'Dispatched'}</span>
+        <span class="order-date">${formatDate(o.created_at)}</span></div>
+      <div class="modal-sub">${items.length} line${items.length === 1 ? '' : 's'}, ${units} item${units === 1 ? '' : 's'} to pack${o.shipping_method ? ' &middot; ' + esc(o.shipping_method) : ''}</div>
+      <div class="pack-grid">${cards || '<div class="pack-noimg">No items</div>'}</div>
+      ${notes}
+      <div style="margin-top:12px;font-size:0.85rem;color:#444;"><strong>Send to</strong><br>${addr || 'No shipping address'}</div>
+      <div class="modal-actions"><button type="button" class="modal-btn-cancel" onclick="closePackView()">Close</button></div>`;
+    document.getElementById('packModal').classList.add('show');
+  }
+
+  function closePackView() {
+    document.getElementById('packModal').classList.remove('show');
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePackView(); });
 
   function openManualOrderModal() {
     document.getElementById('manualOrderModal').classList.add('show');
