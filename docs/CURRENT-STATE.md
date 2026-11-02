@@ -40,3 +40,7 @@ The public product list (`/n8n-proxy/products-api/products`) no longer contains 
 - Pictures come from the product list the page already loads (staff path `/n8n-proxy/products-api/products/`, no new route or backend call, so Rule 23 is not affected). An item is matched to its product by `stripe_price_id`, then by the order's `stock_items` title, then by exact title. The image URL follows the same rule as `store/shop.js` `buildImageUrl` (bare filename becomes `https://images.craftsbyjon.co.uk/products/<name>.jpg`). An item that cannot be matched shows "No image found for this item".
 - Not included: the customer's photo and print file for personalised photo lines still show only on the order card, not in the popup.
 - Test: `node --test tests/staff-orders-pack-view.test.cjs` (4 checks, using the real CBJ-0037 and CBJ-0036 items and a copy of the live product list in `tests/fixtures/products-list-2026-10-31.json`).
+
+# Christmas collection link (task 219, 2 Nov 2026)
+
+The homepage Shop by collection section includes a server-rendered descriptive link to `/collections/deal-christmas`, so visitors and crawlers can reach the six Christmas cards without waiting for the dynamic collection tiles. It does not replace campaign/tracking links or alter the shop scripts. The matching vps-app change improves the Christmas collection and six Prodigi card pages only.
