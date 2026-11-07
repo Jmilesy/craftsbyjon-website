@@ -17,7 +17,7 @@ const { checkoutFromBasket } = require('./scenarios.cjs');
     const opened = await page.waitForSelector('#modalWrap.open #modalAddBtn', { timeout: 6000 }).then(() => true, () => false);
     const disabledFirst = opened && await page.isDisabled('#modalAddBtn');
     if (opened) { await page.click(`.modal-variants .modal-variant-btn:text-is("${finish}")`); }
-    const img = opened && await page.getAttribute('#modalMainImg', 'src');
+    const img = opened && await page.getAttribute('#modalMainImg', 'data-orig');
     let body = null;
     if (opened) { await page.click('#modalAddBtn'); body = await checkoutFromBasket(page, log, {}); }
     const item = body && body.items[0];

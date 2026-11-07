@@ -37,7 +37,7 @@ async function open(browser, mode, id) {
 const state = page => page.evaluate(() => {
   const n = document.getElementById('modalImgNote');
   const thumbs = [...document.querySelectorAll('.modal-img-col .modal-thumb')].map(t => t.getAttribute('src'));
-  return { note: n && !n.hidden ? n.textContent : null, noteEl: !!n, main: document.getElementById('modalMainImg').getAttribute('src'), thumbs };
+  return { note: n && !n.hidden ? n.textContent : null, noteEl: !!n, main: document.getElementById('modalMainImg').getAttribute('data-orig') || document.getElementById('modalMainImg').getAttribute('src'), thumbs };
 });
 const clickVal = (page, row, val) => page.evaluate(([r, v]) => {
   const b = [...document.querySelectorAll('#' + r + ' [data-val]')].find(x => x.getAttribute('data-val') === v);
@@ -135,7 +135,7 @@ async function finishes(browser, mode) {
     check(c.note === null && (!vi.black || tail(c.main) !== tail(vi.black)), `${mode} ${id} Clear`, `note=${JSON.stringify(c.note)} main=${tail(c.main)}`);
     // Tapping the black photo while Clear is chosen: the picture changes, the choice (and the basket) don't.
     if (vi.black) {
-      const t = await page.$(`.modal-img-col .modal-thumb[src$="${tail(vi.black)}"]`);
+      const t = await page.$(`.modal-img-col .modal-thumb[data-orig$="${tail(vi.black)}"]`);
       if (t) {
         await t.click();
         const sel = await page.$eval('.modal-variants .modal-variant-btn.selected', x => x.textContent.trim()).catch(() => null);

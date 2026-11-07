@@ -69,6 +69,27 @@
     return 'https://images.craftsbyjon.co.uk/products/' + base;
   }
 
+  // Pictures are shown from WebP copies in /thumbs/{width}/ (7 Nov 2026) instead of the multi-megabyte originals.
+  // data-orig keeps the original URL (the zoom view and picture matching use it); a missing copy falls back to it.
+  function thumbUrl(url, w) {
+    if (!url || url.indexOf('https://images.craftsbyjon.co.uk/products/') !== 0) return url;
+    return 'https://images.craftsbyjon.co.uk/thumbs/' + w + '/' + url.split('/').pop().replace(/\.[^.]+$/, '') + '.webp';
+  }
+  function cbjImgFallback(el) {
+    var o = el.getAttribute('data-orig');
+    el.onerror = null;
+    if (o && el.src !== o) el.src = o;
+  }
+  function cardImgHtml(url, alt) {
+    return '<img src="' + escHtml(thumbUrl(url, 800)) + '" data-orig="' + escHtml(url) + '" onerror="cbjImgFallback(this)" alt="' + escHtml(alt) + '" loading="lazy">';
+  }
+  function setModalMain(url) {
+    var el = document.getElementById('modalMainImg');
+    el.setAttribute('data-orig', url);
+    el.onerror = function() { cbjImgFallback(el); };
+    el.src = thumbUrl(url, 1200);
+  }
+
   const MOBILE_BANNER_MAP = {
     'teacherappreciation': '/store/assets/banners/mobile/cbj_teacher_mobile_banner_1440x400.png',
     'summer':              '/store/assets/banners/mobile/cbj_summer_mobile_banner_1440x400.png',
@@ -775,7 +796,7 @@
       var isBookmark = id.toLowerCase().startsWith('bookmark-') || (p.product_type || '').toLowerCase() === 'bookmark';
       var cardShow = CARD_DISPLAY[id] || null;
       return '<div class="card"' + (isBookmark ? ' data-product-type="bookmark"' : '') + (isPhotoCard ? ' data-photo-card="1"' : '') + ' onclick="trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ')">'
-        + '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(p['Title']) + '" loading="lazy">'
+        + cardImgHtml(imgUrl, p['Title'])
         + toteStripHtml(p)
         + '<div class="card-body">'
         + '<div class="card-title"><a class="card-title-link" href="/products/' + encodeURIComponent(id) + '" onclick="event.preventDefault(); event.stopPropagation(); trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ');">' + escHtml(cardShow && cardShow.title ? cardShow.title : p['Title']) + '</a></div>'
@@ -813,7 +834,7 @@
     var isBookmark = id.toLowerCase().startsWith('bookmark-') || (p.product_type || '').toLowerCase() === 'bookmark';
     var cardShow = CARD_DISPLAY[id] || null;
     return '<div class="card"' + (isBookmark ? ' data-product-type="bookmark"' : '') + (isPhotoCard ? ' data-photo-card="1"' : '') + ' onclick="trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ')">'
-      + '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(p['Title']) + '" loading="lazy">'
+      + cardImgHtml(imgUrl, p['Title'])
       + toteStripHtml(p)
       + '<div class="card-body">'
       + '<div class="card-title"><a class="card-title-link" href="/products/' + encodeURIComponent(id) + '" onclick="event.preventDefault(); event.stopPropagation(); trackEvent(\'product_card_click\', ' + escAttr(JSON.stringify(id)) + '); openModal(' + pAttr + ');">' + escHtml(cardShow && cardShow.title ? cardShow.title : p['Title']) + '</a></div>'
@@ -953,12 +974,12 @@
     galleryUrls.forEach(function(u) { currentModalImages.push(u); });
 
     html += '<div class="modal-img-col">';
-    html += '<img class="modal-img-main" id="modalMainImg" src="' + escHtml(mainImgUrl) + '" alt="' + escHtml(p['Title']) + '" onclick="openLightbox(this.src, this.alt, currentModalImages)">';
+    html += '<img class="modal-img-main" id="modalMainImg" src="' + escHtml(thumbUrl(mainImgUrl, 1200)) + '" data-orig="' + escHtml(mainImgUrl) + '" onerror="cbjImgFallback(this)" alt="' + escHtml(p['Title']) + '" onclick="openLightbox(this.getAttribute(\'data-orig\') || this.src, this.alt, currentModalImages)">';
     html += '<p class="modal-img-note" id="modalImgNote" role="status" aria-live="polite" hidden></p>';
     if (persImgUrl) {
       html += '<div class="modal-thumbs">';
-      html += '<img class="modal-thumb active" src="' + escHtml(mainImgUrl) + '" alt="Standard" onclick="swapModalImg(\'' + escAttr(mainImgUrl) + '\', this)" title="Standard">';
-      html += '<img class="modal-thumb" src="' + escHtml(persImgUrl) + '" alt="Personalised" onclick="swapModalImg(\'' + escAttr(persImgUrl) + '\', this)" title="Personalised example">';
+      html += '<img class="modal-thumb active" src="' + escHtml(thumbUrl(mainImgUrl, 400)) + '" data-orig="' + escHtml(mainImgUrl) + '" onerror="cbjImgFallback(this)" alt="Standard" onclick="swapModalImg(\'' + escAttr(mainImgUrl) + '\', this)" title="Standard">';
+      html += '<img class="modal-thumb" src="' + escHtml(thumbUrl(persImgUrl, 400)) + '" data-orig="' + escHtml(persImgUrl) + '" onerror="cbjImgFallback(this)" alt="Personalised" onclick="swapModalImg(\'' + escAttr(persImgUrl) + '\', this)" title="Personalised example">';
       html += '</div>';
       html += '<div style="font-size:0.78rem;color:#888;text-align:center;margin-top:4px">Standard &nbsp;|&nbsp; Personalised example</div>';
     }
@@ -971,20 +992,20 @@
         if (!url) return;
         var activeClass = mugThumbFirst ? ' active' : '';
         mugThumbFirst = false;
-        html += '<img class="modal-thumb' + activeClass + '" src="' + escHtml(url) + '" alt="' + mugThumbLabels[i] + '" onclick="swapModalImg(\'' + escAttr(url) + '\', this)" title="' + mugThumbLabels[i] + '">';
+        html += '<img class="modal-thumb' + activeClass + '" src="' + escHtml(thumbUrl(url, 400)) + '" data-orig="' + escHtml(url) + '" onerror="cbjImgFallback(this)" alt="' + mugThumbLabels[i] + '" onclick="swapModalImg(\'' + escAttr(url) + '\', this)" title="' + mugThumbLabels[i] + '">';
       });
       html += '</div>';
     } else if (!isMug && variants.length > 1) {
       html += '<div class="modal-thumbs">';
-      html += '<img class="modal-thumb active" data-variant-key="' + escAttr(firstKey) + '" src="' + escHtml(mainImgUrl) + '" alt="' + escHtml(variants[0]) + '" onclick="swapModalImg(\'' + escAttr(mainImgUrl) + '\', this)">';
+      html += '<img class="modal-thumb active" data-variant-key="' + escAttr(firstKey) + '" src="' + escHtml(thumbUrl(mainImgUrl, 400)) + '" data-orig="' + escHtml(mainImgUrl) + '" onerror="cbjImgFallback(this)" alt="' + escHtml(variants[0]) + '" onclick="swapModalImg(\'' + escAttr(mainImgUrl) + '\', this)">';
       if (blackUrl) {
-        html += '<img class="modal-thumb" data-variant-key="black" src="' + escHtml(blackUrl) + '" alt="Black" onclick="swapModalImg(\'' + escAttr(blackUrl) + '\', this)">';
+        html += '<img class="modal-thumb" data-variant-key="black" src="' + escHtml(thumbUrl(blackUrl, 400)) + '" data-orig="' + escHtml(blackUrl) + '" onerror="cbjImgFallback(this)" alt="Black" onclick="swapModalImg(\'' + escAttr(blackUrl) + '\', this)">';
       }
       html += '</div>';
     } else if (isPod && podDefaultShots.length > 0) {
       html += '<div class="modal-thumbs">';
       podDefaultShots.forEach(function(u, i) {
-        html += '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(u) + '" alt="' + escHtml(podDefaultColour) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
+        html += '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(thumbUrl(u, 400)) + '" data-orig="' + escHtml(u) + '" onerror="cbjImgFallback(this)" alt="' + escHtml(podDefaultColour) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
       });
       html += '</div>';
     }
@@ -992,10 +1013,10 @@
       var hadStrip = !!persImgUrl || (isMug && mugAllImgs.length > 1) || (!isMug && variants.length > 1) || (isPod && podDefaultShots.length > 0);
       html += '<div class="modal-thumbs">';
       if (!hadStrip) {
-        html += '<img class="modal-thumb active" src="' + escHtml(mainImgUrl) + '" alt="Main" onclick="swapModalImg(\'' + escAttr(mainImgUrl) + '\', this)" title="Main">';
+        html += '<img class="modal-thumb active" src="' + escHtml(thumbUrl(mainImgUrl, 400)) + '" data-orig="' + escHtml(mainImgUrl) + '" onerror="cbjImgFallback(this)" alt="Main" onclick="swapModalImg(\'' + escAttr(mainImgUrl) + '\', this)" title="Main">';
       }
       galleryUrls.forEach(function(u, i) {
-        html += '<img class="modal-thumb" src="' + escHtml(u) + '" alt="Photo ' + (i + 2) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)" title="Photo ' + (i + 2) + '">';
+        html += '<img class="modal-thumb" src="' + escHtml(thumbUrl(u, 400)) + '" data-orig="' + escHtml(u) + '" onerror="cbjImgFallback(this)" alt="Photo ' + (i + 2) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)" title="Photo ' + (i + 2) + '">';
       });
       html += '</div>';
     }
@@ -1173,7 +1194,7 @@
         }
         var rBtnText = rVariants.length > 1 ? 'Choose Options &rarr;' : 'Add to Cart';
         relHtml += '<div class="related-card" onclick="openModalFrom(\'related_click\', ' + escAttr(JSON.stringify(p['Product ID'])) + ', ' + rpAttr + ')">'
-          + '<img src="' + escHtml(rImgUrl) + '" alt="' + escHtml(rp['Title']) + '" loading="lazy">'
+          + cardImgHtml(rImgUrl, rp['Title'])
           + '<div class="related-card-body">'
           + '<div class="related-card-title">' + escHtml(rp['Title']) + '</div>'
           + '<div class="related-card-price">' + rPrice + '</div>'
@@ -1193,7 +1214,7 @@
         var dpAttr = escAttr(JSON.stringify(dp));
         var dImgUrl = buildImageUrl(dp['Image URL']) || buildImageUrl(did.toLowerCase());
         designHtml += '<div class="related-card" onclick="openModalFrom(\'design_link_click\', ' + escAttr(JSON.stringify(p['Product ID'])) + ', ' + dpAttr + ')">'
-          + '<img src="' + escHtml(dImgUrl) + '" alt="' + escHtml(dp['Title']) + '" loading="lazy">'
+          + cardImgHtml(dImgUrl, dp['Title'])
           + '<div class="related-card-body">'
           + '<div class="related-card-title">' + escHtml(DESIGN_LINK_LABELS[dp['product_type']] || dp['product_type']) + '</div>'
           + '<button class="related-card-btn" onclick="event.stopPropagation(); openModalFrom(\'design_link_click\', ' + escAttr(JSON.stringify(p['Product ID'])) + ', ' + dpAttr + ')">View &rarr;</button>'
@@ -1280,7 +1301,7 @@
         : '<button class="btn-add' + (inCart ? ' in-cart' : '') + '" onclick="event.stopPropagation(); addToCart(' + pAttr + ', null)">'
           + (inCart ? '&#10003; In Cart' : 'Add to Cart') + '</button>';
       html += '<div class="available-card" onclick="openModal(' + pAttr + ')">'
-        + '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(p['Title']) + '" loading="lazy">'
+        + cardImgHtml(imgUrl, p['Title'])
         + '<div class="available-card-body">'
         + '<div class="available-card-title">' + escHtml(p['Title']) + '</div>'
         + '<div class="available-card-desc">' + escHtml(p['Short Description']) + '</div>'
@@ -1467,10 +1488,10 @@
   // Main picture + thumbnails for a set of pictures (same markup the pickers already used).
   function showModalPictures(urls, alt) {
     if (!urls.length) return;
-    document.getElementById('modalMainImg').src = urls[0];
+    setModalMain(urls[0]);
     currentModalImages = urls;
     var thumbsHtml = urls.length > 1 ? urls.map(function(u, i) {
-      return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(u) + '" alt="' + escHtml(alt) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
+      return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(thumbUrl(u, 400)) + '" data-orig="' + escHtml(u) + '" onerror="cbjImgFallback(this)" alt="' + escHtml(alt) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
     }).join('') : '';
     var existing = document.querySelector('.modal-img-col .modal-thumbs');
     if (existing) {
@@ -1501,10 +1522,10 @@
     if (g.key === st.shownKey) return;
     st.shownKey = g.key;
     var alt = CBJPrint.frameLabel(st.frame) + ' print';
-    document.getElementById('modalMainImg').src = g.urls[0];
+    setModalMain(g.urls[0]);
     currentModalImages = g.urls;
     var thumbsHtml = g.urls.map(function(u, i) {
-      return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(u) + '" alt="' + escHtml(alt) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
+      return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(thumbUrl(u, 400)) + '" data-orig="' + escHtml(u) + '" onerror="cbjImgFallback(this)" alt="' + escHtml(alt) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
     }).join('');
     var existing = document.querySelector('.modal-img-col .modal-thumbs');
     if (existing) {
@@ -1605,10 +1626,10 @@
     }
     if (key === st.shownKey) return;
     st.shownKey = key;
-    document.getElementById('modalMainImg').src = urls[0];
+    setModalMain(urls[0]);
     currentModalImages = urls;
     var thumbsHtml = urls.map(function(u, i) {
-      return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(u) + '" alt="' + escHtml(st.colour + ' tote bag') + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
+      return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(thumbUrl(u, 400)) + '" data-orig="' + escHtml(u) + '" onerror="cbjImgFallback(this)" alt="' + escHtml(st.colour + ' tote bag') + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
     }).join('');
     var existing = document.querySelector('.modal-img-col .modal-thumbs');
     if (existing) {
@@ -1696,7 +1717,7 @@
     st.option = st.vars.filter(function(v) { return v.id === id; })[0] || null;
     if (st.option) {
       if (st.option.retail_price_pence != null) document.getElementById('modalPriceVal').textContent = '£' + (st.option.retail_price_pence / 100).toFixed(2);
-      if (st.option.image_url) { var u = buildImageUrl(st.option.image_url); if (u) document.getElementById('modalMainImg').src = u; }
+      if (st.option.image_url) { var u = buildImageUrl(st.option.image_url); if (u) setModalMain(u); }
     }
     renderPhotoOptions();
   }
@@ -1929,10 +1950,10 @@
     showModalImgNote(shots.length ? null : (variantPictureNote({ kind: 'apparel', vars: _podVariants, podGallery: podGalleryData, defaults: modalDefaultImages }, { Colour: colour }) || ('No photo of ' + colour + ' yet, so this shows another colour.')));
     if (!shots.length) showModalPictures(modalDefaultImages, colour);
     if (shots.length > 0) {
-      document.getElementById('modalMainImg').src = shots[0];
+      setModalMain(shots[0]);
       currentModalImages = shots;
       var thumbsHtml = shots.map(function(u, i) {
-        return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(u) + '" alt="' + escHtml(colour) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
+        return '<img class="modal-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(thumbUrl(u, 400)) + '" data-orig="' + escHtml(u) + '" onerror="cbjImgFallback(this)" alt="' + escHtml(colour) + '" onclick="swapModalImg(\'' + escAttr(u) + '\', this)">';
       }).join('');
       var existingThumbs = document.querySelector('.modal-img-col .modal-thumbs');
       if (existingThumbs) {
@@ -2051,7 +2072,7 @@
     if (hint) hint.style.display = 'none';
     var imgUrl = btn.dataset.imgUrl;
     if (imgUrl) {
-      document.getElementById('modalMainImg').src = imgUrl;
+      setModalMain(imgUrl);
       var key = v.toLowerCase();
       document.querySelectorAll('.modal-thumb').forEach(function(t) {
         t.classList.toggle('active', t.dataset.variantKey === key);
@@ -2062,7 +2083,7 @@
   function swapModalImg(url, thumbEl) {
     window.__modalImagesViewed = (window.__modalImagesViewed || 1) + 1;
     trackEvent('image_switch', window.__modalOpenedId);
-    document.getElementById('modalMainImg').src = url;
+    setModalMain(url);
     document.querySelectorAll('.modal-thumb').forEach(function(t) { t.classList.remove('active'); });
     thumbEl.classList.add('active');
     // Looking at a picture never changes a choice (11 Oct 2026): tapping the Black thumbnail used to select
