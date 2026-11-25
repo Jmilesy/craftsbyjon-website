@@ -35,7 +35,21 @@
     if (!t && id.indexOf('keyring-') === 0) t = 'Keyring';
     return { 'Mug': 'Mugs', 'T-Shirt': 'T-shirts', 'Print': 'Prints', 'Tote Bag': 'Tote bags', 'Coaster Set': 'Coasters', 'Bookmark': 'Bookmarks', 'Keyring': 'Keyrings' }[t] || '';
   }
-  function collectionUrl(name) { return '/store/?collection=' + encodeURIComponent(String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }
+  // Breadcrumb and "See all" links (25 Nov 2026) go to the collection's own page, /collections/{slug}, using the
+  // real slug from /collections, when that page is public right now: status live or available, and in season if
+  // it has season_months (the same rule as products-api collections.js). Anything else (no slug in the data, a
+  // collection the public list does not include, hidden, archived, out of season) keeps the old shop link.
+  function collectionPageOpen(c, now) {
+    if (!c || !c.slug || (c.status !== 'live' && c.status !== 'available')) return false;
+    if (!c.season_months) return true;
+    var month = (now || new Date()).getMonth() + 1;
+    return String(c.season_months).split(',').map(function (m) { return parseInt(m, 10); }).indexOf(month) !== -1;
+  }
+  function collectionUrl(name) {
+    var info = (typeof collectionsInfo !== 'undefined' && collectionsInfo) ? collectionsInfo[name] : null;
+    if (collectionPageOpen(info)) return '/collections/' + encodeURIComponent(info.slug);
+    return '/store/?collection=' + encodeURIComponent(String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+  }
 
   // The basket button sits in the page header rather than floating over the page.
   function placeBasketButton() {

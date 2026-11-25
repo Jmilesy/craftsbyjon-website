@@ -103,6 +103,7 @@
   let mainProducts = [];
   let availableProducts = [];
   var collectionsMonths = {};  // valid_months per collection name (e.g. '5,6,7,8'), used by the Christmas gifts view
+  var collectionsInfo = {};    // slug, status and season_months per collection name, from /collections (product page links)
   let products = [];
   let cart = {};
   let selectedVariant = null;
@@ -160,6 +161,7 @@
         collectionsOrder[c.name] = c.sort_order;
         collectionsStatus[c.name] = c.status;
         collectionsMonths[c.name] = c.valid_months;
+        collectionsInfo[c.name] = { slug: c.slug || null, status: c.status, season_months: c.season_months || null };
       });
 
       allProductsRaw = result || [];
